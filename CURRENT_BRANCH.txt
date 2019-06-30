@@ -1,0 +1,83 @@
+# Current Branch Remit
+
+- Create new nodes for generating Configurations from 'recipes', for the purpose of beginning a simulation from scratch, and with control over parameters of imprtance so that aspect of the Configuration's composition / geometry / and general form may be 'fitted' by some means.
+- Plenty of atomic operations common with AnalysisNodes (e.g. selection of Species) so merge existing and new nodes into a ProcedureNode class. Each node deriving from this base class will implement a pure virtual context() function, returning in which contexts (e.g analysis, config generation) the node is relevant.
+- Numerical arguments to any of the keywords for any node will need to be able to recognise when an Expression has been provided. Sounds like a new keyword type that is able to deduce whether a simple value has been given, or has been given an expression that should be parsed.
+- ParameterNode: Variables/parameters that should be listable / accessible / targetable by Modules should be created within a ParameterNode.
+- CellNode: Provides basic or complete information for the unit cell to be used for the Configuration. It will encompass Configuration's existing Density, CellLengths, and CellAngles keywords. Defaults will be as currently set - cubic, 1.0 A box length. Density shall *not* have a default value - default behaviour will be that the provided cell lengths and angles are absolute, and cannot be modified. Providing a Density value will allow automatic box resizing.
+- AddSpeciesNode: Immediately adds the specified Species to the current cell, following the options set within. If the unit cell does not exist, it is created according to the definition provided in the UnitCell node (following specification of density if provided). If it already exists and has a prescribed density rather than volume, the volume is expanded to accommodate the new molecules to be created. Replicates and extends the content of the SpeciesInfo Configuration block
+
+TODO:
+- Multiplier, Density, CellLengths, and CellAngles Configuration keywords, and the SpeciesInfo block, will be redundant after these changes.
+
+
+Configuration  'Bulk'
+
+  // Standard N-molecule mix
+  Generation
+    Parameters
+      Integer  multiplier  100
+    EndParameters
+    Cell
+      Density  0.1  atoms/ang3
+    EndCell
+    AddSpecies
+      Species  'Water'
+      Population  3*multiplier
+    EndAddSpecies
+    AddSpecies
+      Species  'Methanol'
+      Population  6*multiplier
+    EndRecipe
+  EndGeneration
+
+  // N-molecule mix with fine control over randomisation
+  Generation
+    Recipe
+      int multiplier = 100;
+      int nWater = 3*multiplier;
+      int nMethanol = 6*multiplier;
+      setTargetDensity(0.1);  // Atoms/ang^3
+      addSpecies('Water', nWater);	// Add some water molecules, expanding/creating current box to density specified
+      randomisePositions('Water');	// Randomise positions (but not orientations) of water molecules
+      addSpecies('Methanol', nMethanol);
+      randomise('Methanol');		// Randomise positions and orientations of methanol molecules
+    EndRecipe
+  EndGeneration
+
+  // 3-molecule mix of A solvating B and C, with ratio control between B and C
+  Generation
+    // Externally-available control options for generation
+    Option  double  ratioBC  0.8;	// Option <type> <name> <default value>
+    Recipe
+      int nA = 1000;
+      int nB = 100*ratioBC;
+      int nC = 100*(1.0 - ratioBC);
+      setTargetDensity(0.1);  // Atoms/ang^3
+      addSpecies('A', nA);	// Add some A (all at Species coordinates), expanding/creating current box to density specified
+      addSpecies('B', nB);  	// Box is expanded at this point, scaling molecule centre coordinates to create space
+      addSpecies('C', nC);  	// Box is expanded at this point, scaling molecule centre coordinates to create space
+      randomise();		// Randomise positions and orientations of all molecules in system
+    EndRecipe
+  EndGeneration
+
+  // Porous crystal structure with variable adsorbate loading
+  Generation
+    // Externally-available control options for generation
+    Option  double  radius  21.0;
+    Recipe
+      copyConfiguration();
+    EndRecipe
+  EndGeneration
+
+  // Variable pore radius MCM-41 with adsorbates
+  Generation
+    // Externally-available control options for generation
+    Option  double  radius  21.0;
+    Recipe
+      //double radius = 21.0;	// Satisfied by the Option command
+      
+    EndRecipe
+  EndGeneration
+
+EndConfiguration
