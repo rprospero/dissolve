@@ -22,6 +22,8 @@
 #ifndef DISSOLVE_ARRAY_H
 #define DISSOLVE_ARRAY_H
 
+#include <algorithm>
+#include <functional>
 #include <vector>
 #include "base/messenger.h"
 #include "templates/listitem.h"
@@ -37,25 +39,17 @@ template <class A> class Array : public ListItem< Array<A> >
 	// Constructors
 	Array(int initialSize = 0) : ListItem< Array<A> >()
 	{
-		array_ = NULL;
 		if (initialSize > 0) initialise(initialSize);
 	}
         Array(const Array<A>& source, int firstIndex, int lastIndex) : ListItem< Array<A> >()
         {
-                array_ = NULL;
                 copy(source, firstIndex, lastIndex);
         }
-	// Destructor
-	~Array()
-	{
-		if (array_ != NULL) delete[] array_;
-	}
 	// Copy Constructor
 	Array(const Array<A>& source)
 	{
-		array_ = NULL;
-		initialise(source.size_);
-		copy(source.array_.begin(), source.array_.end_(), array_.begin());
+		initialise(source.size());
+		std::copy(source.array_.begin(), source.array_.end(), array_.begin());
 	}
 
 	private:
@@ -214,7 +208,7 @@ template <class A> class Array : public ListItem< Array<A> >
 		return array_[n];
 	}
 	// Return nth item as const reference
-	A& constAt(int n) const
+	A constAt(int n) const
 	{
 #ifdef CHECKS
 		if ((n < 0) || (n >= nItems_))
@@ -285,7 +279,7 @@ template <class A> class Array : public ListItem< Array<A> >
 		}
 #endif
 		// If this item is already last in the list, return now
-		if (position == (nItems_-1)) return;
+		if (position == (array_.size()-1)) return;
 
 		A temporary(array_[position+1]);
 
@@ -296,7 +290,7 @@ template <class A> class Array : public ListItem< Array<A> >
 	void shiftDown(int position)
 	{
 #ifdef CHECKS
-		if ((position < 0) || (position >= nItems_))
+		if ((position < 0) || (position >= array_.size()))
 		{
 			Messenger::print("OUT_OF_RANGE - Array index %i is out of range in Array::shiftDown() (nItems = %i).\n", position, nItems_);
 			return;
@@ -319,7 +313,7 @@ template <class A> class Array : public ListItem< Array<A> >
 	// void operator=(const A value) { for_each(array_.begin(), array_.end(), [value](A& location){ location = value; });}
 	void operator=(const A value) { for_each(array_.begin(), array_.end(), [value](A& location){location = value;});}
 	// Operator+= (add to all)
-	void operator+=(const Array<A> array) { for (int n=0; n<nItems_; ++n) array_[n] += array.constAt(n); }
+	void operator+=(const Array<A> array) {transform(array_.begin(), array_.end(), array.array_.begin(), array_.begin(), plus<A>());}
 	void operator+=(const A value) { for_each(array_.begin(), array_.end(), [value](A& location){ location += value; });}
 	// Operator-= (subtract from all)
 	void operator-=(const A value) { for_each(array_.begin(), array_.end(), [value](A& location){ location -= value; });}
@@ -329,10 +323,20 @@ template <class A> class Array : public ListItem< Array<A> >
 	void operator/=(const A value) { for_each(array_.begin(), array_.end(), [value](A& location){ location /= value; });}
 	// Operator- (subtraction)
 	Array<A> operator-(const A value) { Array<A> result = *this; result -= value; return result; }
-	Array<A> operator-(const Array<A> array) { Array<A> result(nItems_); for (int n=0; n<nItems_; ++n) result[n] = array_[n] - array.constAt(n); return result; }
+	Array<A> operator-(const Array<A> array)
+	{
+	        Array<A> result(array_.size());
+		transform(array_.begin(), array_.end(), array.array_.begin(), result.begin(), minus<A>());
+		return result;
+	}
 	// Operator+ (addition)
 	Array<A> operator+(const A value) { Array<A> result = *this; result += value; return result; }
-	Array<A> operator+(const Array<A> array) { Array<A> result(nItems_); for (int n=0; n<nItems_; ++n) result[n] = array_[n] + array.constAt(n); return result; }
+	Array<A> operator+(const Array<A> array)
+	{
+	        Array<A> result(array_.size());
+		transform(array_.begin(), array_.end(), array.array_.begin(), result.begin(), plus<A>());
+		return result;
+	}
 	// Operator* (multiply all and return new)
 	Array<A> operator*(const A value) { Array<A> result = *this; result *= value; return result; }
 	// Operator/ (divide all and return new)
@@ -344,20 +348,14 @@ template <class A> class Array : public ListItem< Array<A> >
 	 */
 	public:
 	// Return sum of elements in array
-	A sum()
-	{
-		A result = 0.0;
-		for (int n=0; n<nItems_; ++n) result += array_[n];
-		return result;
-	}
+	A sum() { return accumulate(array_.begin(), array_.end(), 0); }
 	// Return maximal absolute value in array
 	A maxAbs() const
 	{
 		A result = 0.0;
 		A temp;
-		for (int n=0; n<nItems_; ++n)
+		for (const auto temp: array_)
 		{
-			temp = array_[n];
 			if (temp < 0) temp = -temp;
 			if (temp > result) result = temp;
 		}
