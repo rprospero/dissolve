@@ -22,6 +22,7 @@
 #ifndef DISSOLVE_ARRAY_H
 #define DISSOLVE_ARRAY_H
 
+#include <vector>
 #include "base/messenger.h"
 #include "templates/listitem.h"
 #include "templates/vector3.h"
@@ -36,17 +37,12 @@ template <class A> class Array : public ListItem< Array<A> >
 	// Constructors
 	Array(int initialSize = 0) : ListItem< Array<A> >()
 	{
-		chunkSize_ = 128;
 		array_ = NULL;
-		size_ = 0;
-		nItems_ = 0;
 		if (initialSize > 0) initialise(initialSize);
 	}
         Array(const Array<A>& source, int firstIndex, int lastIndex) : ListItem< Array<A> >()
         {
                 array_ = NULL;
-                size_ = 0;
-                nItems_ = 0;
                 copy(source, firstIndex, lastIndex);
         }
 	// Destructor
@@ -57,21 +53,15 @@ template <class A> class Array : public ListItem< Array<A> >
 	// Copy Constructor
 	Array(const Array<A>& source)
 	{
-		chunkSize_ = source.chunkSize_;
 		array_ = NULL;
-		size_ = 0;
-		nItems_ = 0;
 		initialise(source.size_);
-		nItems_ = source.nItems_;
 		for (int n=0; n<nItems_; ++n) array_[n] = source.array_[n];
 	}
 	// Assignment Operator
 	void operator=(const Array<A>& source)
 	{
-		chunkSize_ = source.chunkSize_;
 		clear();
 		resize(source.size_);
-		nItems_ = source.nItems_;
 		for (int n=0; n<nItems_; ++n) array_[n] = source.array_[n];
 	}
 	// Conversion operator (to standard array)
@@ -85,61 +75,39 @@ template <class A> class Array : public ListItem< Array<A> >
 	 * Array Data
 	 */
 	private:
-	// Current size of Array
-	int size_;
 	// Array data
-	A* array_;
-	// Number of data actually in Array
-	int nItems_;
-	// Chunk (increment) size for Array
-	int chunkSize_;
+        vector<A> array_;
 
 	private:
 	// Resize array 
 	void resize(int newSize)
 	{
 		// Array large enough already?
-		if ((newSize-size_) <= 0) return;
-
-		// Copy old data to temporary array
-		A* oldItems = NULL;
-		if (nItems_ > 0)
-		{
-			oldItems = new A[nItems_];
-			for (int n=0; n<nItems_; ++n) oldItems[n] = array_[n];
-		}
-
-		// Delete old, and create new array
-		if (array_ != NULL) delete[] array_;
-		size_ = newSize;
+	        if (newSize <= array_.capacity()) return;
 		try
 		{
-			array_ = new A[size_];
+	        	array_.reserve(newSize);
 		}
-		catch (bad_alloc& alloc)
+		catch (length_error& alloc)
 		{
 			Messenger::error("Array<T>() - Failed to allocate sufficient memory for array_. Exception was : %s\n", alloc.what());
 			return;
 		}
-
-		// Copy old data into new array
-		for (int n=0; n<nItems_; ++n) array_[n] = oldItems[n];
-		delete[] oldItems;
 	}
 
 	public:
 	// Return number of items in array
 	int nItems() const
 	{
-		return nItems_;
+	  return array_.size()_;
 	}
 	// Return current maximum size of array
 	int size() const
 	{
-		return size_;
+	  return array_.capacity();
 	}
 	// Return data array
-	A* array()
+        Array<A> array()
 	{
 		return array_;
 	}
@@ -154,9 +122,6 @@ template <class A> class Array : public ListItem< Array<A> >
 		// First, resize array...
 		resize(size);
 		
-		// ...then set number of items to specified size...
-		nItems_ = size;
-		
 		// ...and finally set all elements to default value
 		for (int n=0; n<nItems_; ++n) array_[n] = A();
 	}
@@ -166,13 +131,6 @@ template <class A> class Array : public ListItem< Array<A> >
 		clear(); 
 
 		resize(size);
-
-		nItems_ = 0;
-	}
-	// Set chunksize to use when incrementally resizing this array
-	void setChunkSize(int chunkSize)
-	{
-		chunkSize_ = chunkSize;
 	}
         // Copy data from source array
         void copy(const Array<A>& source, int firstIndex, int lastIndex)
@@ -196,11 +154,7 @@ template <class A> class Array : public ListItem< Array<A> >
 	// Add new element to array
 	void add(A data)
 	{
-		// Is current array large enough?
-		if (nItems_ == size_) resize(size_+chunkSize_);
-
-		// Store new value
-		array_[nItems_++] = data;
+		array_.push_back(data);
 	}
 	// Insert new element in array
 	void insert(A data, const int position)
@@ -211,42 +165,24 @@ template <class A> class Array : public ListItem< Array<A> >
 			Messenger::print("OUT_OF_RANGE - Position index %i is out of range in Array::insert() (nItems = %i).\n", position, nItems_);
 			return;
 		}
+		array_.insert(array_.begin()+position, data);
 #endif
-
-		// Is current array large enough?
-		if (nItems_ == size_) resize(size_+chunkSize_);
-
-		// Working from the top of the array, shift all items after or at 'position' up one place
-		for (int n=nItems_; n>position; --n) array_[n] = array_[n-1];
-
-		array_[position] = data;
-		++nItems_;
-	}
-	// Forget data (set nItems to zero) leaving array intact
-	void forgetData()
-	{
-		nItems_ = 0;
 	}
 	// Clear array
 	void clear()
 	{
-		nItems_ = 0;
-		if (array_ != NULL) delete[] array_;
-		array_ = NULL;
-		size_ = 0;
+	        array_.clear();
 	}
 	// Drop the first item from the array
 	void removeFirst()
 	{
-		if (nItems_ == 0)
+	        if (array_.empty())
 		{
 			Messenger::warn("Tried to drop the first item of an empty array...\n");
 			return;
 		}
 
 		for (int n=0; n<nItems_-1; ++n) array_[n] = array_[n+1];
-
-		--nItems_;
 	}
 	// Drop the last item from the array
 	void removeLast()
@@ -319,7 +255,7 @@ template <class A> class Array : public ListItem< Array<A> >
 	// Return first value in array
 	A firstValue() const
 	{
-		if (nItems_ == 0)
+	        if (array_.empty())
 		{
 			Messenger::print("OUT_OF_RANGE - No first item to return in Array.\n");
 			return A();
@@ -329,7 +265,7 @@ template <class A> class Array : public ListItem< Array<A> >
 	// Return last value in array
 	A lastValue() const
 	{
-		if (nItems_ == 0)
+	        if (nItems_ == 0)
 		{
 			Messenger::print("OUT_OF_RANGE - No last item to return in Array.\n");
 			return A();
