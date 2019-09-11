@@ -1648,7 +1648,7 @@ bool ProcessPool::broadcast(Array2D<bool>& array, int rootRank, ProcessPool::Com
  */
 
 // Reduce (sum) double data to root rank
-bool ProcessPool::sum(double* source, int count, int rootRank, ProcessPool::CommunicatorType commType)
+bool ProcessPool::sum(vector<double> source, int count, int rootRank, ProcessPool::CommunicatorType commType)
 {
 #ifdef PARALLEL
 	timer_.start();
@@ -1672,7 +1672,7 @@ bool ProcessPool::sum(double* source, int count, int rootRank, ProcessPool::Comm
 }
 
 // Reduce (sum) int data to root rank
-bool ProcessPool::sum(int* source, int count, int rootRank, ProcessPool::CommunicatorType commType)
+bool ProcessPool::sum(vector<int> source, int count, int rootRank, ProcessPool::CommunicatorType commType)
 {
 #ifdef PARALLEL
 	timer_.start();
@@ -1696,7 +1696,7 @@ bool ProcessPool::sum(int* source, int count, int rootRank, ProcessPool::Communi
 }
 
 // Reduce (sum) double data to all processes
-bool ProcessPool::allSum(double* source, int count, ProcessPool::CommunicatorType commType)
+bool ProcessPool::allSum(vector<double> source, int count, ProcessPool::CommunicatorType commType)
 {
 #ifdef PARALLEL
 	timer_.start();
@@ -1711,7 +1711,7 @@ bool ProcessPool::allSum(double* source, int count, ProcessPool::CommunicatorTyp
 }
 
 // Reduce (sum) int data to all processes
-bool ProcessPool::allSum(int* source, int count, ProcessPool::CommunicatorType commType)
+bool ProcessPool::allSum(vector<int> source, int count, ProcessPool::CommunicatorType commType)
 {
 #ifdef PARALLEL
 	timer_.start();
@@ -1729,7 +1729,7 @@ bool ProcessPool::allSum(int* source, int count, ProcessPool::CommunicatorType c
 }
 
 // Reduce (sum) long int data to all processes
-bool ProcessPool::allSum(long int* source, int count, ProcessPool::CommunicatorType commType)
+bool ProcessPool::allSum(vector<long int> source, int count, ProcessPool::CommunicatorType commType)
 {
 #ifdef PARALLEL
 	timer_.start();
@@ -1745,7 +1745,7 @@ bool ProcessPool::allSum(long int* source, int count, ProcessPool::CommunicatorT
 }
 
 // Reduce (sum) double data over processes relevant to specifeid strategy
-bool ProcessPool::allSum(double* source, int count, ProcessPool::DivisionStrategy strategy)
+bool ProcessPool::allSum(vector<double> source, int count, ProcessPool::DivisionStrategy strategy)
 {
 #ifdef PARALLEL
 	timer_.start();
@@ -1774,7 +1774,7 @@ bool ProcessPool::allSum(double* source, int count, ProcessPool::DivisionStrateg
 }
 
 // Reduce (sum) int data over processes relevant to specified strategy
-bool ProcessPool::allSum(int* source, int count, ProcessPool::DivisionStrategy strategy)
+bool ProcessPool::allSum(vector<int> source, int count, ProcessPool::DivisionStrategy strategy)
 {
 #ifdef PARALLEL
 	timer_.start();

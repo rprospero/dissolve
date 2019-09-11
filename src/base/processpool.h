@@ -313,19 +313,19 @@ class ProcessPool
 	 */
 	public:
 	// Reduce (sum) double data to root process
-	bool sum(double* source, int count, int rootRank = 0, ProcessPool::CommunicatorType commType = ProcessPool::PoolProcessesCommunicator);
+	bool sum(vector<double> source, int count, int rootRank = 0, ProcessPool::CommunicatorType commType = ProcessPool::PoolProcessesCommunicator);
 	// Reduce (sum) int data to root process
-	bool sum(int* source, int count, int rootRank = 0, ProcessPool::CommunicatorType commType = ProcessPool::PoolProcessesCommunicator);
+	bool sum(vector<int> source, int count, int rootRank = 0, ProcessPool::CommunicatorType commType = ProcessPool::PoolProcessesCommunicator);
 	// Reduce (sum) double data to all processes
-	bool allSum(double* source, int count, ProcessPool::CommunicatorType commType = ProcessPool::PoolProcessesCommunicator);
+	bool allSum(vector<double> source, int count, ProcessPool::CommunicatorType commType = ProcessPool::PoolProcessesCommunicator);
 	// Reduce (sum) int data to all processes
-	bool allSum(int* source, int count, ProcessPool::CommunicatorType commType = ProcessPool::PoolProcessesCommunicator);
+	bool allSum(vector<int> source, int count, ProcessPool::CommunicatorType commType = ProcessPool::PoolProcessesCommunicator);
 	// Reduce (sum) int data to all processes
-	bool allSum(long int* source, int count, ProcessPool::CommunicatorType commType = ProcessPool::PoolProcessesCommunicator);
+	bool allSum(vector<long int> source, int count, ProcessPool::CommunicatorType commType = ProcessPool::PoolProcessesCommunicator);
 	// Reduce (sum) double data over processes relevant to specified strategy
-	bool allSum(double* source, int count, ProcessPool::DivisionStrategy strategy);
+	bool allSum(vector<double> source, int count, ProcessPool::DivisionStrategy strategy);
 	// Reduce (sum) int data over processes relevant to specified strategy
-	bool allSum(int* source, int count, ProcessPool::DivisionStrategy strategy);
+	bool allSum(vector<int> source, int count, ProcessPool::DivisionStrategy strategy);
 	// Assemble integer array on target rank within the specified communicator
 	bool assemble(vector<int> array, int nData, vector<int> rootDest, int rootMaxData, int rootRank = 0, ProcessPool::CommunicatorType commType = ProcessPool::PoolProcessesCommunicator);
 	// Assemble double array on target rank within the specified communicator
