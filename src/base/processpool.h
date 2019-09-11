@@ -31,6 +31,7 @@
 #include "templates/vector3.h"
 #include "templates/array.h"
 #include "templates/array2d.h"
+#include <vector>
 // Include <mpi.h> only if we are compiling in parallel
 #ifdef PARALLEL
 #include <mpi.h>
@@ -192,7 +193,7 @@ class ProcessPool
 	// Return number of processes in specified group
 	int nProcessesInGroup(int groupId) const;
 	// Return array of pool ranks in the specified group
-	int* poolRanksInGroup(int groupId) const;
+	vector<int> poolRanksInGroup(int groupId) const;
 	// Return whether group data is modifiable
 	bool groupsModifiable() const;
 	// Prevent group data from being modified
@@ -326,9 +327,9 @@ class ProcessPool
 	// Reduce (sum) int data over processes relevant to specified strategy
 	bool allSum(int* source, int count, ProcessPool::DivisionStrategy strategy);
 	// Assemble integer array on target rank within the specified communicator
-	bool assemble(int* array, int nData, int* rootDest, int rootMaxData, int rootRank = 0, ProcessPool::CommunicatorType commType = ProcessPool::PoolProcessesCommunicator);
+	bool assemble(vector<int> array, int nData, vector<int> rootDest, int rootMaxData, int rootRank = 0, ProcessPool::CommunicatorType commType = ProcessPool::PoolProcessesCommunicator);
 	// Assemble double array on target rank within the specified communicator
-	bool assemble(double* array, int nLocalData, double* rootDest, int rootMaxData, int rootRank = 0, ProcessPool::CommunicatorType commType = ProcessPool::PoolProcessesCommunicator);
+	bool assemble(vector<double> array, int nLocalData, vector<double> rootDest, int rootMaxData, int rootRank = 0, ProcessPool::CommunicatorType commType = ProcessPool::PoolProcessesCommunicator);
 	// Assemble Array<double> on target rank within the specified communicator
 	bool assemble(Array<double>& array, int nData, Array<double>& rootDest, int rootMaxData, int rootRank = 0, ProcessPool::CommunicatorType commType = ProcessPool::PoolProcessesCommunicator);
 

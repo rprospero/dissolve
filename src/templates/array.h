@@ -85,7 +85,7 @@ template <class A> class Array : public ListItem< Array<A> >
 	  return array_.capacity();
 	}
 	// Return data array
-        Array<A> array()
+        vector<A> array()
 	{
 		return array_;
 	}

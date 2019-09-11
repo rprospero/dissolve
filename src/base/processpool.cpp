@@ -534,13 +534,13 @@ int ProcessPool::nProcessesInGroup(int groupId) const
 }
 
 // Return array of pool ranks in specified group
-int* ProcessPool::poolRanksInGroup(int groupId) const
+vector<int> ProcessPool::poolRanksInGroup(int groupId) const
 {
 #ifdef CHECKS
 	if ((groupId < 0) || (groupId >= processGroups_.nItems()))
 	{
 		Messenger::print("OUT_OF_RANGE - Specified groupId (%i) is out of range in ProcessPool::worldRanksInGroup() (nProcessGroups = %i).\n", groupId, processGroups_.nItems());
-		return 0;
+		return vector<int>();
 	}
 #endif
 	return processGroups_.constAt(groupId).poolRanks().array();
@@ -1803,7 +1803,7 @@ bool ProcessPool::allSum(int* source, int count, ProcessPool::DivisionStrategy s
 }
 
 // Assemble integer array for entire pool on target process
-bool ProcessPool::assemble(int* array, int nData, int* rootDest, int rootMaxData, int rootRank, ProcessPool::CommunicatorType commType)
+bool ProcessPool::assemble(vector<int> array, int nData, vector<int> rootDest, int rootMaxData, int rootRank, ProcessPool::CommunicatorType commType)
 {
 	/*
 	 * Given that the integer 'array' exists on all processes, and each process has stored nData at the
@@ -1850,7 +1850,7 @@ bool ProcessPool::assemble(int* array, int nData, int* rootDest, int rootMaxData
 }
 
 // Assemble double array for entire pool on target process
-bool ProcessPool::assemble(double* array, int nLocalData, double* rootDest, int rootMaxData, int rootRank, ProcessPool::CommunicatorType commType)
+bool ProcessPool::assemble(vector<double> array, int nLocalData, vector<double> rootDest, int rootMaxData, int rootRank, ProcessPool::CommunicatorType commType)
 {
 	/*
 	 * Given that the double 'array' exists on all processes, and each process has stored nData at the
