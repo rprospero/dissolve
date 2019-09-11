@@ -55,25 +55,9 @@ template <class A> class Array : public ListItem< Array<A> >
 	{
 		array_ = NULL;
 		initialise(source.size_);
-		for (int n=0; n<nItems_; ++n) array_[n] = source.array_[n];
-	}
-	// Assignment Operator
-	void operator=(const Array<A>& source)
-	{
-		clear();
-		resize(source.size_);
-		for (int n=0; n<nItems_; ++n) array_[n] = source.array_[n];
-	}
-	// Conversion operator (to standard array)
-	operator A*()
-	{
-		return array_;
+		copy(source.array_.begin(), source.array_.end_(), array_.begin());
 	}
 
-
-	/*
-	 * Array Data
-	 */
 	private:
 	// Array data
         vector<A> array_;
@@ -99,7 +83,7 @@ template <class A> class Array : public ListItem< Array<A> >
 	// Return number of items in array
 	int nItems() const
 	{
-	  return array_.size()_;
+	  return array_.size();
 	}
 	// Return current maximum size of array
 	int size() const
@@ -119,11 +103,7 @@ template <class A> class Array : public ListItem< Array<A> >
 	// Create array of specified size
 	void initialise(int size)
 	{
-		// First, resize array...
-		resize(size);
-		
-		// ...and finally set all elements to default value
-		for (int n=0; n<nItems_; ++n) array_[n] = A();
+		array_.resize(size);
 	}
 	// Create empty array of specified size
 	void createEmpty(int size)
@@ -136,13 +116,9 @@ template <class A> class Array : public ListItem< Array<A> >
         void copy(const Array<A>& source, int firstIndex, int lastIndex)
         {
                 clear();
-
-                int nItemsToCopy = (lastIndex - firstIndex) + 1;
-                if (nItemsToCopy > 0)
+                if (lastIndex >= firstIndex)
                 {
-                        resize(nItemsToCopy);
-                        nItems_ = nItemsToCopy;
-                        for (int n=0; n<nItems_; ++n) array_[n] = source.array_[n+firstIndex];
+			copy(source.array_.begin()+firstIndex, source.array_.begin_()+lastIndex+1, array_.begin());
                 }
         }
 
@@ -182,17 +158,17 @@ template <class A> class Array : public ListItem< Array<A> >
 			return;
 		}
 
-		for (int n=0; n<nItems_-1; ++n) array_[n] = array_[n+1];
+		array_.pop_front();
 	}
 	// Drop the last item from the array
 	void removeLast()
 	{
-		if (nItems_ == 0)
+		if (array_.empty())
 		{
 			Messenger::warn("Tried to drop the last item of an empty array...\n");
 			return;
 		}
-		--nItems_;
+		array_.pop_back();
 	}
 	// Remove the specified index
 	void remove(const int position)
@@ -204,9 +180,7 @@ template <class A> class Array : public ListItem< Array<A> >
 			return;
 		}
 #endif
-		for (int n=position; n<nItems_-1; ++n) array_[n] = array_[n+1];
-
-		--nItems_;
+		array_.erase(array_.begin()+position);
 	}
 
 	/*
@@ -260,39 +234,39 @@ template <class A> class Array : public ListItem< Array<A> >
 			Messenger::print("OUT_OF_RANGE - No first item to return in Array.\n");
 			return A();
 		}
-		return array_[0];
+		return array_.front;
 	}
 	// Return last value in array
 	A lastValue() const
 	{
-	        if (nItems_ == 0)
+	        if (array_.empty())
 		{
 			Messenger::print("OUT_OF_RANGE - No last item to return in Array.\n");
 			return A();
 		}
-		return array_[nItems_-1];
+		return array_.back();
 	}
 	// Return first item in array
 	A& first()
 	{
-		if (nItems_ == 0)
+		if (array_.empty())
 		{
 			static A dummy;
 			Messenger::print("OUT_OF_RANGE - No first item to return in Array.\n");
 			return dummy;
 		}
-		return array_[0];
+		return array_.front();
 	}
 	// Return last item in array
 	A& last()
 	{
-		if (nItems_ == 0)
+		if (array_.empty())
 		{
 			static A dummy;
 			Messenger::print("OUT_OF_RANGE - No last item to return in Array.\n");
 			return dummy;
 		}
-		return array_[nItems_-1];
+		return array_.end()-1;
 	}
 
 
@@ -314,6 +288,7 @@ template <class A> class Array : public ListItem< Array<A> >
 		if (position == (nItems_-1)) return;
 
 		A temporary(array_[position+1]);
+
 		array_[position+1] = array_[position];
 		array_[position] = temporary;
 	}
@@ -341,16 +316,17 @@ template <class A> class Array : public ListItem< Array<A> >
 	 */
 	public:
 	// Operator= (set all)
-	void operator=(const A value) { for (int n=0; n<nItems_; ++n) array_[n] = value; }
+	// void operator=(const A value) { for_each(array_.begin(), array_.end(), [value](A& location){ location = value; });}
+	void operator=(const A value) { for_each(array_.begin(), array_.end(), [value](A& location){location = value;});}
 	// Operator+= (add to all)
-	void operator+=(const A value) { for (int n=0; n<nItems_; ++n) array_[n] += value; }
 	void operator+=(const Array<A> array) { for (int n=0; n<nItems_; ++n) array_[n] += array.constAt(n); }
+	void operator+=(const A value) { for_each(array_.begin(), array_.end(), [value](A& location){ location += value; });}
 	// Operator-= (subtract from all)
-	void operator-=(const A value) { for (int n=0; n<nItems_; ++n) array_[n] -= value; }
+	void operator-=(const A value) { for_each(array_.begin(), array_.end(), [value](A& location){ location -= value; });}
 	// Operator*= (multiply all)
-	void operator*=(const A value) { for (int n=0; n<nItems_; ++n) array_[n] *= value; }
+	void operator*=(const A value) { for_each(array_.begin(), array_.end(), [value](A& location){ location *= value; });}
 	// Operator/= (divide all)
-	void operator/=(const A value) { for (int n=0; n<nItems_; ++n) array_[n] /= value; }
+	void operator/=(const A value) { for_each(array_.begin(), array_.end(), [value](A& location){ location /= value; });}
 	// Operator- (subtraction)
 	Array<A> operator-(const A value) { Array<A> result = *this; result -= value; return result; }
 	Array<A> operator-(const Array<A> array) { Array<A> result(nItems_); for (int n=0; n<nItems_; ++n) result[n] = array_[n] - array.constAt(n); return result; }
