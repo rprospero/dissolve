@@ -31,13 +31,6 @@
 Molecule::Molecule() : DynamicArrayObject<Molecule>()
 {
 	species_ = NULL;
-
-	// Set sensible defaults for Arrays
-	atoms_.setChunkSize(2);
-	grains_.setChunkSize(2);
-	bonds_.setChunkSize(2);
-	angles_.setChunkSize(2);
-	torsions_.setChunkSize(2);
 }
 
 // Destructor
@@ -93,7 +86,7 @@ int Molecule::nAtoms() const
 }
 
 // Return atoms array
-Atom** Molecule::atoms()
+vector <Atom*> Molecule::atoms()
 {
 	return atoms_.array();
 }
@@ -160,7 +153,7 @@ int Molecule::nBonds() const
 }
 
 // Return Bond array
-Bond** Molecule::bonds()
+Array<Bond*> Molecule::bonds()
 {
 	return bonds_;
 }
@@ -187,7 +180,7 @@ int Molecule::nAngles() const
 }
 
 // Return Angle array
-Angle** Molecule::angles()
+Array<Angle*> Molecule::angles()
 {
 	return angles_;
 }
@@ -214,7 +207,7 @@ int Molecule::nTorsions() const
 }
 
 // Return Torsion array
-Torsion** Molecule::torsions()
+Array<Torsion*> Molecule::torsions()
 {
 	return torsions_;
 }

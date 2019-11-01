@@ -116,7 +116,7 @@ bool RegionalDistributor::cycle()
 
 	Molecule* molecule;
 	Array<bool> allPossibleMoleculesAssigned(nProcessesOrGroups_);
-	allPossibleMoleculesAssigned = false;
+	// allPossibleMoleculesAssigned[0] = false;
 	int processOrGroup, nMoleculesAssigned, allPossibleMoleculesAssignedCount = 0;
 
 	// Set Molecule completed flags and clear distribution arrays
@@ -156,7 +156,7 @@ bool RegionalDistributor::cycle()
 			if (DND) Messenger::print("\n ** Searching for suitable Molecule to assign to process/group %i...\n\n", processOrGroup);
 
 			// If we have already assigned all possible Molecules for this process/group, continue the loop
-			if (allPossibleMoleculesAssigned[processOrGroup]) continue;
+			if (allPossibleMoleculesAssigned.constAt(processOrGroup)) continue;
 
 			// Try to assign a Molecule to this process/group
 			molecule = assignMolecule(processOrGroup);

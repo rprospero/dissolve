@@ -29,6 +29,7 @@
 #include "classes/molecule.h"
 #include "classes/species.h"
 #include "base/processpool.h"
+#include <vector>
 
 // Constructor
 EnergyKernel::EnergyKernel(ProcessPool& procPool, Configuration* config, const PotentialMap& potentialMap, double energyCutoff) : configuration_(config), cells_(config->cells()), potentialMap_(potentialMap), processPool_(procPool)
@@ -286,7 +287,7 @@ double EnergyKernel::energy(Cell* centralCell, Cell* otherCell, bool applyMim, b
 	}
 
 	// Perform relevant sum if requested
-	if (performSum) processPool_.allSum(&totalEnergy, 1, strategy);
+	if (performSum) processPool_.allSum(vector<double>(totalEnergy), 1, strategy);
 
 	return totalEnergy;
 }
@@ -380,7 +381,7 @@ double EnergyKernel::energy(Cell* centralCell, bool excludeIgeJ, bool interMolec
 	}
 
 	// Perform relevant sum if requested
-	if (performSum) processPool_.allSum(&totalEnergy, 1, strategy);
+	if (performSum) processPool_.allSum(vector<double>(totalEnergy), 1, strategy);
 
 	return totalEnergy;
 }
@@ -579,7 +580,7 @@ double EnergyKernel::energy(const Atom* i, Cell* cell, int flags, ProcessPool::D
 	}
 
 	// Perform relevant sum if requested
-	if (performSum) processPool_.allSum(&totalEnergy, 1, strategy);
+	if (performSum) processPool_.allSum(vector<double>(totalEnergy), 1, strategy);
 
 	return totalEnergy;
 }
@@ -608,7 +609,7 @@ double EnergyKernel::energy(const Atom* i, ProcessPool::DivisionStrategy strateg
 	for (int n=0; n<cellI->nMimCellNeighbours(); ++n) totalEnergy += energy(i, mimNeighbours[n], KernelFlags::ApplyMinimumImageFlag, strategy, false);
 
 	// Perform relevant sum if requested
-	if (performSum) processPool_.allSum(&totalEnergy, 1, strategy);
+	if (performSum) processPool_.allSum(vector<double>(totalEnergy), 1, strategy);
 
 	return totalEnergy;
 }
@@ -660,7 +661,7 @@ double EnergyKernel::energy(const Grain* grain, bool excludeIgtJ, ProcessPool::D
 	}
 
 	// Perform relevant sum if requested
-	if (performSum) processPool_.allSum(&totalEnergy, 1, strategy);
+	if (performSum) processPool_.allSum(vector<double>(totalEnergy), 1, strategy);
 
 	return totalEnergy;
 }
@@ -690,7 +691,7 @@ double EnergyKernel::energy(const Molecule* mol, ProcessPool::DivisionStrategy s
 	}
 
 	// Perform relevant sum if requested
-	if (performSum) processPool_.allSum(&totalEnergy, 1, strategy);
+	if (performSum) processPool_.allSum(vector<double>(totalEnergy), 1, strategy);
 
 	return totalEnergy;
 }
@@ -700,7 +701,8 @@ double EnergyKernel::correct(const Atom* i)
 {
 	// Loop over atoms in molecule
 	int nMolAtoms = i->molecule()->nAtoms();
-	Atom* j, **atoms = i->molecule()->atoms();
+	vector<Atom*> atoms = i->molecule()->atoms();
+	Atom* j = atoms[0];
 	double scale, r, correctionEnergy = 0.0;
 	Vec3<double> rI = i->r();
 

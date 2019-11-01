@@ -25,6 +25,7 @@
 #include "math/matrix3.h"
 #include "templates/array.h"
 #include "templates/dynamicarrayobject.h"
+#include <vector>
 
 // Forward Declarations
 class Atom;
@@ -65,7 +66,7 @@ class Grain : public DynamicArrayObject<Grain>
 	// Return number of Atoms in Grain
 	int nAtoms() const;
 	// Return Atoms array
-	Atom** atoms();
+	vector<Atom*> atoms();
 	// Return nth Atom in Grain
 	Atom* atom(int n) const;
 

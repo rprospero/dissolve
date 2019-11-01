@@ -48,7 +48,7 @@ class ForcefieldBondTerm : public ListItem<ForcefieldBondTerm>
 	// Functional form of interaction
 	SpeciesBond::BondFunction form_;
 	// Parameters for interaction
-	double parameters_[MAXINTRAPARAMS];
+	vector<double> parameters_;
 
 	public:
 	// Return if this term matches the atom types supplied
@@ -56,7 +56,7 @@ class ForcefieldBondTerm : public ListItem<ForcefieldBondTerm>
 	// Return functional form index of interaction
 	SpeciesBond::BondFunction form() const;
 	// Return array of parameters
-	const double* parameters() const;
+	const vector<double> parameters() const;
 };
 
 #endif

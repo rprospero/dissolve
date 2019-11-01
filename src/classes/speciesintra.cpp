@@ -174,7 +174,7 @@ Array<double> SpeciesIntra::parametersAsArray() const
 }
 
 // Set parameters from double*
-void SpeciesIntra::setParameters(const double* params)
+void SpeciesIntra::setParameters(vector<double> params)
 {
 	// Does this intramolecular interaction reference a set of master parameters?
 	if (masterParameters_)

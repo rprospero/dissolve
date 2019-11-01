@@ -65,7 +65,7 @@ SpeciesAngle::AngleFunction ForcefieldAngleTerm::form() const
 }
 
 // Return array of parameters
-const double* ForcefieldAngleTerm::parameters() const
+const vector<double> ForcefieldAngleTerm::parameters() const
 {
 	return parameters_;
 }

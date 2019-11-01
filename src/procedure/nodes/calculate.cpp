@@ -167,13 +167,13 @@ ProcedureNode::NodeExecutionResult CalculateProcedureNode::execute(ProcessPool& 
 	switch (observable_)
 	{
 		case (CalculateProcedureNode::AngleObservable):
-			value_.x = cfg->box()->angleInDegrees(sites_[0]->currentSite()->origin(), sites_[1]->currentSite()->origin(), sites_[2]->currentSite()->origin());
+			value_.x = cfg->box()->angleInDegrees(sites_[0]->currentSite().origin(), sites_[1]->currentSite().origin(), sites_[2]->currentSite().origin());
 			break;
 		case (CalculateProcedureNode::DistanceObservable):
-			value_.x = cfg->box()->minimumDistance(sites_[0]->currentSite()->origin(), sites_[1]->currentSite()->origin());
+			value_.x = cfg->box()->minimumDistance(sites_[0]->currentSite().origin(), sites_[1]->currentSite().origin());
 			break;
 		case (CalculateProcedureNode::VectorObservable):
-			value_ = cfg->box()->minimumVector(sites_[0]->currentSite()->origin(), sites_[1]->currentSite()->origin());
+			value_ = cfg->box()->minimumVector(sites_[0]->currentSite().origin(), sites_[1]->currentSite().origin());
 			break;
 		default:
 			Messenger::error("Mr Developer Man has not implemented calculation of this observable quantity (%i).\n", observable_);

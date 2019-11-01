@@ -67,7 +67,7 @@ template <class T> class EnumOptions : public EnumOptionsBase
 		return "ENUMERATION_NOT_VALID";
 	}
 	// Return option with enumeration specified
-	const EnumOption& option(T enumeration) const
+	const EnumOption option(T enumeration) const
 	{
 		for (int n=0; n<options_.nItems(); ++n) if (options_.constAt(n).enumeration() == enumeration) return options_.constAt(n);
 		return unrecognisedOption_;

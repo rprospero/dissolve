@@ -24,6 +24,7 @@
 
 #include <algorithm>
 #include <functional>
+#include <numeric>
 #include <vector>
 #include "base/messenger.h"
 #include "templates/listitem.h"
@@ -152,7 +153,7 @@ template <class A> class Array : public ListItem< Array<A> >
 			return;
 		}
 
-		array_.pop_front();
+		array_.erase(array_.begin());
 	}
 	// Drop the last item from the array
 	void removeLast()
@@ -182,7 +183,7 @@ template <class A> class Array : public ListItem< Array<A> >
 	 */
 	public:
 	// Return reference to nth item in array
-	A& operator[](int n)
+	typename vector<A>::reference operator[](int n)
 	{
 #ifdef CHECKS
 		if ((n < 0) || (n >= nItems_))
@@ -195,7 +196,7 @@ template <class A> class Array : public ListItem< Array<A> >
 		return array_[n];
 	}
 	// Return single value
-	A& at(int n)
+	typename vector<A>::reference at(int n)
 	{
 #ifdef CHECKS
 		if ((n < 0) || (n >= nItems_))
@@ -228,7 +229,7 @@ template <class A> class Array : public ListItem< Array<A> >
 			Messenger::print("OUT_OF_RANGE - No first item to return in Array.\n");
 			return A();
 		}
-		return array_.front;
+		return array_.front();
 	}
 	// Return last value in array
 	A lastValue() const
@@ -241,7 +242,7 @@ template <class A> class Array : public ListItem< Array<A> >
 		return array_.back();
 	}
 	// Return first item in array
-	A& first()
+	typename vector<A>::reference first()
 	{
 		if (array_.empty())
 		{
@@ -252,7 +253,7 @@ template <class A> class Array : public ListItem< Array<A> >
 		return array_.front();
 	}
 	// Return last item in array
-	A& last()
+	typename vector<A>::reference last()
 	{
 		if (array_.empty())
 		{
@@ -260,7 +261,7 @@ template <class A> class Array : public ListItem< Array<A> >
 			Messenger::print("OUT_OF_RANGE - No last item to return in Array.\n");
 			return dummy;
 		}
-		return array_.end()-1;
+		return array_.back();
 	}
 
 

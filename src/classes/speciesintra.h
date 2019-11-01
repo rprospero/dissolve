@@ -103,7 +103,7 @@ class SpeciesIntra
 	// Set parameters from double*
 	void setParameters(Array<double> params);
 	// Set parameters from Array<double>
-	void setParameters(const double* params);
+	void setParameters(vector<double> params);
 	// Set up any necessary parameters
 	virtual void setUp() = 0;
 	// Calculate and return fundamental frequency for the interaction

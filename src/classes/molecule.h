@@ -1,6 +1,6 @@
 /*
-	*** Molecule
-	*** src/classes/molecule.h
+	vector<**> Molecule
+	vector<**> src/classes/molecule.h
 	Copyright T. Youngs 2012-2019
 
 	This file is part of Dissolve.
@@ -26,6 +26,7 @@
 #include "templates/dynamicarrayobject.h"
 #include "templates/reflist.h"
 #include "templates/vector3.h"
+#include <vector>
 
 // Forward Declarations
 class Angle;
@@ -89,7 +90,7 @@ class Molecule : public DynamicArrayObject<Molecule>
 	// Return size of Atom array
 	int nAtoms() const;
 	// Return Atoms array
-	Atom** atoms();
+	vector<Atom*> atoms();
 	// Return nth Atom pointer
 	Atom* atom(int n) const;
 	// Add Grain to Molecule
@@ -103,7 +104,7 @@ class Molecule : public DynamicArrayObject<Molecule>
 	// Return size of Bond array
 	int nBonds() const;
 	// Return Bonds array
-	Bond** bonds();
+	Array<Bond*> bonds();
 	// Return nth Bond pointer
 	Bond* bond(int n) const;
 	// Add Angle to Molecule
@@ -111,7 +112,7 @@ class Molecule : public DynamicArrayObject<Molecule>
 	// Return size of Angle array
 	int nAngles() const;
 	// Return Angles array
-	Angle** angles();
+	Array<Angle*> angles();
 	// Return nth Angle pointer
 	Angle* angle(int n) const;
 	// Add Torsion to Molecule
@@ -119,7 +120,7 @@ class Molecule : public DynamicArrayObject<Molecule>
 	// Return size of Torsion array
 	int nTorsions() const;
 	// Return Torsions array
-	Torsion** torsions();
+	Array<Torsion*> torsions();
 	// Return nth Torsion pointer
 	Torsion* torsion(int n) const;
 

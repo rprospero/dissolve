@@ -110,7 +110,7 @@ template <class T> class PrAxisMinimiser : public MinimiserBase<T>
 	//****************************************************************************80
 	
 	double flin ( const Array<double> alpha, int jsearch, double l,
-		int &nf, double v[], double q0[], double q1[], double &qd0,
+		int &nf, vector<double> v, vector<double> q0, vector<double> q1, double &qd0,
 		double &qd1, double &qa, double &qb, double &qc )
 	
 	//****************************************************************************80
@@ -159,7 +159,7 @@ template <class T> class PrAxisMinimiser : public MinimiserBase<T>
 	//    For a quadratic search, L is a parameter which specifies
 	//    a point in the plane of X, Q0 and Q1.
 	//
-	//    Input, double F ( double X[], int N ), the function to be minimized.
+	//    Input, double F ( vector<double> X, int N ), the function to be minimized.
 	//
 	//    Input, double X[N], the base point of the search.
 	//
@@ -224,7 +224,7 @@ template <class T> class PrAxisMinimiser : public MinimiserBase<T>
 	}
 	//****************************************************************************80
 	
-	void minfit ( int n, double tol, double a[], double q[] )
+	void minfit ( int n, double tol, vector<double> a, vector<double> q )
 	
 	//****************************************************************************80
 	//
@@ -651,7 +651,7 @@ template <class T> class PrAxisMinimiser : public MinimiserBase<T>
 	
 	void minny ( Array<double>& alpha, int jsearch, int nits, double &d2, double &x1, double &f1,
 		bool fk, double t, double h,
-		double v[], double q0[], double q1[], int &nl, int &nf, double dmin,
+		vector<double> v, vector<double> q0, vector<double> q1, int &nl, int &nf, double dmin,
 		double ldt, double &fx, double &qa, double &qb, double &qc, double &qd0,
 		double &qd1 )
 	
@@ -712,7 +712,7 @@ template <class T> class PrAxisMinimiser : public MinimiserBase<T>
 	//    Input, bool FK; if FK is TRUE, then on input F1 contains
 	//    the value FLIN(X1).
 	//
-	//    Input, double F ( double X[], int N ), is the name of the function to
+	//    Input, double F ( vector<double> X, int N ), is the name of the function to
 	//    be minimized.
 	//
 	//    Input/output, double X[N], ?
@@ -970,7 +970,7 @@ template <class T> class PrAxisMinimiser : public MinimiserBase<T>
 	}
 	//****************************************************************************80
 	
-	void print2 ( int n, double x[], int prin, double fx, int nf, int nl )
+	void print2 ( int n, vector<double> x, int prin, double fx, int nf, int nl )
 	
 	//****************************************************************************80
 	//
@@ -1036,7 +1036,7 @@ template <class T> class PrAxisMinimiser : public MinimiserBase<T>
 	//****************************************************************************80
 	
 	void quad ( Array<double>& alpha, double t,
-		double h, double v[], double q0[], double q1[], int &nl, int &nf, double dmin,
+		double h, vector<double> v, vector<double> q0, vector<double> q1, int &nl, int &nf, double dmin,
 		double ldt, double &fx, double &qf1, double &qa, double &qb, double &qc,
 		double &qd0, double &qd1 )
 	
@@ -1075,7 +1075,7 @@ template <class T> class PrAxisMinimiser : public MinimiserBase<T>
 	//
 	//    Input, int N, the number of variables.
 	//
-	//    Input, double F ( double X[], int N ), the name of the function to
+	//    Input, double F ( vector<double> X, int N ), the name of the function to
 	//    be minimized.
 	//
 	//    Input/output, double X[N], ?
@@ -1327,7 +1327,7 @@ template <class T> class PrAxisMinimiser : public MinimiserBase<T>
 	}
 	//****************************************************************************80
 	
-	void r8mat_print ( int m, int n, double a[], const char* title )
+	void r8mat_print ( int m, int n, vector<double> a, const char* title )
 	
 	//****************************************************************************80
 	//
@@ -1371,7 +1371,7 @@ template <class T> class PrAxisMinimiser : public MinimiserBase<T>
 	}
 	//****************************************************************************80
 	
-	void r8mat_print_some ( int m, int n, double a[], int ilo, int jlo, int ihi,
+	void r8mat_print_some ( int m, int n, vector<double> a, int ilo, int jlo, int ihi,
 		int jhi, const char* title )
 	
 	//****************************************************************************80
@@ -1495,7 +1495,7 @@ template <class T> class PrAxisMinimiser : public MinimiserBase<T>
 	}
 	//****************************************************************************80
 	
-	void r8mat_transpose_in_place ( int n, double a[] )
+	void r8mat_transpose_in_place ( int n, vector<double> a )
 	
 	//****************************************************************************80
 	//
@@ -1544,7 +1544,7 @@ template <class T> class PrAxisMinimiser : public MinimiserBase<T>
 	}
 	//****************************************************************************80
 	
-	void r8vec_copy ( int n, double a1[], double a2[] )
+	void r8vec_copy ( int n, vector<double> a1, vector<double> a2 )
 	
 	//****************************************************************************80
 	//
@@ -1587,7 +1587,7 @@ template <class T> class PrAxisMinimiser : public MinimiserBase<T>
 	}
 	//****************************************************************************80
 	
-	double r8vec_max ( int n, double r8vec[] )
+	double r8vec_max ( int n, vector<double> r8vec )
 	
 	//****************************************************************************80
 	//
@@ -1637,7 +1637,7 @@ template <class T> class PrAxisMinimiser : public MinimiserBase<T>
 	}
 	//****************************************************************************80
 	
-	double r8vec_min ( int n, double r8vec[] )
+	double r8vec_min ( int n, vector<double> r8vec )
 	
 	//****************************************************************************80
 	//
@@ -1686,7 +1686,7 @@ template <class T> class PrAxisMinimiser : public MinimiserBase<T>
 	}
 	//****************************************************************************80
 	
-	double r8vec_norm ( int n, double a[] )
+	double r8vec_norm ( int n, vector<double> a )
 	
 	//****************************************************************************80
 	//
@@ -1738,7 +1738,7 @@ template <class T> class PrAxisMinimiser : public MinimiserBase<T>
 	}
 	//****************************************************************************80
 	
-	void r8vec_print ( int n, double a[], const char* title )
+	void r8vec_print ( int n, vector<double> a, const char* title )
 	
 	//****************************************************************************80
 	//
@@ -1783,7 +1783,7 @@ template <class T> class PrAxisMinimiser : public MinimiserBase<T>
 	}
 	//****************************************************************************80
 	
-	void svsort ( int n, double d[], double v[] )
+	void svsort ( int n, vector<double> d, vector<double> v )
 	
 	//****************************************************************************80
 	//
@@ -1949,7 +1949,7 @@ template <class T> class PrAxisMinimiser : public MinimiserBase<T>
 	//    Input/output, double X[N], is an array containing on entry a
 	//    guess of the point of minimum, on return the estimated point of minimum.
 	//
-	//    Input, double F ( double X[], int N ), is the name of the function to be
+	//    Input, double F ( vector<double> X, int N ), is the name of the function to be
 	//    minimized.
 	//
 	//    Output, double PRAXIS, the function value at the minimizer.
@@ -1969,7 +1969,7 @@ template <class T> class PrAxisMinimiser : public MinimiserBase<T>
 	//    Local, int NL, the number of linear searches.
 	//
 	{
-		double *d;
+		vector<double> d;
 		double d2;
 		double df;
 		double dmin;
@@ -1998,8 +1998,8 @@ template <class T> class PrAxisMinimiser : public MinimiserBase<T>
 		int nits;
 		int nl;
 		int nf;
-		double *q0;
-		double *q1;
+		vector<double> q0;
+		vector<double> q1;
 		double qa;
 		double qb;
 		double qc;
@@ -2016,22 +2016,23 @@ template <class T> class PrAxisMinimiser : public MinimiserBase<T>
 		double t;
 		double temp;
 		double t2;
-		double *v;
+		vector<double> v;
 		double value;
 		double vlarge;
 		double vsmall;
-		double *y;
-		double *z;
+		vector<double> y;
+		vector<double> z;
 	//
 	//  Allocation.
 	//
 		int nAlpha = x.nItems();
-		d = new double[nAlpha];
-		q0 = new double[nAlpha];
-		q1 = new double[nAlpha];
-		v = new double[nAlpha*nAlpha];
-		y = new double[nAlpha];
-		z = new double[nAlpha];
+		d.reserve(nAlpha);
+		q0.reserve(nAlpha);
+		q1.reserve(nAlpha);
+		v.reserve(nAlpha);
+		y.reserve(nAlpha);
+		y.reserve(nAlpha);
+		
 	//
 	//  Initialization.
 	//
@@ -2318,10 +2319,10 @@ template <class T> class PrAxisMinimiser : public MinimiserBase<T>
 	
 				if ( 0 < prin )
 				{
-					print2 ( nAlpha, x, prin, fx, nf, nl );
+					print2 ( nAlpha, x.array(), prin, fx, nf, nl );
 				}
 	
-				t2 = r8vec_norm ( nAlpha, x );
+				t2 = r8vec_norm ( nAlpha, x.array() );
 	
 				t2 = m2 * t2 + t;
 	//
@@ -2339,15 +2340,8 @@ template <class T> class PrAxisMinimiser : public MinimiserBase<T>
 				{
 					if ( 0 < prin )
 					{
-						r8vec_print ( nAlpha, x, "  X:" );
+						r8vec_print ( nAlpha, x.array(), "  X:" );
 					}
-	
-					delete [] d;
-					delete [] q0;
-					delete [] q1;
-					delete [] v;
-					delete [] y;
-					delete [] z;
 	
 					return fx;
 				}
@@ -2515,17 +2509,8 @@ template <class T> class PrAxisMinimiser : public MinimiserBase<T>
 	
 		if ( 0 < prin )
 		{
-			r8vec_print ( nAlpha, x, "  X:" );
+			r8vec_print ( nAlpha, x.array(), "  X:" );
 		}
-	//
-	//  Free memory.
-	//
-		delete [] d;
-		delete [] q0;
-		delete [] q1;
-		delete [] v;
-		delete [] y;
-		delete [] z;
 	
 		return fx;
 	}

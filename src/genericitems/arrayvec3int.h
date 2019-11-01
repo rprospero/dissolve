@@ -75,7 +75,7 @@ template <> class GenericItemContainer< Array< Vec3<int> > > : public GenericIte
 	bool write(LineParser& parser)
 	{
 		parser.writeLineF("%i\n", data_.nItems());
-		Vec3<int>* array = data_.array();
+		vector<Vec3<int>> array = data_.array();
 		for (int n=0; n<data_.nItems(); ++n)
 		{
 			if (!parser.writeLineF("%i %i %i\n", array[n].x, array[n].y, array[n].z)) return false;

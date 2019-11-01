@@ -25,12 +25,13 @@
 #include "classes/cell.h"
 #include "classes/grain.h"
 #include "classes/changestore.h"
+#include <vector>
 
 // Update Cell contents
 void Configuration::updateCellContents()
 {
 	// Fold the coordinates of each atom into the box, and then check its Cell location, moving if necessary.
-	Atom** atoms = atoms_.array();
+	vector<Atom*> atoms = atoms_.array();
 	for (int n = 0; n < atoms_.nItems(); ++n) updateCellLocation(atoms[n]);
 }
 

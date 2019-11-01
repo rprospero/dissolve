@@ -25,6 +25,7 @@
 #include "templates/list.h"
 #include "base/messenger.h"
 #include <new>
+#include <vector>
 #include <stdint.h>
 
 using namespace std;
@@ -352,7 +353,7 @@ template <class T> class DynamicArray
 		return array_.nItems();
 	}
 	// Return item array
-	T** array()
+	vector<T*> array()
 	{
 		return array_.array();
 	}

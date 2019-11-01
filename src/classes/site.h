@@ -55,7 +55,11 @@ class Site
 	virtual bool hasAxes() const;
 	// Return local axes
 	virtual const Matrix3& axes() const;
+	bool operator==(const Site other) const {
+	  return origin_ == other.origin_;
+	}
 };
+
 
 // Site with Axes Definition
 class OrientedSite : public Site

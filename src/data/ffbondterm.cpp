@@ -63,7 +63,7 @@ SpeciesBond::BondFunction ForcefieldBondTerm::form() const
 }
 
 // Return array of parameters
-const double* ForcefieldBondTerm::parameters() const
+const vector<double> ForcefieldBondTerm::parameters() const
 {
 	return parameters_;
 }

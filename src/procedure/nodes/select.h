@@ -110,7 +110,7 @@ class SelectProcedureNode : public ProcedureNode
 	 */
 	private:
 	// Array containing pointers to our selected sites
-	Array<const Site*> sites_;
+	Array<Site> sites_;
 	// Current Site index
 	int currentSiteIndex_;
 	// Number of selections made by the node
@@ -126,7 +126,7 @@ class SelectProcedureNode : public ProcedureNode
 	// Return the cumulative number of sites ever selected
 	int nCumulativeSites() const;
 	// Return current site
-	const Site* currentSite() const;
+	const Site currentSite() const;
 
 
 	/*

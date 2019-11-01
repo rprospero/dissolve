@@ -206,6 +206,9 @@ template <class T> class Vec3
 		static T dummy;
 		return dummy;
 	}
+	bool operator==(const Vec3<T> value) const {
+	  return x == value.x && y == value.y && z == value.z;
+	}
 
 
 	/*

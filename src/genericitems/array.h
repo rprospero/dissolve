@@ -78,7 +78,7 @@ template <class T> class GenericItemContainer< Array<T> > : public GenericItem
 	bool write(LineParser& parser)
 	{
 		parser.writeLineF("%i\n", data_.nItems());
-		T* array = data_.array();
+		vector<T> array = data_.array();
 		for (int n=0; n<data_.nItems(); ++n)
 		{
 			if (!array[n].write(parser)) return false;

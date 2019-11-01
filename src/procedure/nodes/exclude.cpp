@@ -23,6 +23,7 @@
 #include "procedure/nodes/select.h"
 #include "procedure/nodescopestack.h"
 #include "classes/species.h"
+#include "classes/site.h"
 #include "base/lineparser.h"
 #include "base/sysfunc.h"
 

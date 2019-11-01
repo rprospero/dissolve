@@ -65,7 +65,7 @@ SpeciesTorsion::TorsionFunction ForcefieldTorsionTerm::form() const
 }
 
 // Return array of parameters
-const double* ForcefieldTorsionTerm::parameters() const
+const vector<double> ForcefieldTorsionTerm::parameters() const
 {
 	return parameters_;
 }

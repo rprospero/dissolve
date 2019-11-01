@@ -29,7 +29,6 @@
 Grain::Grain()
 {
 	molecule_ = NULL;
-	atoms_.setChunkSize(4);
 }
 
 // Destructor
@@ -90,7 +89,7 @@ int Grain::nAtoms() const
 }
 
 // Return atoms array
-Atom** Grain::atoms()
+vector<Atom*> Grain::atoms()
 {
 	return atoms_.array();
 }

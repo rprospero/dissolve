@@ -147,14 +147,14 @@ const Molecule* SelectProcedureNode::sameMoleculeMolecule()
 {
 	if (!sameMolecule_) return NULL;
 
-	const Site* site = sameMolecule_->currentSite();
-	if (!site)
-	{
-		Messenger::warn("Requested Molecule from SelectProcedureNode::sameMolecule_, but there is no current site.\n");
-		return NULL;
-	}
+	const Site site = sameMolecule_->currentSite();
+	// if (!site)
+	// {
+	// 	Messenger::warn("Requested Molecule from SelectProcedureNode::sameMolecule_, but there is no current site.\n");
+	// 	return NULL;
+	// }
 
-	return site->molecule();
+	return site.molecule();
 }
 
 /*
@@ -180,7 +180,7 @@ int SelectProcedureNode::nCumulativeSites() const
 }
 
 // Return current site
-const Site* SelectProcedureNode::currentSite() const
+const Site SelectProcedureNode::currentSite() const
 {
 	return (currentSiteIndex_ == -1 ? NULL : sites_.constAt(currentSiteIndex_));
 }
@@ -226,11 +226,11 @@ ProcedureNode::NodeExecutionResult SelectProcedureNode::execute(ProcessPool& pro
 	// Update our exclusion lists
 	excludedMolecules_.clear();
 	RefListIterator<SelectProcedureNode> moleculeExclusionIterator(sameMoleculeExclusions_);
-	while (SelectProcedureNode* node = moleculeExclusionIterator.iterate()) if (node->currentSite()) excludedMolecules_.addUnique(node->currentSite()->molecule());
+	while (SelectProcedureNode* node = moleculeExclusionIterator.iterate()) excludedMolecules_.addUnique(node->currentSite().molecule());
 
 	excludedSites_.clear();
 	RefListIterator<SelectProcedureNode> siteExclusionIterator(sameSiteExclusions_);
-	while (SelectProcedureNode* node = siteExclusionIterator.iterate()) if (node->currentSite()) excludedSites_.addUnique(node->currentSite());
+	while (SelectProcedureNode* node = siteExclusionIterator.iterate()) excludedSites_.addUnique(node->currentSite());
 
 	// Get required Molecule parent, if requested
 	const Molecule* moleculeParent = sameMolecule_ ? sameMoleculeMolecule() : NULL;
@@ -246,14 +246,14 @@ ProcedureNode::NodeExecutionResult SelectProcedureNode::execute(ProcessPool& pro
 
 		for (int n=0; n<siteStack->nSites(); ++n)
 		{
-			const Site* site = &siteStack->site(n);
+			const Site site = siteStack->site(n);
 
 			// Check Molecule inclusion / exclusions
 			if (moleculeParent)
 			{
-				if (site->molecule() != moleculeParent) continue; 
+				if (site.molecule() != moleculeParent) continue; 
 			}
-			else if (excludedMolecules_.contains(site->molecule())) continue;
+			else if (excludedMolecules_.contains(site.molecule())) continue;
 
 			// Check Site exclusions
 			if (excludedSites_.contains(site)) continue;
@@ -273,7 +273,7 @@ ProcedureNode::NodeExecutionResult SelectProcedureNode::execute(ProcessPool& pro
 		if (dynamicNode->execute(procPool, cfg, prefix, targetList) == ProcedureNode::Failure) return ProcedureNode::Failure;
 
 		const Array<Site>& generatedSites = dynamicNode->generatedSites();
-		for (int n=0; n<generatedSites.nItems(); ++n) sites_.add(&generatedSites.constAt(n));
+		for (int n=0; n<generatedSites.nItems(); ++n) sites_.add(generatedSites.constAt(n));
 	}
 
 	// Set first site index and increase selections counter
