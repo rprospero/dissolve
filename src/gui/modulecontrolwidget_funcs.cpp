@@ -117,8 +117,8 @@ void ModuleControlWidget::updateControls()
 	// Update Configuration list and HeaderFrame tooltip
 	ui_.ConfigurationTargetList->clear();
 	CharString toolTip("Targets: ");
-	ListIterator<Configuration> configIterator(dissolve_->constConfigurations());
-	while (Configuration* cfg = configIterator.iterate())
+	bool first = true;
+	for (Configuration* cfg : dissolve_->constConfigurations())
 	{
 		QListWidgetItem* item = new QListWidgetItem(cfg->name(), ui_.ConfigurationTargetList);
 		item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
@@ -128,10 +128,11 @@ void ModuleControlWidget::updateControls()
 		{
 			item->setCheckState(Qt::Checked);
 
-			if (configIterator.isFirst()) toolTip.strcatf("%s", cfg->name());
+			if (first) toolTip.strcatf("%s", cfg->name());
 			else toolTip.strcatf(", %s", cfg->name());
 		}
 		else item->setCheckState(Qt::Unchecked);
+		first = false;
 	}
 	ui_.ConfigurationTargetGroup->setVisible((!module_->configurationLocal()) && (module_->nRequiredTargets() != Module::ZeroTargets));
 	ui_.HeaderFrame->setToolTip(toolTip.get());

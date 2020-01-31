@@ -110,11 +110,12 @@ void Weights::print() const
 	Messenger::print("  ------------------------------------------------------\n");
 	for (Isotopologues* topes = isotopologueMixtures_.first(); topes != NULL; topes = topes->next())
 	{
-		ListIterator<IsotopologueWeight> weightIterator(topes->mix());
-		while (IsotopologueWeight* isoWeight = weightIterator.iterate())
+		bool first = true;
+		for (IsotopologueWeight* isoWeight : topes->mix())
 		{
-			if (weightIterator.isFirst()) Messenger::print("  %-15s  %-15s  %-10i  %f\n", topes->species()->name(), isoWeight->isotopologue()->name(), topes->speciesPopulation(), isoWeight->weight());
+			if (first) Messenger::print("  %-15s  %-15s  %-10i  %f\n", topes->species()->name(), isoWeight->isotopologue()->name(), topes->speciesPopulation(), isoWeight->weight());
 			else Messenger::print("                   %-15s              %f\n", isoWeight->isotopologue()->name(), isoWeight->weight());
+			first=false;
 		}
 	}
 
@@ -205,8 +206,7 @@ void Weights::calculateWeightingMatrices()
 		}
 
 		// Loop over Isotopologues defined for this mixture
-		ListIterator<IsotopologueWeight> weightIterator(topes->mix());
-		while (IsotopologueWeight* isoWeight = weightIterator.iterate())
+		for (IsotopologueWeight* isoWeight : topes->mix())
 		{
 			// Sum the scattering lengths of each pair of AtomTypes, weighted by the speciesWeight and the fractional Isotopologue weight in the mix.
 			double weight = speciesWeight * isoWeight->weight();
@@ -288,8 +288,7 @@ void Weights::createFromIsotopologues(const AtomTypeList& exchangeableTypes)
 	for (Isotopologues* topes = isotopologueMixtures_.first(); topes != NULL; topes = topes->next())
 	{
 		// We must now loop over the Isotopologues in the topesture
-		ListIterator<IsotopologueWeight> weightIterator(topes->mix());
-		while (IsotopologueWeight* isoWeight = weightIterator.iterate())
+		for (IsotopologueWeight* isoWeight : topes->mix())
 		{
 			const Isotopologue* tope = isoWeight->isotopologue();
 
@@ -434,8 +433,7 @@ bool Weights::write(LineParser& parser)
 
 	// Write Isotopologues-tures
 	if (!parser.writeLineF("%i  # nItems\n", isotopologueMixtures_.nItems())) return false;
-	ListIterator<Isotopologues> mixIterator(isotopologueMixtures_);
-	while (Isotopologues* mix = mixIterator.iterate()) if (!mix->write(parser)) return false;
+	for (Isotopologues* mix : isotopologueMixtures_) if (!mix->write(parser)) return false;
 
 	// Write arrays using static methods in the relevant GenericItemContainer
 	if (!GenericItemContainer< Array2D<double> >::write(concentrationProducts_, parser)) return false;

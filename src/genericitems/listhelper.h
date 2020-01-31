@@ -158,8 +158,7 @@ template <class T> class GenericListHelper
 	static RefList<T> items(GenericList& sourceList)
 	{
 		RefList<T> items;
-		ListIterator<GenericItem> itemIterator(sourceList.items());
-		while (GenericItem* item = itemIterator.iterate()) if (DissolveSys::sameString(item->itemClassName(), T::itemClassName()))
+		for (GenericItem* item : sourceList.items())
 		{
 			// Cast to correct type
 			GenericItemContainer<T>* castItem = dynamic_cast< GenericItemContainer<T>* >(item);

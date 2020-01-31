@@ -106,8 +106,7 @@ const List<Renderable>& BaseViewer::renderables() const
 // Return named Renderable
 Renderable* BaseViewer::renderable(const char* name) const
 {
-	ListIterator<Renderable> renderableIterator(renderables_);
-	while (Renderable* rend = renderableIterator.iterate()) if (DissolveSys::sameString(name, rend->name())) return rend;
+	for (Renderable* rend : renderables_) if (DissolveSys::sameString(name, rend->name())) return rend;
 
 	return NULL;
 }
@@ -115,8 +114,7 @@ Renderable* BaseViewer::renderable(const char* name) const
 // Return Renderable with specified objectTag (if it exists)
 Renderable* BaseViewer::renderableWithTag(const char* objectTag) const
 {
-	ListIterator<Renderable> renderableIterator(renderables_);
-	while (Renderable* rend = renderableIterator.iterate()) if (DissolveSys::sameString(objectTag, rend->objectTag())) return rend;
+	for (Renderable* rend : renderables_) if (DissolveSys::sameString(objectTag, rend->objectTag())) return rend;
 
 	return NULL;
 }

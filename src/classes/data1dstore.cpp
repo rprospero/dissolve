@@ -57,8 +57,7 @@ bool Data1DStore::addData(const char* dataName, LineParser& parser, int startArg
 // Check to see if the named data is present in the store
 bool Data1DStore::containsData(const char* name) const
 {
-	ListIterator<Data1D> dataIterator(data_);
-	while (Data1D* data = dataIterator.iterate()) if (DissolveSys::sameString(name, data->name())) return true;
+	for (Data1D* data : data_) if (DissolveSys::sameString(name, data->name())) return true;
 
 	return false;
 }
@@ -66,8 +65,7 @@ bool Data1DStore::containsData(const char* name) const
 // Return named data
 const Data1D& Data1DStore::data(const char* name) const
 {
-	ListIterator<Data1D> dataIterator(data_);
-	while (Data1D* xyData = dataIterator.iterate()) if (DissolveSys::sameString(name, xyData->name())) return (*xyData);
+	for (Data1D* xyData : data_) if (DissolveSys::sameString(name, xyData->name())) return (*xyData);
 
 	static Data1D dummy;
 	Messenger::warn("Data named '%s' was requested from Data1DStore, but it does not exist. Returning an empty Data1D...\n", name);

@@ -64,8 +64,7 @@ List<Forcefield>& ForcefieldLibrary::forcefields()
 // Return named Forcefield, if it exists
 Forcefield* ForcefieldLibrary::forcefield(const char* name)
 {
-	ListIterator<Forcefield> ffIterator(forcefields());
-	while (Forcefield* ff = ffIterator.iterate()) if (DissolveSys::sameString(ff->name(), name)) return ff;
+	for (Forcefield* ff : forcefields()) if (DissolveSys::sameString(ff->name(), name)) return ff;
 
 	return NULL;
 }

@@ -55,8 +55,7 @@ void DataManagerDialog::addItemsToTable(QTableWidget* table, List<GenericItem>& 
 	QTableWidgetItem* item;
 	int count = table->rowCount();
 	table->setRowCount(count + items.nItems());
-	ListIterator<GenericItem> itemIterator(items);
-	while (GenericItem* genericItem = itemIterator.iterate())
+	for (GenericItem* genericItem : items)
 	{
 		// Item name
 		item = new QTableWidgetItem(genericItem->name());
@@ -160,8 +159,7 @@ void DataManagerDialog::updateControls()
 	// Clear and re-populate simulation data table
 	ui_.SimulationDataTable->setRowCount(0);
 	addItemsToTable(ui_.SimulationDataTable, dissolve_.processingModuleData().items(), "Main Processing", ":/dissolve/icons/dissolve.png");
-	ListIterator<Configuration> configIterator(dissolve_.configurations());
-	while (Configuration* cfg = configIterator.iterate()) addItemsToTable(ui_.SimulationDataTable, cfg->moduleData().items(), cfg->name(), ":/tabs/icons/tabs_configuration.svg");
+	for (Configuration* cfg : dissolve_.configurations()) addItemsToTable(ui_.SimulationDataTable, cfg->moduleData().items(), cfg->name(), ":/tabs/icons/tabs_configuration.svg");
 	ui_.SimulationDataTable->resizeColumnsToContents();
 
 	// Populate reference points table
@@ -183,8 +181,7 @@ void DataManagerDialog::on_ReferencePointRemoveButton_clicked(bool checked)
 
 	// For the provided suffix, we need to prune all processing data lists of associated data
 	dissolve_.processingModuleData().pruneWithSuffix(qPrintable(refPoint->suffix()));
-	ListIterator<Configuration> configIterator(dissolve_.configurations());
-	while (Configuration* cfg = configIterator.iterate()) cfg->moduleData().pruneWithSuffix(qPrintable(refPoint->suffix()));
+	for (Configuration* cfg : dissolve_.configurations()) cfg->moduleData().pruneWithSuffix(qPrintable(refPoint->suffix()));
 
 	updateControls();
 }

@@ -901,12 +901,10 @@ bool BaseViewer::readSession(LineParser& parser)
 bool BaseViewer::writeSession(LineParser& parser) const
 {
 	// Write RenderableGroup data
-	ListIterator<RenderableGroup> groupsIterator(groupManager_.groups());
-	while (RenderableGroup* group = groupsIterator.iterate()) if (!writeRenderableGroupBlock(parser, group)) return false;
+	for (RenderableGroup* group : groupManager_.groups()) if (!writeRenderableGroupBlock(parser, group)) return false;
 
 	// Write Renderable data
-	ListIterator<Renderable> renderablesIterator(renderables_);
-	while (Renderable* renderable = renderablesIterator.iterate()) if (!writeRenderableBlock(parser, renderable)) return false;
+	for (Renderable* renderable : renderables_) if (!writeRenderableBlock(parser, renderable)) return false;
 
 	// Write View Data
 	if (!writeViewBlock(parser)) return false;

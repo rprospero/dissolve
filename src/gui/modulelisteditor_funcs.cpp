@@ -67,8 +67,7 @@ bool ModuleListEditor::setUp(DissolveWindow* dissolveWindow, ModuleLayer* module
 
 	// Add MimeTreeWidgetItems for each Module, adding them to a parent category item
 	moduleCategories_.clear();
-	ListIterator<Module> moduleIterator(dissolveWindow->dissolve().masterModules());
-	while (const Module* module = moduleIterator.iterate())
+	for (const Module* module : dissolveWindow->dissolve().masterModules())
 	{
 		// Check that the category is not 'HIDDEN' (in which case we don't show it)
 		if (DissolveSys::sameString("HIDDEN", module->category())) continue;
@@ -202,8 +201,7 @@ void ModuleListEditor::on_AvailableModulesTree_itemDoubleClicked(QTreeWidgetItem
 		if (localConfiguration_) newInstance->addTargetConfiguration(localConfiguration_);
 		else
 		{
-			ListIterator<Configuration> configIterator(dissolveWindow_->dissolve().configurations());
-			while (Configuration* cfg = configIterator.iterate())
+			for (Configuration* cfg : dissolveWindow_->dissolve().configurations())
 			{
 				newInstance->addTargetConfiguration(cfg);
 				if ((newInstance->nRequiredTargets() != Module::OneOrMoreTargets) && (newInstance->nRequiredTargets() == newInstance->nTargetConfigurations())) break;

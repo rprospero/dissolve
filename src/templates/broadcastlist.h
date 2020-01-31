@@ -46,8 +46,7 @@ template <class T> class BroadcastList
 			// Broadcast number of items in list, then list items...
 			count = items.nItems();
 			if (!procPool.broadcast(count, root)) return;
-			ListIterator<T> itemIterator(items);
-			while (T* item = itemIterator.iterate()) if (!item->broadcast(procPool, root, coreData)) return;
+			for (T* item : items) if (!item->broadcast(procPool, root, coreData)) return;
 		}
 		else
 		{

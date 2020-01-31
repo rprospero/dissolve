@@ -41,8 +41,7 @@ template <class T, class I> class ListWidgetUpdater
 
 		int currentRow = 0;
 
-		ListIterator<I> dataIterator(data);
-		while (I* dataItem = dataIterator.iterate())
+		for (I* dataItem : data)
 		{
 			// Our table may or may not be populated, and with different items to those in the list.
 
@@ -91,8 +90,7 @@ template <class T, class I> class ListWidgetUpdater
 
 		int currentRow = 0;
 
-		ListIterator<I> dataIterator(list);
-		while (I* dataItem = dataIterator.iterate())
+		for (I* dataItem : list)
 		{
 			// Our table may or may not be populated, and with different items to those in the list.
 

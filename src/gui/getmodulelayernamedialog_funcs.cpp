@@ -66,8 +66,7 @@ void GetModuleLayerNameDialog::on_NameEdit_textChanged(const QString text)
 	if (text.isEmpty()) nameValid = false;
 	else
 	{
-		ListIterator<ModuleLayer> layerIterator(layers_);
-		while (ModuleLayer* layer = layerIterator.iterate())
+		for (ModuleLayer* layer : layers_)
 		{
 			if (moduleLayer_ == layer) continue;
 

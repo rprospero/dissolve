@@ -210,8 +210,7 @@ int NETANode::score(const SpeciesAtom* i, RefList<const SpeciesAtom>& atomData) 
 	int totalScore = 0;
 
 	// Loop over nodes in branch in sequence
-	ListIterator<NETANode> branchIterator(branch_);
-	while (NETANode* node = branchIterator.iterate())
+	for (NETANode* node : branch_)
 	{
 		// Get the score from the node, returning early if NoMatch is encountered
 		int nodeScore = node->score(i, atomData);

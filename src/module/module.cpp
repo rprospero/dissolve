@@ -94,8 +94,7 @@ void Module::printValidKeywords()
 {
 	Messenger::print("Valid keywords for '%s' Module are:\n", type());
 
-	ListIterator<KeywordBase> keywordIterator(keywords_.keywords());
-	while (KeywordBase* keyword = keywordIterator.iterate()) Messenger::print("  %30s  %s\n", keyword->name(), keyword->description());
+	for (KeywordBase* keyword : keywords_.keywords()) Messenger::print("  %30s  %s\n", keyword->name(), keyword->description());
 }
 
 /*
@@ -190,8 +189,7 @@ bool Module::addTargetConfigurations(const List<Configuration>& configs)
 	{
 		Messenger::print("Adding %i configurations as targets for module '%s'...\n", configs.nItems(), uniqueName());
 
-		ListIterator<Configuration> configIterator(configs);
-		while (Configuration* cfg = configIterator.iterate()) if (!addTargetConfiguration(cfg)) return Messenger::error("Failed to add configuration '%s' to module '%s'.\n", cfg->name(), uniqueName());
+		for (Configuration* cfg : configs) if (!addTargetConfiguration(cfg)) return Messenger::error("Failed to add configuration '%s' to module '%s'.\n", cfg->name(), uniqueName());
 	}
 	else if (nTargetConfigurations() == nRequiredTargets()) return Messenger::error("Refusing to add any of the %i provided configurations as targets for the module '%s' as it already has it's specified number (%i).\n", configs.nItems(), uniqueName(), nRequiredTargets());
 	else
@@ -199,8 +197,7 @@ bool Module::addTargetConfigurations(const List<Configuration>& configs)
 		int spaces = nRequiredTargets() - nTargetConfigurations();
 		Messenger::print("Adding up to %i configurations from the %i provided as targets for module '%s'...\n", spaces, configs.nItems(), uniqueName());
 
-		ListIterator<Configuration> configIterator(configs);
-		while (Configuration* cfg = configIterator.iterate()) if (!addTargetConfiguration(cfg)) return Messenger::error("Failed to add configuration '%s' to module '%s'.\n", cfg->name(), uniqueName());
+		for (Configuration* cfg : configs) if (!addTargetConfiguration(cfg)) return Messenger::error("Failed to add configuration '%s' to module '%s'.\n", cfg->name(), uniqueName());
 	}
 
 	return true;

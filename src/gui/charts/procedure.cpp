@@ -85,8 +85,7 @@ void ProcedureChart::paintEvent(QPaintEvent* event)
 	// TEST - Highlight all hotspots
 	if (false)
 	{
-		ListIterator<ChartHotSpot> hotSpotIterator(hotSpots_);
-		while (ChartHotSpot* hotSpot = hotSpotIterator.iterate()) painter.fillRect(hotSpot->geometry(), QBrush(QColor(200,200,0,50)));
+		for (ChartHotSpot* hotSpot : hotSpots_) painter.fillRect(hotSpot->geometry(), QBrush(QColor(200,200,0,50)));
 	}
 }
 
@@ -101,8 +100,7 @@ void ProcedureChart::updateContentBlocks(const SequenceProcedureNode* sequence, 
 	RefList<ProcedureChartNodeBlock> newSequenceWidgets;
 
 	// Iterate through the nodes in this sequence, searching for their widgets in the oldWidgetsList
-	ListIterator<ProcedureNode> nodeIterator(sequence->sequence());
-	while (ProcedureNode* node = nodeIterator.iterate())
+	for (ProcedureNode* node : sequence->sequence())
 	{
 		// Does this node have an existing widget?
 		ProcedureChartNodeBlock* block = nodeBlock(node);

@@ -196,8 +196,7 @@ double Isotopologues::totalRelative() const
 {
 	double total = 0.0;
 
-	ListIterator<IsotopologueWeight> weightIterator(mix_);
-	while (IsotopologueWeight* isoWeight = weightIterator.iterate()) total += isoWeight->weight();
+	for (IsotopologueWeight* isoWeight : mix_) total += isoWeight->weight();
 
 	return total;
 }
@@ -207,8 +206,7 @@ void Isotopologues::normalise()
 {
 	double total = totalRelative();
 
-	ListIterator<IsotopologueWeight> weightIterator(mix_);
-	while (IsotopologueWeight* isoWeight = weightIterator.iterate()) isoWeight->setWeight(isoWeight->weight() / total);
+	for (IsotopologueWeight* isoWeight : mix_) isoWeight->setWeight(isoWeight->weight() / total);
 }
 
 /*
@@ -260,8 +258,7 @@ bool Isotopologues::write(LineParser& parser)
 	if (!parser.writeLineF("'%s'  %i  %i\n", species_->name(), speciesPopulation_, mix_.nItems())) return false;
 
 	// Write Isotopologues
-	ListIterator<IsotopologueWeight> weightIterator(mix_);
-	while (IsotopologueWeight* isoWeight = weightIterator.iterate()) if (!parser.writeLineF("%s  %f\n", isoWeight->isotopologue()->name(), isoWeight->weight())) return false;
+	for (IsotopologueWeight* isoWeight : mix_) if (!parser.writeLineF("%s  %f\n", isoWeight->isotopologue()->name(), isoWeight->weight())) return false;
 
 	return true;
 }
@@ -326,9 +323,8 @@ bool Isotopologues::equality(ProcessPool& procPool)
 	if (!procPool.equality(speciesPopulation_)) return Messenger::error("Isotopologues species population is not equivalent (process %i has %i).\n", procPool.poolRank(), speciesPopulation_);
 	// Check number of isotopologues in mix
 	if (!procPool.equality(mix_.nItems())) return Messenger::error("Isotopologues mix nItems is not equivalent (process %i has %i).\n", procPool.poolRank(), mix_.nItems());
-	ListIterator<IsotopologueWeight> mixIterator(mix_);
 	int count = 0;
-	while (const IsotopologueWeight* isoWeight = mixIterator.iterate())
+	for (const IsotopologueWeight* isoWeight : mix_)
 	{
 		// Just check the name and the relative population
 		if (!procPool.equality(isoWeight->isotopologue()->name())) return Messenger::error("Isotopologues isotopologue %i name is not equivalent (process %i has '%s').\n", count, procPool.poolRank(), isoWeight->isotopologue()->name());

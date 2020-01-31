@@ -185,8 +185,7 @@ void WizardWidget::registerFinishPage(int index, const char* title)
 // Find page with specified index
 WizardWidgetPageInfo* WizardWidget::findPage(int index)
 {
-	ListIterator<WizardWidgetPageInfo> pageIterator(pages_);
-	while (WizardWidgetPageInfo* page = pageIterator.iterate()) if (page->index() == index) return page;
+	for (WizardWidgetPageInfo* page : pages_) if (page->index() == index) return page;
 
 	return NULL;
 }

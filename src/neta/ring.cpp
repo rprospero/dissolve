@@ -150,8 +150,7 @@ int NETARingNode::score(const SpeciesAtom* i, RefList<const SpeciesAtom>& matchP
 	else findRings(i, rings, ringPath, 3, 99);
 
 	// Prune rings for duplicates
-	ListIterator<SpeciesRing> ringIterator(rings);
-	while (SpeciesRing* ring = ringIterator.iterate())
+	for (SpeciesRing* ring : rings)
 	{
 		// Check this ring against others in the list - if we find a duplicate, we can remove it and then move on with the next ring.
 		for (SpeciesRing* other = ring->next(); other != NULL; other = other->next())
@@ -168,8 +167,7 @@ int NETARingNode::score(const SpeciesAtom* i, RefList<const SpeciesAtom>& matchP
 
 	// Loop over rings
 	int nMatches = 0, totalScore = 0, nodeScore;
-	ringIterator.restart();
-	while (SpeciesRing* ring = ringIterator.iterate())
+	for (SpeciesRing* ring : rings)
 	{
 		// Copy the atoms in the ring into an array we can modify
 		PointerArray<const SpeciesAtom> ringAtoms = ring->atoms();
@@ -186,8 +184,7 @@ int NETARingNode::score(const SpeciesAtom* i, RefList<const SpeciesAtom>& matchP
 			for (int n=0; n<ring->size(); ++n) ringAtoms.append(ring->atom(n));
 
 			const SpeciesAtom* matchedAtom;
-			ListIterator<NETANode> branchIterator(branch_);
-			while (NETANode* node = branchIterator.iterate())
+			for (NETANode* node : branch_)
 			{
 				nodeScore = node->score(NULL, ringAtoms);
 				if (nodeScore == NETANode::NoMatch) break;

@@ -290,8 +290,7 @@ void ImportSpeciesWizard::updateAtomTypesPage()
 
 	// Determine whether we have any naming conflicts
 	bool conflicts = false;
-	ListIterator<AtomType> typeIterator(temporaryCoreData_.constAtomTypes());
-	while (AtomType* at = typeIterator.iterate()) if (dissolveReference_->findAtomType(at->name()))
+	for (AtomType* at : temporaryCoreData_.constAtomTypes()) if (dissolveReference_->findAtomType(at->name()))
 	{
 		conflicts = true;
 		break;
@@ -390,20 +389,17 @@ void ImportSpeciesWizard::updateMasterTermsPage()
 
 	// Determine whether we have any naming conflicts
 	bool conflicts = false;
-	ListIterator<MasterIntra> bondIterator(temporaryCoreData_.masterBonds());
-	while (MasterIntra* intra = bondIterator.iterate()) if (dissolveReference_->constCoreData().findMasterTerm(intra->name()))
+	for (MasterIntra* intra : temporaryCoreData_.masterBonds()) if (dissolveReference_->constCoreData().findMasterTerm(intra->name()))
 	{
 		conflicts = true;
 		break;
 	}
-	ListIterator<MasterIntra> angleIterator(temporaryCoreData_.masterAngles());
-	while (MasterIntra* intra = angleIterator.iterate()) if (dissolveReference_->constCoreData().findMasterTerm(intra->name()))
+	for (MasterIntra* intra : temporaryCoreData_.masterAngles()) if (dissolveReference_->constCoreData().findMasterTerm(intra->name()))
 	{
 		conflicts = true;
 		break;
 	}
-	ListIterator<MasterIntra> torsionIterator(temporaryCoreData_.masterTorsions());
-	while (MasterIntra* intra = torsionIterator.iterate()) if (dissolveReference_->constCoreData().findMasterTerm(intra->name()))
+	for (MasterIntra* intra : temporaryCoreData_.masterTorsions()) if (dissolveReference_->constCoreData().findMasterTerm(intra->name()))
 	{
 		conflicts = true;
 		break;

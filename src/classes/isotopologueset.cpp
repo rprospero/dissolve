@@ -197,8 +197,7 @@ bool IsotopologueSet::write(LineParser& parser)
 	if (!parser.writeLineF("'%s'  %i\n", configuration_->name(), isotopologues_.nItems())) return false;
 
 	// Write details for each set of Isotopologues
-	ListIterator<Isotopologues> isotopologuesIterator(isotopologues_);
-	while (Isotopologues* topes = isotopologuesIterator.iterate()) if (!topes->write(parser)) return false;
+	for (Isotopologues* topes : isotopologues_) if (!topes->write(parser)) return false;
 
 	return true;
 }

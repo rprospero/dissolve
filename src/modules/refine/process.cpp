@@ -111,8 +111,7 @@ bool RefineModule::process(Dissolve& dissolve, ProcessPool& procPool)
 	 * Calculate current percentage errors in calculated vs reference target data
 	 */
 	int nUnstableData = 0;
-	ListIterator<ModuleGroup> groupIterator(groupedTargets_.groups());
-	while (ModuleGroup* group = groupIterator.iterate())
+	for (ModuleGroup* group : groupedTargets_.groups())
 	{
 		// Grab Module list for this group and set up an iterator
 		for (Module* module : group->modules())
@@ -203,8 +202,7 @@ bool RefineModule::process(Dissolve& dissolve, ProcessPool& procPool)
 	globalCombinedErrors.initialise(dissolve.nAtomTypes(), dissolve.nAtomTypes(), true);
 	globalCombinedErrors = 0.0;
 	bool created;
-	groupIterator.restart();
-	while (ModuleGroup* group = groupIterator.iterate())
+	for (ModuleGroup* group : groupedTargets_.groups())
 	{
 		Messenger::print("Generating dPhiR from target group '%s'...\n", group->name());
 
@@ -652,8 +650,7 @@ bool RefineModule::process(Dissolve& dissolve, ProcessPool& procPool)
 	// Perform actual modification to potential, adding in deltaPhiR calculated over all groups
 	if (modifyPotential)
 	{
-		groupIterator.restart();
-		while (ModuleGroup* group = groupIterator.iterate())
+		for (ModuleGroup* group : groupedTargets_.groups())
 		{
 			// Get the delta phi(r) data for this group
 			if (!dissolve.processingModuleData().contains(CharString("DeltaPhiR_%s", group->name()), uniqueName())) return Messenger::error("Could not locate delta phi(r) data for group '%s'.\n", group->name());

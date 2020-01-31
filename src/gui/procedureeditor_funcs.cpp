@@ -67,16 +67,14 @@ void ProcedureEditor::setUp(Procedure* procedure, const CoreData& coreData)
 
 // 	// Add MimeTreeWidgetItems for each Module, adding them to a parent category item
 // 	moduleCategories_.clear();
-// 	ListIterator<Module> moduleIterator(dissolveWindow->dissolve().masterModules());
-// 	while (const Module* module = moduleIterator.iterate())
+// 	for (const Module* module : dissolveWindow->dissolve().masterModules())
 // 	{
 // 		// Check that the category is not 'HIDDEN' (in which case we don't show it)
 // 		if (DissolveSys::sameString("HIDDEN", module->category())) continue;
 // 
 // 		// Find category for this Module (if it exists) or create a new one
 // 		MimeTreeWidgetItem* categoryItem = NULL;
-// 		RefDataListIterator<MimeTreeWidgetItem,CharString> categoryIterator(moduleCategories_);
-// 		while (categoryItem = categoryIterator.iterate()) if (DissolveSys::sameString(module->category(), categoryIterator.currentData())) break;
+// 		for (categoryItem : moduleCategories_) if (DissolveSys::sameString(module->category(), categoryIterator.currentData())) break;
 // 		if (categoryItem == NULL)
 // 		{
 // 			categoryItem = new MimeTreeWidgetItem((QTreeWidget*)NULL, 1000);
@@ -97,8 +95,7 @@ void ProcedureEditor::setUp(Procedure* procedure, const CoreData& coreData)
 // 
 // 	// Populate the available Modules tree with the categories we now have
 // 	ui_.AvailableModulesTree->clear();
-// 	RefDataListIterator<MimeTreeWidgetItem,CharString> categoryIterator(moduleCategories_);
-// 	while (MimeTreeWidgetItem* categoryItem = categoryIterator.iterate()) ui_.AvailableModulesTree->addTopLevelItem(categoryItem);
+// 	for (MimeTreeWidgetItem* categoryItem : moduleCategories_) ui_.AvailableModulesTree->addTopLevelItem(categoryItem);
 // 	ui_.AvailableModulesTree->resizeColumnToContents(0);
 // 	ui_.AvailableModulesTree->sortByColumn(0, Qt::AscendingOrder);
 // 	ui_.AvailableModulesTree->setSortingEnabled(true);
@@ -157,8 +154,7 @@ void ProcedureEditor::enableSensitiveControls()
 // 		if (localConfiguration_) newInstance->addTargetConfiguration(localConfiguration_);
 // 		else
 // 		{
-// 			ListIterator<Configuration> configIterator(dissolveWindow_->dissolve().configurations());
-// 			while (Configuration* cfg = configIterator.iterate())
+// 			for (Configuration* cfg : dissolveWindow_->dissolve().configurations())
 // 			{
 // 				newInstance->addTargetConfiguration(cfg);
 // 				if ((newInstance->nRequiredTargets() != -1) && (newInstance->nRequiredTargets() == newInstance->nTargetConfigurations())) break;

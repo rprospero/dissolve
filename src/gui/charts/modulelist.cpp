@@ -120,8 +120,7 @@ void ModuleListChart::paintEvent(QPaintEvent* event)
 	// Highlight all hotspots
 	if (false)
 	{
-		ListIterator<ChartHotSpot> hotSpotIterator(hotSpots_);
-		while (ChartHotSpot* hotSpot = hotSpotIterator.iterate()) painter.fillRect(hotSpot->geometry(), QBrush(QColor(200,200,0,50)));
+		for (ChartHotSpot* hotSpot : hotSpots_) painter.fillRect(hotSpot->geometry(), QBrush(QColor(200,200,0,50)));
 	}
 }
 
@@ -146,8 +145,7 @@ void ModuleListChart::updateContentBlocks()
 	RefList<ModuleBlock> newWidgets;
 
 	// Iterate through the nodes in this sequence, searching for their widgets in the oldWidgetsList
-	ListIterator<Module> moduleIterator(moduleList_->modules());
-	while (Module* module = moduleIterator.iterate())
+	for (Module* module : moduleList_->modules())
 	{
 		// Does this Module have an existing widget?
 		ModuleBlock* block = moduleBlock(module);

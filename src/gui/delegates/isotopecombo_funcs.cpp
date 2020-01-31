@@ -45,8 +45,7 @@ QWidget* IsotopeComboDelegate::createEditor(QWidget* parent, const QStyleOptionV
 	{
 		// Populate combo with all possible Isotopes for this Element
 		const Element& element = isotope->element();
-		ListIterator<Isotope> isotopeIterator(Isotopes::isotopes(element.Z()));
-		while (Isotope* tope = isotopeIterator.iterate()) editor->addItem(textForIsotope(tope));
+		for (Isotope* tope : Isotopes::isotopes(element.Z())) editor->addItem(textForIsotope(tope));
 	}
 	else Messenger::error("IsotopeComboDelegate::createEditor() - Did not find an Isotope* in the associated QModelIndex.\n");
 

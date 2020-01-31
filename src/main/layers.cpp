@@ -37,12 +37,10 @@ void Dissolve::removeProcessingLayer(ModuleLayer* layer)
 	if (!layer) return;
 
 	// Remove any references to the Modules in the layer before we delete them
-	ListIterator<Module> moduleIterator(layer->modules());
-	while (Module* module = moduleIterator.iterate()) removeReferencesTo(module);
+	for (Module* module : layer->modules()) removeReferencesTo(module);
 
 	// Delete the module instances themselves
-	moduleIterator.restart();
-	while (Module* module = moduleIterator.iterate()) moduleInstances_.remove(module);
+	for (Module* module : layer->modules()) moduleInstances_.remove(module);
 
 	// Now safe to remove the layer
 	processingLayers_.remove(layer);
@@ -51,8 +49,7 @@ void Dissolve::removeProcessingLayer(ModuleLayer* layer)
 // Find named processing layer
 ModuleLayer* Dissolve::findProcessingLayer(const char* name) const
 {
-	ListIterator<ModuleLayer> layerIterator(processingLayers_);
-	while (ModuleLayer* layer = layerIterator.iterate()) if (DissolveSys::sameString(layer->name(), name)) return layer;
+	for (ModuleLayer* layer : processingLayers_) if (DissolveSys::sameString(layer->name(), name)) return layer;
 
 	return NULL;
 }

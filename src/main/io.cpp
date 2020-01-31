@@ -275,8 +275,7 @@ bool Dissolve::saveInput(const char* filename)
 		// Modules
 		if (!parser.writeLineF("\n  # Modules\n")) return false;
 		if ((cfg->nModules() == 0) && (!parser.writeLineF("  # -- None\n"))) return false;
-		ListIterator<Module> moduleIterator(cfg->modules().modules());
-		while (Module* module = moduleIterator.iterate())
+		for (Module* module : cfg->modules().modules())
 		{
 			if (!parser.writeLineF("  %s  %s  '%s'\n", ConfigurationBlock::keywords().keyword(ConfigurationBlock::ModuleKeyword), module->type(), module->uniqueName())) return false;
 
@@ -295,8 +294,7 @@ bool Dissolve::saveInput(const char* filename)
 
 	// Write processing layers
 	if (!parser.writeBannerComment("Processing Layers")) return false;
-	ListIterator<ModuleLayer> processingLayerIterator(processingLayers_);
-	while (ModuleLayer* layer = processingLayerIterator.iterate())
+	for (ModuleLayer* layer : processingLayers_)
 	{
 		if (!parser.writeLineF("\n%s  '%s'\n", BlockKeywords::keywords().keyword(BlockKeywords::LayerBlockKeyword), layer->name())) return false;
 
@@ -304,8 +302,7 @@ bool Dissolve::saveInput(const char* filename)
 		if (!parser.writeLineF("  Frequency  %i\n", layer->frequency())) return false;
 		if (!layer->enabled() && (!parser.writeLineF("  Disabled\n"))) return false;
 
-		ListIterator<Module> processingIterator(layer->modules());
-		while (Module* module= processingIterator.iterate())
+		for (Module* module: layer->modules())
 		{
 			if (!parser.writeLineF("\n  %s  %s  '%s'\n", BlockKeywords::keywords().keyword(BlockKeywords::ModuleBlockKeyword), module->type(), module->uniqueName())) return false;
 
@@ -632,8 +629,7 @@ bool Dissolve::saveRestart(const char* filename)
 	// Module Keyword Data
 	for (Module* module : moduleInstances_)
 	{
-		ListIterator<KeywordBase> keywordIterator(module->keywords().keywords());
-		while (KeywordBase* keyword = keywordIterator.iterate())
+		for (KeywordBase* keyword : module->keywords().keywords())
 		{
 			// If the keyword is not flagged to be saved in the restart file, skip it
 			if (!keyword->isOptionSet(KeywordBase::InRestartFileOption)) continue;
@@ -646,8 +642,7 @@ bool Dissolve::saveRestart(const char* filename)
 	for (Configuration* cfg = configurations().first(); cfg != NULL; cfg = cfg->next())
 	{
 		// Cycle over data store in the Configuration
-		ListIterator<GenericItem> itemIterator(cfg->moduleData().items());
-		while (GenericItem* item = itemIterator.iterate())
+		for (GenericItem* item : cfg->moduleData().items())
 		{
 			// If it is not flagged to be saved in the restart file, skip it
 			if (!(item->flags()&GenericItem::InRestartFileFlag)) continue;
@@ -658,8 +653,7 @@ bool Dissolve::saveRestart(const char* filename)
 	}
 
 	// Processing Module Data
-	ListIterator<GenericItem> itemIterator(processingModuleData_.items());
-	while (GenericItem* item = itemIterator.iterate())
+	for (GenericItem* item : processingModuleData_.items())
 	{
 		// If it is not flagged to be saved in the restart file, skip it
 		if (!(item->flags()&GenericItem::InRestartFileFlag)) continue;

@@ -331,8 +331,7 @@ bool AtomTypeList::read(LineParser& parser, const CoreData& coreData)
 bool AtomTypeList::write(LineParser& parser)
 {
 	if (!parser.writeLineF("%i  # nItems\n", types_.nItems())) return false;
-	ListIterator<AtomTypeData> atdIterator(types_);
-	while (AtomTypeData* atd = atdIterator.iterate()) if (!atd->write(parser)) return false;
+	for (AtomTypeData* atd : types_) if (!atd->write(parser)) return false;
 
 	return true;
 }

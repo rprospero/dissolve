@@ -694,8 +694,7 @@ bool Species::write(LineParser& parser, const char* prefix)
 	{
 		if (!parser.writeLineF("\n%s# Sites\n", newPrefix.get())) return false;
 
-		ListIterator<SpeciesSite> siteIterator(sites());
-		while (SpeciesSite* site = siteIterator.iterate()) if (!site->write(parser, newPrefix)) return false;
+		for (SpeciesSite* site : sites()) if (!site->write(parser, newPrefix)) return false;
 	}
 
 	// Input Coordinates

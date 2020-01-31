@@ -78,8 +78,7 @@ void ModuleList::cut(Module* module)
 // Find associated Module by unique name
 Module* ModuleList::find(const char* uniqueName) const
 {
-	ListIterator<Module> moduleIterator(modules_);
-	while (Module* module = moduleIterator.iterate()) if (DissolveSys::sameString(module->uniqueName(), uniqueName)) return module;
+	for (Module* module : modules_) if (DissolveSys::sameString(module->uniqueName(), uniqueName)) return module;
 
 	return NULL;
 }
@@ -87,8 +86,7 @@ Module* ModuleList::find(const char* uniqueName) const
 // Return whether specified Module is present in the list
 bool ModuleList::contains(Module* searchModule) const
 {
-	ListIterator<Module> moduleIterator(modules_);
-	while (Module* module = moduleIterator.iterate()) if (module == searchModule) return true;
+	for (Module* module : modules_) if (module == searchModule) return true;
 
 	return false;
 }
@@ -112,6 +110,5 @@ List<Module>& ModuleList::modules()
 // Run set-up stages for all modules
 bool ModuleList::setUpAll(Dissolve& dissolve, ProcessPool& procPool)
 {
-	ListIterator<Module> moduleIterator(modules_);
-	while (Module* module = moduleIterator.iterate()) if (!module->setUp(dissolve, procPool)) return false;
+	for (Module* module : modules_) if (!module->setUp(dissolve, procPool)) return false;
 }

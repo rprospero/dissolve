@@ -76,8 +76,7 @@ bool GeometryListKeyword::write(LineParser& parser, const char* keywordName, con
 {
 	CharString index;
 
-	ListIterator<Geometry> GeoIterator(data_);
-	while (Geometry* ref = GeoIterator.iterate())
+	for (Geometry* ref : data_)
 	{
 		index.clear();
 		for (int n=0; n<maxArguments()-1; ++n) index.strcatf("  %i", ref->indices(n) + 1);

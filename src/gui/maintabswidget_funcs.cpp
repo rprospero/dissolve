@@ -205,10 +205,9 @@ void MainTabsWidget::reconcileTabs(DissolveWindow* dissolveWindow)
 	Dissolve& dissolve = dissolveWindow->dissolve();
 
 	// Species - Global tab indices run from 1 (first tab after ForcefieldTab) to 1+nSpecies
-	ListIterator<Species> speciesIterator(dissolve.species());
 	int currentTabIndex = 0;
 	int baseIndex = 1;
-	while (Species* sp = speciesIterator.iterate())
+	for (Species* sp : dissolve.species())
 	{
 		// Loop over existing tabs
 		while (currentTabIndex < speciesTabs_.nItems())
@@ -239,9 +238,8 @@ void MainTabsWidget::reconcileTabs(DissolveWindow* dissolveWindow)
 	baseIndex += dissolve.nSpecies();
 
 	// Configurations - Global tab indices run from 1+nSpecies (first tab after last Species) to 1+nSpecies+nConfigurations
-	ListIterator<Configuration> configurationIterator(dissolve.configurations());
 	currentTabIndex = 0;
-	while (Configuration* cfg = configurationIterator.iterate())
+	for (Configuration* cfg : dissolve.configurations())
 	{
 		// Loop over existing tabs
 		while (currentTabIndex < configurationTabs_.nItems())
@@ -272,9 +270,8 @@ void MainTabsWidget::reconcileTabs(DissolveWindow* dissolveWindow)
 	baseIndex += dissolve.nConfigurations();
 
 	// Processing Layers - Global tab indices run from 1+nSpecies+nConfigurations (first tab after last Configuration) to 1+nSpecies+nConfigurations+nProcessingLayers
-	ListIterator<ModuleLayer> processingLayerIterator(dissolve.processingLayers());
 	currentTabIndex = 0;
-	while (ModuleLayer* layer = processingLayerIterator.iterate())
+	for (ModuleLayer* layer : dissolve.processingLayers())
 	{
 		// Loop over existing tabs
 		while (currentTabIndex < processingLayerTabs_.nItems())
@@ -496,8 +493,7 @@ void MainTabsWidget::updateAllTabs()
 // Update all Species tabs
 void MainTabsWidget::updateSpeciesTabs()
 {
-	ListIterator<SpeciesTab> tabIterator(speciesTabs_);
-	while (SpeciesTab* tab = tabIterator.iterate()) tab->updateControls();
+	for (SpeciesTab* tab : speciesTabs_) tab->updateControls();
 }
 
 // Disable sensitive controls in all tabs

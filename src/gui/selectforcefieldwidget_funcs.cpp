@@ -32,8 +32,7 @@ SelectForcefieldWidget::SelectForcefieldWidget(QWidget* parent, const List<Force
 	refreshing_ = true;
 
 	// Populate the list with available forcefields
-	ListIterator<Forcefield> forcefieldIterator(forcefields_);
-	while (Forcefield* ff = forcefieldIterator.iterate())
+	for (Forcefield* ff : forcefields_)
 	{
 		QListWidgetItem* item = new QListWidgetItem(ff->name(), ui_.ForcefieldsList);
 		item->setData(Qt::UserRole, VariantPointer<Forcefield>(ff));

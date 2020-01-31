@@ -57,8 +57,7 @@ bool Data2DStore::addData(const char* dataName, LineParser& parser, int startArg
 // Check to see if the named data is present in the store
 bool Data2DStore::containsData(const char* name) const
 {
-	ListIterator<Data2D> dataIterator(data_);
-	while (Data2D* data = dataIterator.iterate()) if (DissolveSys::sameString(name, data->name())) return true;
+	for (Data2D* data : data_) if (DissolveSys::sameString(name, data->name())) return true;
 
 	return false;
 }
@@ -66,8 +65,7 @@ bool Data2DStore::containsData(const char* name) const
 // Return named data
 const Data2D& Data2DStore::data(const char* name) const
 {
-	ListIterator<Data2D> dataIterator(data_);
-	while (Data2D* xyData = dataIterator.iterate()) if (DissolveSys::sameString(name, xyData->name())) return (*xyData);
+	for (Data2D* xyData : data_) if (DissolveSys::sameString(name, xyData->name())) return (*xyData);
 
 	static Data2D dummy;
 	Messenger::warn("Data named '%s' was requested from Data2DStore, but it does not exist. Returning an empty Data2D...\n", name);

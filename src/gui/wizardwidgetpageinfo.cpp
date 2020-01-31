@@ -122,13 +122,11 @@ WizardWidgetHighlight* WizardWidgetPageInfo::addWidgetHighlight()
 // Highlight all defined widgets
 void WizardWidgetPageInfo::highlightWidgets()
 {
-	ListIterator<WizardWidgetHighlight> highlightIterator(widgetHighlights_);
-	while (WizardWidgetHighlight* wh =highlightIterator.iterate()) wh->highlight();
+	for (WizardWidgetHighlight* wh : widgetHighlights_) wh->highlight();
 }
 
 // Un-highlight all defined widgets
 void WizardWidgetPageInfo::unHighlightWidgets()
 {
-	ListIterator<WizardWidgetHighlight> highlightIterator(widgetHighlights_);
-	while (WizardWidgetHighlight* wh =highlightIterator.iterate()) wh->unHighlight();
+	for (WizardWidgetHighlight* wh : widgetHighlights_) wh->unHighlight();
 }

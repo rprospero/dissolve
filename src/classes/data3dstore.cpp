@@ -57,8 +57,7 @@ bool Data3DStore::addData(const char* dataName, LineParser& parser, int startArg
 // Check to see if the named data is present in the store
 bool Data3DStore::containsData(const char* name) const
 {
-	ListIterator<Data3D> dataIterator(data_);
-	while (Data3D* data = dataIterator.iterate()) if (DissolveSys::sameString(name, data->name())) return true;
+	for (Data3D* data : data_) if (DissolveSys::sameString(name, data->name())) return true;
 
 	return false;
 }
@@ -66,8 +65,7 @@ bool Data3DStore::containsData(const char* name) const
 // Return named data
 const Data3D& Data3DStore::data(const char* name) const
 {
-	ListIterator<Data3D> dataIterator(data_);
-	while (Data3D* xyData = dataIterator.iterate()) if (DissolveSys::sameString(name, xyData->name())) return (*xyData);
+	for (Data3D* xyData : data_) if (DissolveSys::sameString(name, xyData->name())) return (*xyData);
 
 	static Data3D dummy;
 	Messenger::warn("Data named '%s' was requested from Data3DStore, but it does not exist. Returning an empty Data3D...\n", name);

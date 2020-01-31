@@ -246,8 +246,7 @@ bool AtomTypeData::write(LineParser& parser)
 {
 	// Line Contains: AtomType name, exchangeable flag, population, fraction, boundCoherent, and nIsotopes
 	if (!parser.writeLineF("%s %f %f %f %i\n", atomType_->name(), population_, fraction_, boundCoherent_, isotopes_.nItems())) return false;
-	ListIterator<IsotopeData> isotopeIterator(isotopes_);
-	while (IsotopeData* topeData = isotopeIterator.iterate()) if (!topeData->write(parser)) return false;
+	for (IsotopeData* topeData : isotopes_) if (!topeData->write(parser)) return false;
 	return true;
 }
 
@@ -287,9 +286,8 @@ bool AtomTypeData::equality(ProcessPool& procPool)
 
 	// Number of isotopes
 	if (!procPool.equality(isotopes_.nItems())) return Messenger::error("AtomTypeData number of isotopes is not equivalent (process %i has %i).\n", procPool.poolRank(), isotopes_.nItems());
-	ListIterator<IsotopeData> isotopeIterator(isotopes_);
 	int count = 0;
-	while (IsotopeData* topeData = isotopeIterator.iterate())
+	for (IsotopeData* topeData : isotopes_)
 	{
 		if (!topeData->equality(procPool)) return Messenger::error("AtomTypeData entry for isotope data %i is not equivalent.\n", count);
 		++count;

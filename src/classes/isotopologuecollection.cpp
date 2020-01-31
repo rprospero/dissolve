@@ -182,8 +182,7 @@ void IsotopologueCollection::complete(const RefList<Configuration>& configuratio
 		}
 
 		// Loop over Species in the Configuration
-		ListIterator<SpeciesInfo> spInfoIterator(cfg->usedSpecies());
-		while (SpeciesInfo* spInfo = spInfoIterator.iterate())
+		for (SpeciesInfo* spInfo : cfg->usedSpecies())
 		{
 			// If the Species already exists in our set, nothing more to do...
 			if (set->contains(spInfo->species())) continue;
@@ -230,8 +229,7 @@ bool IsotopologueCollection::write(LineParser& parser)
 	if (!parser.writeLineF("%i\n", isotopologueSets_.nItems())) return false;
 
 	// Write details for each set of Isotopologues
-	ListIterator<IsotopologueSet> setIterator(isotopologueSets_);
-	while (IsotopologueSet* set = setIterator.iterate()) if (!set->write(parser)) return false;
+	for (IsotopologueSet* set : isotopologueSets_) if (!set->write(parser)) return false;
 
 	return true;
 }

@@ -33,8 +33,7 @@ bool DissolveWindow::saveState()
 	if (!stateParser.isFileGoodForWriting()) return false;
 
 	// Write reference points
-	ListIterator<ReferencePoint> referencePointIterator(referencePoints_);
-	while (ReferencePoint* refPoint = referencePointIterator.iterate())
+	for (ReferencePoint* refPoint : referencePoints_)
 	{
 		if (!stateParser.writeLineF("ReferencePoint  '%s'  '%s'\n", refPoint->suffix(), refPoint->restartFile())) return false;
 	}

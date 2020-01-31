@@ -133,8 +133,7 @@ double Configuration::chemicalDensity() const
 	double density = 0.0;
 
 	// Get total molar mass in configuration
-	ListIterator<SpeciesInfo> speciesIterator(usedSpecies_);
-	while (SpeciesInfo* spInfo = speciesIterator.iterate()) density += spInfo->species()->mass() * spInfo->population();
+	for (SpeciesInfo* spInfo : usedSpecies_) density += spInfo->species()->mass() * spInfo->population();
 
 	// Convert to absolute mass, and divide by box volume
 	density /= AVOGADRO;

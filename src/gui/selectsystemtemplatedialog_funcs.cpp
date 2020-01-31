@@ -30,8 +30,7 @@ SelectSystemTemplateDialog::SelectSystemTemplateDialog(QWidget* parent, const Li
 	ui_.setupUi(this);
 
 	// Populate the list with available templates
-	ListIterator<SystemTemplate> templateIterator(systemTemplates_);
-	while (SystemTemplate* sysTemp = templateIterator.iterate())
+	for (SystemTemplate* sysTemp : systemTemplates_)
 	{
 		QListWidgetItem* item = new QListWidgetItem(QPixmap(sysTemp->iconResource()), sysTemp->name(), ui_.TemplatesList);
 		item->setData(Qt::UserRole, VariantPointer<SystemTemplate>(sysTemp));

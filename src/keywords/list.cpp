@@ -270,8 +270,7 @@ KeywordBase::ParseResult KeywordList::parse(LineParser& parser, const CoreData& 
 // Write all keywords to specified LineParser
 bool KeywordList::write(LineParser& parser, const char* prefix, bool onlyIfSet)
 {
-	ListIterator<KeywordBase> keywordIterator(keywords_);
-	while (KeywordBase* keyword = keywordIterator.iterate())
+	for (KeywordBase* keyword : keywords_)
 	{
 		// If the keyword has never been set (i.e. it still has its default value) don't bother to write it
 		if (onlyIfSet && (!keyword->base()->isSet())) continue;
@@ -288,8 +287,7 @@ bool KeywordList::writeGroups(LineParser& parser, const char* prefix, bool onlyI
 {
 	// Loop over keyword groups
 	bool firstGroup = true;
-	ListIterator<KeywordGroup> groupsIterator(groups_);
-	while (KeywordGroup* group = groupsIterator.iterate())
+	for (KeywordGroup* group : groups_)
 	{
 		// Loop over keywords in group
 		bool firstWritten = true;

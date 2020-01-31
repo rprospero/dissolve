@@ -52,8 +52,7 @@ void AtomTypeSelectionKeyword::checkSelection()
 	AtomTypeList newSelection;
 
 	// Loop over existing selection, checking for each AtomType existing in any source Configuration
-	ListIterator<AtomTypeData> typeIterator(data_.types());
-	while (AtomTypeData* atd = typeIterator.iterate())
+	for (AtomTypeData* atd : data_.types())
 	{
 		bool found = false;
 		for(auto cfg : sourceConfigurations_)
@@ -129,8 +128,7 @@ bool AtomTypeSelectionKeyword::write(LineParser& parser, const char* keywordName
 {
 	// Loop over the AtomType selection list
 	CharString selection;
-	ListIterator<AtomTypeData> typeIterator(data_.types());
-	while (AtomTypeData* atd = typeIterator.iterate()) selection.strcatf("  %s", atd->atomTypeName());
+	for (AtomTypeData* atd : data_.types()) selection.strcatf("  %s", atd->atomTypeName());
 
 	if (!parser.writeLineF("%s%s%s\n", prefix, keywordName, selection.get())) return false;
 

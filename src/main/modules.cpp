@@ -57,8 +57,7 @@
 bool Dissolve::registerMasterModule(Module* masterInstance)
 {
 	// Do sanity check on name
-	ListIterator<Module> moduleIterator(masterModules_);
-	while (Module* module = moduleIterator.iterate())
+	for (Module* module : masterModules_)
 	{
 		if (DissolveSys::sameString(module->type(), masterInstance->type()))
 		{
@@ -107,8 +106,7 @@ bool Dissolve::registerMasterModules()
 	if (!registerMasterModule(new TestModule)) return false;
 
 	Messenger::print("Module Information (%i available):\n", masterModules_.nItems());
-	ListIterator<Module> moduleIterator(masterModules_);
-	while (Module* module = moduleIterator.iterate())
+	for (Module* module : masterModules_)
 	{
 		Messenger::print(" --> %s\n", module->type());
 		Messenger::print("     %s\n", module->brief());
@@ -120,8 +118,7 @@ bool Dissolve::registerMasterModules()
 // Search for master Module of the named type
 Module* Dissolve::findMasterModule(const char* moduleType) const
 {
-	ListIterator<Module> moduleIterator(masterModules_);
-	while (Module* module = moduleIterator.iterate())
+	for (Module* module : masterModules_)
 	{
 		if (DissolveSys::sameString(module->type(), moduleType)) return module;
 	}

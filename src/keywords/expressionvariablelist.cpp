@@ -116,8 +116,7 @@ bool ExpressionVariableListKeyword::read(LineParser& parser, int startArg, const
 bool ExpressionVariableListKeyword::write(LineParser& parser, const char* keywordName, const char* prefix)
 {
 	// Loop over list of defined ExpressionNode's (ExpressionVariables)
-	ListIterator<ExpressionNode> nodeIterator(data_);
-	while (ExpressionNode* node = nodeIterator.iterate())
+	for (ExpressionNode* node : data_)
 	{
 		// Cast up to ExpressionVariable
 		ExpressionVariable* var = dynamic_cast<ExpressionVariable*>(node);

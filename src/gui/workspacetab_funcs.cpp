@@ -93,24 +93,21 @@ bool WorkspaceTab::canChangeTitle() const
 void WorkspaceTab::updateControls()
 {
 	// Update our MDI subwindows
-	ListIterator<Gizmo> gizmoIterator(gizmos_);
-	while (Gizmo* gizmo = gizmoIterator.iterate()) gizmo->updateControls();
+	for (Gizmo* gizmo : gizmos_) gizmo->updateControls();
 }
 
 // Disable sensitive controls within tab
 void WorkspaceTab::disableSensitiveControls()
 {
 	// Disable sensitive controls in subwindows
-	ListIterator<Gizmo> gizmoIterator(gizmos_);
-	while (Gizmo* gizmo = gizmoIterator.iterate()) gizmo->disableSensitiveControls();
+	for (Gizmo* gizmo : gizmos_) gizmo->disableSensitiveControls();
 }
 
 // Enable sensitive controls within tab
 void WorkspaceTab::enableSensitiveControls()
 {
 	// Enable sensitive controls in subwindows
-	ListIterator<Gizmo> gizmoIterator(gizmos_);
-	while (Gizmo* gizmo = gizmoIterator.iterate()) gizmo->enableSensitiveControls();
+	for (Gizmo* gizmo : gizmos_) gizmo->enableSensitiveControls();
 }
 
 /*
@@ -211,8 +208,7 @@ Gizmo* WorkspaceTab::findGizmo(const char* uniqueName)
 void WorkspaceTab::showContextMenu(const QPoint& pos)
 {
 	// Check that we are not over an existing gizmo
-	ListIterator<Gizmo> gizmoIterator(gizmos_);
-	while (Gizmo* gizmo = gizmoIterator.iterate()) if (gizmo->window()->geometry().contains(pos)) return;
+	for (Gizmo* gizmo : gizmos_) if (gizmo->window()->geometry().contains(pos)) return;
 
 	QMenu menu;
 	menu.setFont(font());
@@ -229,8 +225,7 @@ void WorkspaceTab::showContextMenu(const QPoint& pos)
 // 	menuItem = parent->addAction("Configurations");
 // 	menuItem->setFont(italicFont);
 // 	menuItem->setEnabled(false);
-// 	ListIterator<Configuration> configIterator(dissolve_.configurations());
-// 	while (Configuration* cfg = configIterator.iterate())
+// 	for (Configuration* cfg : dissolve_.configurations())
 // 	{
 // 		QMenu* cfgMenu = parent->addMenu(cfg->name());
 // 		if (cfg->nModules() == 0)
@@ -239,8 +234,7 @@ void WorkspaceTab::showContextMenu(const QPoint& pos)
 // 			moduleItem->setFont(italicFont);
 // 			moduleItem->setEnabled(false);
 // 		}
-// 		ListIterator<Module> moduleIterator(cfg->modules());
-// 		while (Module* module= moduleIterator.iterate())
+// 		for (Module* module: cfg->modules())
 // 		{
 // 			QAction* moduleItem = cfgMenu->addAction(CharString("%s (%s)", module->type(), module->uniqueName()).get());
 // 			moduleItem->setData(VariantPointer<Module>(module));
@@ -302,8 +296,7 @@ bool WorkspaceTab::writeState(LineParser& parser) const
 	if (!parser.writeLineF("%i      # NGizmos\n", gizmos_.nItems())) return false;
 
 	// Loop over our subwindow list
-	ListIterator<Gizmo> gizmoIterator(gizmos_);
-	while (Gizmo* gizmo = gizmoIterator.iterate())
+	for (Gizmo* gizmo : gizmos_)
 	{
 		// Write Gizmo type
 		if (!parser.writeLineF("%s\n", gizmo->type())) return false;
