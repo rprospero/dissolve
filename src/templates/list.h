@@ -28,6 +28,7 @@
 
 // Forward Declarations
 /* none */
+template <class T> class ListIterator;
 
 /*
  * List Class
@@ -158,6 +159,16 @@ template <class T> class List
 	void setDisownOnDestruction(bool dod)
 	{
 		disownOnDestruction_ =dod;
+	}
+	ListIterator<T> begin() const
+	{
+		return ListIterator<T>(*this, false);
+	}
+	ListIterator<T> end() const
+	{
+		ListIterator<T> temp(*this, true);
+		temp.iterate();
+		return temp;
 	}
 
 
@@ -822,11 +833,34 @@ template <class T> class ListIterator
 
 		return currentItem_;
 	}
+	ListIterator<T> operator++()
+	{
+		iterate();
+		return *this;
+	}
+	T* operator*()
+	{
+		return currentItem_;
+	}
 	// Restart iteration
 	void restart()
 	{
 		finished_ = false;
 		currentItem_ = NULL;
+	}
+	bool operator==(const ListIterator<T> that) const
+	{
+		return finished_ == that.finished_
+			&& currentItem_ == that.currentItem_
+			&& reverse_ == that.reverse_;
+			// && targetList_ == that.targetList_;
+	}
+	bool operator!=(const ListIterator<T> that) const
+	{
+		return finished_ != that.finished_
+			|| currentItem_ != that.currentItem_
+			|| reverse_ != that.reverse_;
+			// || targetList_ != that.targetList_;
 	}
 	// Return whether we are on the first item in the list
 	bool isFirst() const
