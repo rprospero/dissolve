@@ -162,7 +162,9 @@ template <class T> class List
 	}
 	ListIterator<T> begin() const
 	{
-		return ListIterator<T>(*this, false);
+		ListIterator<T> temp(*this, false);
+		temp.iterate();
+		return temp;
 	}
 	ListIterator<T> end() const
 	{
@@ -851,15 +853,13 @@ template <class T> class ListIterator
 	bool operator==(const ListIterator<T> that) const
 	{
 		return finished_ == that.finished_
-			&& currentItem_ == that.currentItem_
-			&& reverse_ == that.reverse_;
+		  && currentItem_ == that.currentItem_;
 			// && targetList_ == that.targetList_;
 	}
 	bool operator!=(const ListIterator<T> that) const
 	{
 		return finished_ != that.finished_
-			|| currentItem_ != that.currentItem_
-			|| reverse_ != that.reverse_;
+		  || currentItem_ != that.currentItem_;
 			// || targetList_ != that.targetList_;
 	}
 	// Return whether we are on the first item in the list
