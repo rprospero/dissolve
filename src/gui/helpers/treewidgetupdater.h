@@ -239,7 +239,9 @@ template <class T, class I, class D> class TreeWidgetRefDataListUpdater
 
 		int count = 0;
 
-		for (auto dataItem : list)
+		for (auto dataItem = list.begin();
+			dataItem != list.end();
+			++dataItem)
 		{
 			// Our QTreeWidgetItem may or may not be populated, and with different items to those in the list.
 
@@ -249,10 +251,10 @@ template <class T, class I, class D> class TreeWidgetRefDataListUpdater
 			{
 				treeItem = parentItem->child(count);
 				I* rowData = (treeItem ? VariantPointer<I>(treeItem->data(1, Qt::UserRole)) : NULL);
-				if (rowData == dataItem)
+				if (rowData == *dataItem)
 				{
 					// Update the current row and quit the loop
-					(functionParent->*updateChildFunction)(parentItem, count, dataItem, list.dataForItem(dataItem), false);
+					(functionParent->*updateChildFunction)(parentItem, count, *dataItem, dataItem.data(), false);
 
 					break;
 				}
@@ -263,7 +265,7 @@ template <class T, class I, class D> class TreeWidgetRefDataListUpdater
 			if (count == parentItem->childCount())
 			{
 				// Create new item
-				(functionParent->*updateChildFunction)(parentItem, count, dataItem, list.dataForItem(dataItem), true);
+				(functionParent->*updateChildFunction)(parentItem, count, *dataItem, dataItem.data(), true);
 			}
 
 			++count;

@@ -133,17 +133,18 @@ bool Species::checkSetUp()
 	 */
 	for (Isotopologue* iso = isotopologues_.first(); iso != NULL; iso = iso->next())
 	{
-		for (AtomType* atomType : iso->isotopes())
+		for (auto atomType = iso->isotopes().begin();
+			 atomType != iso->isotopes().end();
+			++atomType)
 		{
-			Isotope* data = iso->isotopes().dataForItem(atomType);
-			if (data == NULL)
+			if (atomType.data() == NULL)
 			{
-				Messenger::error("Isotopologue '%s' does not refer to an elemental Isotope for AtomType '%s'.\n", iso->name(), atomType->name());
+				Messenger::error("Isotopologue '%s' does not refer to an elemental Isotope for AtomType '%s'.\n", iso->name(), (*atomType)->name());
 				++nErrors;
 			}
-			else if (!Isotopes::isotope(atomType->element(), data->A()))
+			else if (!Isotopes::isotope((*atomType)->element(), atomType.data()->A()))
 			{
-				Messenger::error("Isotopologue '%s' does not refer to a suitable Isotope for AtomType '%s'.\n", iso->name(), atomType->name());
+				Messenger::error("Isotopologue '%s' does not refer to a suitable Isotope for AtomType '%s'.\n", iso->name(), (*atomType)->name());
 				++nErrors;
 			}
 		}
