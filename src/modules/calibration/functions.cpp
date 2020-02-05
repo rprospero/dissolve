@@ -60,8 +60,7 @@ double CalibrationModuleCostFunctions::intraBroadeningCost(const Array<double>& 
 
 	// Go over NeutronSQ Modules, run the processing, and sum errors in an ReferenceData we have
 	double totalError = 0.0;
-	RefDataListIterator<Module,CalibrationModule::IntraBroadeningFitTarget> neutronModuleIterator(intraBroadeningReferences_);
-	while (Module* module = neutronModuleIterator.iterate())
+	for (Module* module : intraBroadeningReferences_)
 	{
 		// Check for ReferenceData first
 		if (!dissolve_.processingModuleData().contains("ReferenceData", module->uniqueName())) continue;
@@ -75,7 +74,7 @@ double CalibrationModuleCostFunctions::intraBroadeningCost(const Array<double>& 
 		Messenger::unMute();
 
 		// Grab target data and compare 
-		CalibrationModule::IntraBroadeningFitTarget target = neutronModuleIterator.currentData();
+		CalibrationModule::IntraBroadeningFitTarget target = intraBroadeningReferences_.dataForItem(module);
 		if ((target == CalibrationModule::IntraBroadeningTargetBoth) || (target == CalibrationModule::IntraBroadeningTargetSQ))
 		{
 			// Grab WeightedSQ and ReferenceData and compare

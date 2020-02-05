@@ -184,9 +184,11 @@ template <class T, class I, class D> class TableWidgetRefDataListUpdater
 
 		int rowCount = 0;
 
-		RefDataListIterator<I,D> itemIterator(list);
-		while (I* item = itemIterator.iterate())
+		for (auto itemData : list)
 		{
+			T* item;
+			D data;
+			std::tie(item, data) = itemData;
 			// Our table may or may not be populated, and with different items to those in the list.
 
 			// If there is an item already on this row, check it
@@ -198,7 +200,7 @@ template <class T, class I, class D> class TableWidgetRefDataListUpdater
 				if (rowData == item)
 				{
 					// Update the current row and quit the loop
-					(functionParent->*updateRow)(rowCount, item, itemIterator.currentData(), false);
+					(functionParent->*updateRow)(rowCount, item, data, false);
 
 					break;
 				}
@@ -212,7 +214,7 @@ template <class T, class I, class D> class TableWidgetRefDataListUpdater
 				table->setRowCount(rowCount+1);
 
 				// Create new items
-				(functionParent->*updateRow)(rowCount, item, itemIterator.currentData(), true);
+				(functionParent->*updateRow)(rowCount, item, data, true);
 			}
 
 			++rowCount;

@@ -22,6 +22,7 @@
 #ifndef DISSOLVE_REFDATALIST_H
 #define DISSOLVE_REFDATALIST_H
 
+#include <tuple>
 #include <stddef.h>
 #include <stdio.h>
 
@@ -66,7 +67,36 @@ template <class T, class D> class RefDataItem
 	{
 		return data_;
 	}
+	RefDataItem<T, D> operator++()
+	{
+		if(next_ == nullptr)
+		{
+			prev_ = nullptr;
+			item_ = nullptr;
+			next_ = nullptr;
+		}
+		else
+		{
+			prev_ = next_->prev_;
+			item_ = next_->item_;
+			next_ = next_->next_;
+		}
+		return *this;
+	}
+	bool operator==(RefDataItem<T, D> that)
+	{
+		return next_ == that.next_ && prev_ == that.prev_ && item_ == that.item_;
+	}
+	bool operator!=(RefDataItem<T, D> that)
+	{
+		return next_ != that.next_ || prev_ != that.prev_ || item_ != that.item_;
+	}
+	T*& operator*()
+	{
+		return item_;
+	}
 
+  
 
 	/*
 	 * List Pointers
@@ -182,6 +212,18 @@ template <class T, class D> class RefDataList
 	RefDataItem<T,D>* last() const
 	{
 		return listTail_;
+	}
+	RefDataItem<T, D> begin() const
+	{
+		if (listHead_ == nullptr) {
+			return end();
+		}
+		return *listHead_;
+	}
+	const RefDataItem<T, D> end() const
+	{
+		RefDataItem<T, D> temp;
+		return temp;
 	}
 	// Returns the T referenced by the head of the item list
 	T* firstItem() const

@@ -69,8 +69,7 @@ template <class I> class ComboBoxUpdater
 		comboBox_ = comboBox;
 		currentIndex_ = startIndex;
 
-		RefDataListIterator<I,CharString> dataIterator(data);
-		while (I* dataItem = dataIterator.iterate()) updateItem(dataIterator.currentData(), dataItem, dataItem == currentItem);
+		for (I* dataItem : data) updateItem(data.dataForItem(dataItem), dataItem, dataItem == currentItem);
 
 		// If there are still rows remaining in the widget, delete them now
 		while (currentIndex_ < comboBox_->count()) comboBox_->removeItem(currentIndex_);

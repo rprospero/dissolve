@@ -76,8 +76,7 @@ bool ModuleListEditor::setUp(DissolveWindow* dissolveWindow, ModuleLayer* module
 
 		// Find category for this Module (if it exists) or create a new one
 		MimeTreeWidgetItem* categoryItem = NULL;
-		RefDataListIterator<MimeTreeWidgetItem,CharString> categoryIterator(moduleCategories_);
-		while ((categoryItem = categoryIterator.iterate())) if (DissolveSys::sameString(module->category(), categoryIterator.currentData())) break;
+		for (MimeTreeWidgetItem* categoryItem : moduleCategories_) if (DissolveSys::sameString(module->category(), moduleCategories_.dataForItem(categoryItem))) break;
 		if (categoryItem == NULL)
 		{
 			categoryItem = new MimeTreeWidgetItem((QTreeWidget*)NULL, 1000);
@@ -98,8 +97,7 @@ bool ModuleListEditor::setUp(DissolveWindow* dissolveWindow, ModuleLayer* module
 
 	// Populate the available Modules tree with the categories we now have
 	ui_.AvailableModulesTree->clear();
-	RefDataListIterator<MimeTreeWidgetItem,CharString> categoryIterator(moduleCategories_);
-	while (MimeTreeWidgetItem* categoryItem = categoryIterator.iterate()) ui_.AvailableModulesTree->addTopLevelItem(categoryItem);
+	for (MimeTreeWidgetItem* categoryItem : moduleCategories_) ui_.AvailableModulesTree->addTopLevelItem(categoryItem);
 	ui_.AvailableModulesTree->sortByColumn(0, Qt::AscendingOrder);
 	ui_.AvailableModulesTree->expandAll();
 	ui_.AvailableModulesTree->resizeColumnToContents(0);

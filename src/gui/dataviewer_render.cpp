@@ -84,7 +84,7 @@ void DataViewer::render2DOverlay()
 	// Loop over legend entries
 	GLfloat colour[4];
 	RefDataListIterator<Renderable,double> legendEntryIterator(legendEntries);
-	while (Renderable* rend = legendEntryIterator.iterate())
+	for (Renderable* rend : legendEntries)
 	{
 		// Grab copy of the relevant colour definition for this Renderable
 		const ColourDefinition& colourDefinition = rend->colour();

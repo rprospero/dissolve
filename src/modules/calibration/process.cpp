@@ -155,8 +155,7 @@ bool CalibrationModule::process(Dissolve& dissolve, ProcessPool& procPool)
 		}
 
 		// Go over NeutronSQ Modules and run the processing
-		RefDataListIterator<Module,CalibrationModule::IntraBroadeningFitTarget> neutronModuleIterator(neutronReferences);
-		while (Module* module = neutronModuleIterator.iterate())
+		for (Module* module : neutronReferences)
 		{
 			// Make sure the structure factors will be updated by the NeutronSQ module - set flag in the target Configurations
 			for (Configuration* cfg : module->targetConfigurations()) GenericListHelper<bool>::realise(cfg->moduleData(), "_ForceNeutronSQ") = true;

@@ -239,8 +239,7 @@ template <class T, class I, class D> class TreeWidgetRefDataListUpdater
 
 		int count = 0;
 
-		RefDataListIterator<I,D> itemIterator(list);
-		while (I* dataItem = itemIterator.iterate())
+		for (auto dataItem : list)
 		{
 			// Our QTreeWidgetItem may or may not be populated, and with different items to those in the list.
 
@@ -253,7 +252,7 @@ template <class T, class I, class D> class TreeWidgetRefDataListUpdater
 				if (rowData == dataItem)
 				{
 					// Update the current row and quit the loop
-					(functionParent->*updateChildFunction)(parentItem, count, dataItem, itemIterator.currentData(), false);
+					(functionParent->*updateChildFunction)(parentItem, count, dataItem, list.dataForItem(dataItem), false);
 
 					break;
 				}
@@ -264,7 +263,7 @@ template <class T, class I, class D> class TreeWidgetRefDataListUpdater
 			if (count == parentItem->childCount())
 			{
 				// Create new item
-				(functionParent->*updateChildFunction)(parentItem, count, dataItem, itemIterator.currentData(), true);
+				(functionParent->*updateChildFunction)(parentItem, count, dataItem, list.dataForItem(dataItem), true);
 			}
 
 			++count;

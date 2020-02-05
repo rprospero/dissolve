@@ -291,8 +291,7 @@ void EPSRModuleWidget::setGraphDataTargets(EPSRModule* module)
 	rFacTot->lineStyle().setStipple(LineStipple::HalfDashStipple);
 
 	// Add reference data & calculated data to the FQGraph_, and percentage errors to the rFactorGraph_
-	RefDataListIterator<Module,ModuleGroup*> targetIterator(module->allTargets());
-	while (Module* targetModule = targetIterator.iterate())
+	for (auto targetModule : module->allTargets())
 	{
 		// Reference data
 		FQGraph_->createRenderable(Renderable::Data1DRenderable, CharString("%s//ReferenceData", targetModule->uniqueName()), CharString("%s (Exp)", targetModule->uniqueName()), "Exp");

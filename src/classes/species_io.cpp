@@ -677,13 +677,13 @@ bool Species::write(LineParser& parser, const char* prefix)
 		for (Isotopologue* iso = isotopologues_.first(); iso != NULL; iso = iso->next())
 		{
 			if (!parser.writeLineF("%s%s  '%s'", newPrefix.get(), keywords().keyword(Species::IsotopologueKeyword), iso->name())) return false;
-			RefDataListIterator<AtomType,Isotope*> isotopeIterator(iso->isotopes());
-			while (AtomType* atomType = isotopeIterator.iterate())
+			for (AtomType* atomType : iso->isotopes())
 			{
 				// No need to write anything that's the natural isotope...
-				if (isotopeIterator.currentData()->A() == 0) continue;
+ 				Isotope* data = iso->isotopes().dataForItem(atomType);
+				if (data->A() == 0) continue;
 
-				if (!parser.writeLineF("  %s=%i", atomType->name(), isotopeIterator.currentData()->A())) return false;
+				if (!parser.writeLineF("  %s=%i", atomType->name(), data->A())) return false;
 			}
 			if (!parser.writeLineF("\n")) return false;
 		}

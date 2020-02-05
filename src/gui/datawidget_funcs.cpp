@@ -151,10 +151,10 @@ void DataWidget::on_ViewLinkedViewButton_clicked(bool checked)
 		// Construct a list of targets as a QStringList
 		QStringList destinations;
 		int currentItem = -1, count = 0;
-		RefDataListIterator<DataViewer,GraphGizmo*> targetIterator(targets);
-		while (DataViewer* viewer = targetIterator.iterate())
+		for (DataViewer* viewer : targets)
 		{
-			destinations << targetIterator.currentData()->uniqueName();
+			GraphGizmo* data = targets.dataForItem(viewer);
+			destinations << data->uniqueName();
 			if (&viewer->view() == dataViewer()->view().linkedView()) currentItem = count;
 			++count;
 		}

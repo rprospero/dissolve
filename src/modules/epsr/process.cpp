@@ -60,8 +60,7 @@ bool EPSRModule::setUp(Dissolve& dissolve, ProcessPool& procPool)
 		// Calculate representative rho
 		double averagedRho = 0.0;
 		RefList<Configuration> configs;
-		RefDataListIterator<Module,ModuleGroup*> allTargetsIterator(groupedTargets_.modules());
-		while (Module* module = allTargetsIterator.iterate())
+		for (Module* module : groupedTargets_.modules())
 		{
 			for (Configuration* cfg : module->targetConfigurations())
 			{
@@ -159,9 +158,8 @@ bool EPSRModule::process(Dissolve& dissolve, ProcessPool& procPool)
 	 * Make a list of all Configurations related to all targets
 	 */
 	RefList<Configuration> configs;
-	RefDataListIterator<Module,ModuleGroup*> allTargetsIterator(groupedTargets_.modules());
 	double averagedRho = 0.0;
-	while (Module* module = allTargetsIterator.iterate())
+	for (auto module : groupedTargets_.modules())
 	{
 		for (Configuration* cfg : module->targetConfigurations())
 		{
@@ -177,8 +175,7 @@ bool EPSRModule::process(Dissolve& dissolve, ProcessPool& procPool)
 	 * Calculate difference functions and current percentage errors in calculated vs reference target data
 	 */
 	double rFacTot = 0.0;
-	allTargetsIterator.restart();
-	while (Module* module = allTargetsIterator.iterate())
+	for (auto module : groupedTargets_.modules())
 	{
 		// Realise the error array and make sure its object name is set
 		Data1D& errors = GenericListHelper<Data1D>::realise(dissolve.processingModuleData(), CharString("RFactor_%s", module->uniqueName()), uniqueName_, GenericItem::InRestartFileFlag);
@@ -273,9 +270,7 @@ bool EPSRModule::process(Dissolve& dissolve, ProcessPool& procPool)
 	 * Calculate difference functions for each experimental dataset and fit them.
 	 * Also calculate the simulated F(r) - for consistency with EPSR, this is the inverse FT of the simulated F(Q), rather than the directly-calculated function
 	 */
-
-	allTargetsIterator.restart();
-	while (Module* module = allTargetsIterator.iterate())
+	for (auto module : groupedTargets_.modules())
 	{
 		bool found;
 

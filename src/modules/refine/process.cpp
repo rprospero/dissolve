@@ -99,8 +99,7 @@ bool RefineModule::process(Dissolve& dissolve, ProcessPool& procPool)
 	 * Make a list of all Configurations related to all targets
 	 */
 	RefList<Configuration> configs;
-	RefDataListIterator<Module,ModuleGroup*> allTargetsIterator(groupedTargets_.modules());
-	while (Module* module = allTargetsIterator.iterate())
+	for (Module* module : groupedTargets_.modules())
 	{
 		for (Configuration* cfg : module->targetConfigurations()) configs.addUnique(cfg);
 	}

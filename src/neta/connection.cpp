@@ -166,8 +166,7 @@ int NETAConnectionNode::score(const SpeciesAtom* i, RefList<const SpeciesAtom>& 
 
 	// Loop over neighbour atoms
 	int nMatches = 0;
-	RefDataListIterator<const SpeciesAtom,int> neighbourIterator(neighbours);
-	while (const SpeciesAtom* j = neighbourIterator.iterate())
+	for (const SpeciesAtom* j : neighbours)
 	{
 		// Evaluate the neighbour against our elements
 		int atomScore = NETANode::NoMatch;
@@ -231,7 +230,7 @@ int NETAConnectionNode::score(const SpeciesAtom* i, RefList<const SpeciesAtom>& 
 
 		// Found a match, so increase the match count and store the score
 		++nMatches;
-		neighbourIterator.currentData() = atomScore;
+		neighbours.dataForItem(j) = atomScore;
 
 		// Have we matched enough? If so break out early.
 		if (compareValues(nMatches, repeatCountOperator_, repeatCount_)) break;
@@ -242,12 +241,11 @@ int NETAConnectionNode::score(const SpeciesAtom* i, RefList<const SpeciesAtom>& 
 
 	// Generate total score and add matched atoms to path
 	int totalScore = 0;
-	neighbourIterator.restart();
-	while (const SpeciesAtom* j = neighbourIterator.iterate())
+	for (const SpeciesAtom* j : neighbours)
 	{
-		if (neighbourIterator.currentData() == NETANode::NoMatch) continue;
+		if (neighbours.dataForItem(j) == NETANode::NoMatch) continue;
 
-		totalScore += neighbourIterator.currentData();
+		totalScore += neighbours.dataForItem(j);
 		matchPath.append(j);
 	}
 

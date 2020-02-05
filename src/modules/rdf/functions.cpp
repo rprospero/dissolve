@@ -688,20 +688,18 @@ bool RDFModule::sumUnweightedGR(ProcessPool& procPool, Module* module, GenericLi
 
 	// Calculate overall density of combined system
 	double rho0 = 0.0;
-	RefDataListIterator<Configuration,double> weightsIterator(configWeights);
-	while (Configuration* cfg = weightsIterator.iterate()) rho0 += (weightsIterator.currentData() / totalWeight) / cfg->atomicDensity();
+	for (Configuration* cfg : configWeights) rho0 += (configWeights.dataForItem(cfg) / totalWeight) / cfg->atomicDensity();
 	rho0 = 1.0 / rho0;
 
 	// Sum Configurations into the PartialSet
 	CharString fingerprint;
-	weightsIterator.restart();
-	while (Configuration* cfg = weightsIterator.iterate())
+	for (Configuration* cfg : configWeights)
 	{
 		// Update fingerprint
 		fingerprint += fingerprint.isEmpty() ? CharString("%i", cfg->contentsVersion()) : CharString("_%i", cfg->contentsVersion());
 
 		// Calculate weighting factor
-		double weight = ((weightsIterator.currentData() / totalWeight) * cfg->atomicDensity()) / rho0;
+		double weight = ((configWeights.dataForItem(cfg) / totalWeight) * cfg->atomicDensity()) / rho0;
 
 		// Grab partials for Configuration and add into our set
 		if (!cfg->moduleData().contains("UnweightedGR")) return Messenger::error("Couldn't find UnweightedGR data for Configuration '%s'.\n", cfg->name());
@@ -741,11 +739,10 @@ bool RDFModule::sumUnweightedGR(ProcessPool& procPool, Module* parentModule, Mod
 	// Calculate overall density of combined system, normalising the Configuration weights as we go, and create an AtomTypeList to cover all used types
 	double rho0 = 0.0;
 	AtomTypeList combinedAtomTypes;
-	RefDataListIterator<Configuration,double> weightsIterator(configWeights);
-	while (Configuration* cfg = weightsIterator.iterate())
+	for (Configuration* cfg : configWeights)
 	{
-		weightsIterator.setCurrentData(weightsIterator.currentData() / totalWeight);
-		rho0 += weightsIterator.currentData() / cfg->atomicDensity();
+		configWeights.dataForItem(cfg) /= totalWeight;
+		rho0 += configWeights.dataForItem(cfg) / cfg->atomicDensity();
 
 		combinedAtomTypes.add(cfg->usedAtomTypesList());
 	}
@@ -761,14 +758,13 @@ bool RDFModule::sumUnweightedGR(ProcessPool& procPool, Module* parentModule, Mod
 
 	// Sum Configurations into the PartialSet
 	CharString fingerprint;
-	weightsIterator.restart();
-	while (Configuration* cfg = weightsIterator.iterate())
+	for (Configuration* cfg : configWeights)
 	{
 		// Update fingerprint
 		fingerprint += fingerprint.isEmpty() ? CharString("%i", cfg->contentsVersion()) : CharString("_%i", cfg->contentsVersion());
 
 		// Calculate weighting factor
-		double weight = (weightsIterator.currentData() * cfg->atomicDensity()) / rho0;
+		double weight = (configWeights.dataForItem(cfg) * cfg->atomicDensity()) / rho0;
 
 		// *Copy* the partials for the Configuration, subtract 1.0, and add into our set
 		if (!cfg->moduleData().contains("UnweightedGR")) return Messenger::error("Couldn't find UnweightedGR data for Configuration '%s'.\n", cfg->name());
