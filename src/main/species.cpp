@@ -165,8 +165,7 @@ Species* Dissolve::copySpecies(const Species* species)
 	newSpecies->setAutoUpdateIntramolecularTerms(false);
 
 	// Duplicate atoms
-	ListIterator<SpeciesAtom> atomIterator(species->atoms());
-	while (SpeciesAtom* i = atomIterator.iterate())
+	for (SpeciesAtom* i : species->atoms())
 	{
 		// Create the Atom in our new Species
 		SpeciesAtom* newAtom = newSpecies->addAtom(i->element(), i->r(), i->charge());
