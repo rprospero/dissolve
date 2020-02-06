@@ -22,6 +22,7 @@
 #ifndef DISSOLVE_SPECIES_H
 #define DISSOLVE_SPECIES_H
 
+#include <list>
 #include "classes/atomtypelist.h"
 #include "classes/coordinateset.h"
 #include "classes/speciesangle.h"
@@ -79,7 +80,7 @@ class Species : public ListItem<Species>, public ObjectStore<Species>
 	 */
 	private:
 	// List of Atoms in the Species
-	List<SpeciesAtom> atoms_;
+	std::list<SpeciesAtom*> atoms_;
 	// Version of the atom types
 	VersionCounter atomTypesVersion_;
 	// List of selected Atoms

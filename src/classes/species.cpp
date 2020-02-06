@@ -84,7 +84,7 @@ bool Species::checkSetUp()
 	int nErrors = 0;
 
 	// Must have at least one atom...
-	if (atoms_.nItems() == 0)
+	if (atoms_.empty())
 	{
 		Messenger::error("Species contains no Atoms.\n");
 		return false;
@@ -93,7 +93,7 @@ bool Species::checkSetUp()
 	/*
 	 * AtomTypes
 	 */
-	for (SpeciesAtom* i = atoms_.first(); i != NULL; i = i->next())
+	for (auto i : atoms_)
 	{
 		if (i->atomType() == NULL)
 		{
@@ -106,9 +106,9 @@ bool Species::checkSetUp()
 	/*
 	 * IntraMolecular Data
 	 */
-	for (SpeciesAtom* i = atoms_.first(); i != NULL; i = i->next())
+	for (auto i : atoms_)
 	{
-		if ((i->nBonds() == 0) && (atoms_.nItems() > 1))
+		if ((i->nBonds() == 0) && (atoms_.size() > 1))
 		{
 			Messenger::error("SpeciesAtom %i (%s) participates in no Bonds, but is part of a multi-atom Species.\n", i->userIndex(), i->element()->symbol());
 			++nErrors;
@@ -158,10 +158,11 @@ void Species::print()
 	Messenger::print("  Atoms:\n");
 	Messenger::print("      ID   El  Type (ID)        X             Y             Z             Q\n");
 	Messenger::print("    ----------------------------------------------------------------------------\n");
-	for (int n=0; n<nAtoms(); ++n)
+	int n = 0;
+	for (auto i : atoms_)
 	{
-		SpeciesAtom* i = atoms_[n];
 		Messenger::print("    %4i  %3s  %4s (%2i)  %12.4e  %12.4e  %12.4e  %12.4e\n", n+1, i->element()->symbol(), (i->atomType() ? i->atomType()->name() : "??"), (i->atomType() ? i->atomType()->index() : -1), i->r().x, i->r().y, i->r().z, i->charge());
+		++n;
 	}
 
 	if (nBonds() > 0)
@@ -243,7 +244,7 @@ void Species::clearCoordinateSets()
 CoordinateSet* Species::addCoordinateSet()
 {
 	CoordinateSet* coordSet = coordinateSets_.add();
-	coordSet->initialise(atoms_.nItems());
+	coordSet->initialise(atoms_.size());
 
 	return coordSet;
 }
