@@ -629,7 +629,7 @@ bool Forcefield_UFF::generateTorsionTerm(const Species* sp, SpeciesTorsion* tors
 bool Forcefield_UFF::assignAtomTypes(Species* sp, CoreData& coreData, bool keepExisting) const
 {
 	// Loop over Species atoms
-	for (SpeciesAtom* i = sp->atoms().first(); i != NULL; i = i->next())
+	for (SpeciesAtom* i : sp->atoms())
 	{
 		// If keepExisting == true, don't reassign a type to this atom if one already exists
 		if (keepExisting && i->atomType()) continue;
@@ -672,8 +672,7 @@ bool Forcefield_UFF::assignIntramolecular(Species* sp, bool useExistingTypes, bo
 	if (useExistingTypes)
 	{
 		// For each SpeciesAtom, search for the AtomType by name...
-		ListIterator<SpeciesAtom> atomIterator(sp->atoms());
-		while (SpeciesAtom* i = atomIterator.iterate())
+		for (SpeciesAtom* i : sp->atoms())
 		{
 			if (!i->atomType()) return Messenger::error("No AtomType assigned to SpeciesAtom %i, so can't generate intramolecular terms based on existing types.\n", i->userIndex());
 			UFFAtomType* at = dynamic_cast<UFFAtomType*>(atomTypeByName(i->atomType()->name(), i->element()));
@@ -684,8 +683,7 @@ bool Forcefield_UFF::assignIntramolecular(Species* sp, bool useExistingTypes, bo
 	else
 	{
 		// Use on-the-fly generated types for all atoms
-		ListIterator<SpeciesAtom> atomIterator(sp->atoms());
-		while (SpeciesAtom* i = atomIterator.iterate())
+		for (SpeciesAtom* i : sp->atoms())
 		{
 			UFFAtomType* at = dynamic_cast<UFFAtomType*>(determineAtomType(i));
 			if (!at) return Messenger::error("Couldn't determine a suitable AtomType for atom %i.\n", i->userIndex());
