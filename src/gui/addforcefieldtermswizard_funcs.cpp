@@ -106,9 +106,8 @@ bool AddForcefieldTermsWizard::applyForcefieldTerms(Dissolve& dissolve)
 	 */
 
 	// 1) Set AtomTypes
-	ListIterator<SpeciesAtom> atomIterator(targetSpecies_->atoms());
-	SpeciesAtom* modifiedI = modifiedSpecies_->atoms().first();
-	while (SpeciesAtom* i = atomIterator.iterate())
+	SpeciesAtom* modifiedI = modifiedSpecies_->atoms().front();
+	for (SpeciesAtom* i : targetSpecies_->atoms())
 	{
 		// Copy AtomType
 		dissolve.copyAtomType(modifiedI, i);

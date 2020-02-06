@@ -100,10 +100,10 @@ void RenderableSpecies::transformValues()
 	if (valuesTransformDataVersion_ == dataVersion()) return;
 
 	// Loop over Atoms, seeking extreme x, y, and z values
-	ListIterator<SpeciesAtom> atomIterator(source_->atoms());
-	while (SpeciesAtom* i = atomIterator.iterate())
+	bool first = true;
+	for (auto i : source_->atoms())
 	{
-		if (atomIterator.isFirst())
+		if (first)
 		{
 			limitsMin_ = i->r();
 			limitsMax_ = i->r();
@@ -117,6 +117,7 @@ void RenderableSpecies::transformValues()
 			if (i->r().z < limitsMin_.z) limitsMin_.z = i->r().z;
 			else if (i->r().z > limitsMax_.z) limitsMax_.z = i->r().z;
 		}
+		first = false;
 	}
 
 	// Need to add on a little extra to the limits since the atoms have a radius
@@ -189,8 +190,7 @@ void RenderableSpecies::recreatePrimitives(const View& view, const ColourDefinit
 		speciesAssembly_.add(lineSpeciesPrimitive_, A);
 
 		// Draw Atoms
-		ListIterator<SpeciesAtom> atomIterator(source_->atoms());
-		while (SpeciesAtom* i = atomIterator.iterate())
+		for (auto i : source_->atoms())
 		{
 			// Only draw the atom if it has no bonds, in which case draw it as a 'cross'
 			if (i->nBonds() != 0) continue;
@@ -224,8 +224,7 @@ void RenderableSpecies::recreatePrimitives(const View& view, const ColourDefinit
 		selectionAssembly_.add(true, GL_LINE);
 
 		// Draw Atoms
-		ListIterator<SpeciesAtom> atomIterator(source_->atoms());
-		while (SpeciesAtom* i = atomIterator.iterate())
+		for (auto i : source_->atoms())
 		{
 			A.setIdentity();
 			A.setTranslation(i->r());
@@ -284,8 +283,7 @@ void RenderableSpecies::recreateSelectionPrimitive()
 		selectionAssembly_.add(lineSelectionPrimitive_, A);
 
 		// Draw selection
-		ListIterator<SpeciesAtom> atomIterator(source_->atoms());
-		while (SpeciesAtom* i = atomIterator.iterate())
+		for (SpeciesAtom* i : source_->atoms())
 		{
 			// If not selected, continue
 			if (!i->isSelected()) continue;
@@ -322,8 +320,7 @@ void RenderableSpecies::recreateSelectionPrimitive()
 		// Set basic styling
 		selectionAssembly_.add(true, GL_LINE);
 
-		ListIterator<SpeciesAtom> atomIterator(source_->atoms());
-		while (SpeciesAtom* i = atomIterator.iterate())
+		for (auto i : source_->atoms())
 		{
 			if (!i->isSelected()) continue;
 

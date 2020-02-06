@@ -37,8 +37,7 @@ SpeciesAtom* SiteViewer::atomAt(int x, int y)
 	Vec3<double> rScreen;
 
 	// Loop over atoms, converting the local coordinates into screen coordinates, and testing distance from the point provided
-	ListIterator<SpeciesAtom> atomIterator(species_->atoms());
-	while (SpeciesAtom* i = atomIterator.iterate())
+	for (SpeciesAtom* i : species_->atoms())
 	{
 		// Set the lengthscale to the appropriate atom radius for the current display style - it will be replaced with the atom's screen radius
 		lengthScale = 0.3;
@@ -114,8 +113,7 @@ void SiteViewer::endInteraction()
 				if (!mouseDownModifiers_.testFlag(Qt::ShiftModifier)) species_->clearAtomSelection();
 				Vec3<double> rScreen;
 				QRect selectionRect(QPoint(rMouseDown_.x, rMouseDown_.y), QPoint(rMouseLast_.x, rMouseLast_.y));
-				ListIterator<SpeciesAtom> atomIterator(species_->atoms());
-				while (SpeciesAtom* i = atomIterator.iterate())
+				for (auto i : species_->atoms())
 				{
 					rScreen = view_.dataToScreen(i->r());
 					if (selectionRect.contains(rScreen.x, rScreen.y)) species_->selectAtom(i);
