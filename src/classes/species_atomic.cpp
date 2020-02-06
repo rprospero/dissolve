@@ -49,7 +49,7 @@ void Species::removeAtom(SpeciesAtom* i)
 	while (i->nBonds()) removeBond(i, i->bond(0)->partner(i));
 
 	// Now remove the atom
-	atoms_.remove(i);
+	atoms_.erase(find(atoms_.begin(), atoms_.end(), i));
 
 	++version_;
 }
