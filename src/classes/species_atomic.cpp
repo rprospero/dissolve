@@ -25,10 +25,11 @@
 // Add a new atom to the Species
 SpeciesAtom* Species::addAtom(Element* element, Vec3<double> r, double q)
 {
-	SpeciesAtom* i = atoms_.add();
+	SpeciesAtom* i = new SpeciesAtom;
 	i->setSpecies(this);
 	i->set(element, r.x, r.y, r.z, q);
-	i->setIndex(atoms_.nItems()-1);
+	i->setIndex(atoms_.size()-1);
+	atoms_.push_back(i);
 
 	++version_;
 
@@ -55,23 +56,25 @@ void Species::removeAtom(SpeciesAtom* i)
 // Return the number of Atoms in the Species
 int Species::nAtoms() const
 {
-	return atoms_.nItems();
+	return atoms_.size();
 }
 
 // Return the first Atom in the Species
 SpeciesAtom* Species::firstAtom() const
 {
-	return atoms_.first();
+	return atoms_.front();
 }
 
 // Return the nth Atom in the Species
 SpeciesAtom* Species::atom(int n)
 {
-	return atoms_[n];
+	auto it = atoms_.begin();
+	for(int i=0; i<n; i++)	++it;
+	return *it;
 }
 
 // Return the list of SpeciesAtoms
-const List<SpeciesAtom>& Species::atoms() const
+const std::list<SpeciesAtom*>& Species::atoms() const
 {
 	return atoms_;
 }
@@ -90,14 +93,16 @@ void Species::setAtomCoordinates(SpeciesAtom* i, Vec3<double> r)
 void Species::setAtomCoordinates(int id, double x, double y, double z)
 {
 #ifdef CHECKS
-	if ((id < 0) || (id >= atoms_.nItems()))
+	if ((id < 0) || (id >= atoms_.size()))
 	{
 		Messenger::error("Atom index %i is out of range - nAtoms = %i\n", id, atoms_.nItems());
 		return;
 	}
 #endif
 
-	atoms_[id]->setCoordinates(x, y, z);
+	auto it = atoms_.begin();
+	for(int i=0; i<id; ++i) it++;
+	(*it)->setCoordinates(x, y, z);
 }
 
 // Transmute specified SpeciesAtom
@@ -118,7 +123,7 @@ void Species::transmuteAtom(SpeciesAtom* i, Element* el)
 // Clear current Atom selection
 void Species::clearAtomSelection()
 {
-	for (SpeciesAtom* i = atoms_.first(); i != NULL; i = i->next()) i->setSelected(false);
+	for (SpeciesAtom* i : atoms_) i->setSelected(false);
 
 	selectedAtoms_.clear();
 
@@ -197,7 +202,7 @@ SpeciesAtom* Species::selectedAtom(int n)
 double Species::totalChargeOnAtoms()
 {
 	double totalQ = 0.0;
-	for (SpeciesAtom* i = atoms_.first(); i != NULL; i = i->next()) totalQ += i->charge();
+	for (SpeciesAtom* i : atoms_) totalQ += i->charge();
 	return totalQ;
 }
 
@@ -223,7 +228,7 @@ int Species::atomSelectionVersion() const
 double Species::mass() const
 {
 	double m = 0.0;
-	for (SpeciesAtom* i = atoms_.first(); i != NULL; i = i->next()) m += AtomicMass::mass(i->element());
+	for (SpeciesAtom* i : atoms_) m += AtomicMass::mass(i->element());
 	return m;
 }
 
@@ -239,7 +244,7 @@ const AtomTypeList& Species::usedAtomTypes()
 	if (usedAtomTypesPoint_ != atomTypesVersion_)
 	{
 		usedAtomTypes_.clear();
-		for (SpeciesAtom* i = atoms_.first(); i != NULL; i = i->next()) if (i->atomType()) usedAtomTypes_.add(i->atomType(), 1);
+		for (SpeciesAtom* i : atoms_) if (i->atomType()) usedAtomTypes_.add(i->atomType(), 1);
 	
 		usedAtomTypesPoint_ = atomTypesVersion_;
 	}
@@ -250,7 +255,7 @@ const AtomTypeList& Species::usedAtomTypes()
 // Clear AtomType assignments for all atoms
 void Species::clearAtomTypes()
 {
-	for (SpeciesAtom* i = atoms_.first(); i != NULL; i = i->next()) i->setAtomType(NULL);
+	for (SpeciesAtom* i : atoms_) i->setAtomType(NULL);
 
 	++atomTypesVersion_;
 }

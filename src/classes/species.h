@@ -104,7 +104,7 @@ class Species : public ListItem<Species>, public ObjectStore<Species>
 	// Return the nth atom in the Species
 	SpeciesAtom* atom(int n);
 	// Return the list of atoms
-	const List<SpeciesAtom>& atoms() const;
+	const std::list<SpeciesAtom*>& atoms() const;
 	// Set coordinates of specified atom
 	void setAtomCoordinates(SpeciesAtom* i, Vec3<double> r);
 	// Set coordinates of specified atom (by index and individual coordinates)

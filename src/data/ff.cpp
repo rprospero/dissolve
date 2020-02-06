@@ -253,7 +253,7 @@ bool Forcefield::assignAtomTypes(Species* sp, CoreData& coreData, bool keepExist
 	Messenger::print("Assigning atomtypes to species '%s' from forcefield '%s'...\n", sp->name(), name());
 
 	// Loop over Species atoms
-	for (SpeciesAtom* i = sp->atoms().first(); i != NULL; i = i->next())
+	for (SpeciesAtom* i : sp->atoms())
 	{
 		// If keepExisting == true, don't reassign a type to this atom if one already exists
 		if (keepExisting && i->atomType()) continue;
@@ -317,8 +317,7 @@ bool Forcefield::assignIntramolecular(Species* sp, bool useExistingTypes, bool g
 	if (useExistingTypes)
 	{
 		// For each SpeciesAtom, search for the AtomType by name...
-		ListIterator<SpeciesAtom> atomIterator(sp->atoms());
-		while (SpeciesAtom* i = atomIterator.iterate())
+		for (SpeciesAtom* i : sp->atoms())
 		{
 			if (!i->atomType()) return Messenger::error("No AtomType assigned to SpeciesAtom %i, so can't generate intramolecular terms based on existing types.\n", i->userIndex());
 			ForcefieldAtomType* at = atomTypeByName(i->atomType()->name(), i->element());
@@ -329,8 +328,7 @@ bool Forcefield::assignIntramolecular(Species* sp, bool useExistingTypes, bool g
 	else
 	{
 		// Use on-the-fly generated types for all atoms
-		ListIterator<SpeciesAtom> atomIterator(sp->atoms());
-		while (SpeciesAtom* i = atomIterator.iterate())
+		for (SpeciesAtom* i : sp->atoms())
 		{
 			ForcefieldAtomType* at = determineAtomType(i);
 			if (!at) return Messenger::error("Couldn't determine a suitable AtomType for atom %i.\n", i->userIndex());
@@ -388,8 +386,7 @@ bool Forcefield::assignIntramolecular(Species* sp, bool useExistingTypes, bool g
 	if (generateImpropers && (improperTerms_.nItems() > 0))
 	{
 		// Loop over potential improper sites in the Species and see if any match terms in the forcefield
-		ListIterator<SpeciesAtom> atomIterator(sp->atoms());
-		while (SpeciesAtom* ii = atomIterator.iterate())
+		for (SpeciesAtom* ii : sp->atoms())
 		{
 			// If we have less than three bonds to the central atom 'i', can continue now
 			if (ii->nBonds() < 3) continue;
