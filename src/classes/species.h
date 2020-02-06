@@ -22,7 +22,7 @@
 #ifndef DISSOLVE_SPECIES_H
 #define DISSOLVE_SPECIES_H
 
-#include <list>
+#include <vector>
 #include "classes/atomtypelist.h"
 #include "classes/coordinateset.h"
 #include "classes/speciesangle.h"
@@ -80,7 +80,7 @@ class Species : public ListItem<Species>, public ObjectStore<Species>
 	 */
 	private:
 	// List of Atoms in the Species
-	std::list<SpeciesAtom*> atoms_;
+	std::vector<SpeciesAtom*> atoms_;
 	// Version of the atom types
 	VersionCounter atomTypesVersion_;
 	// List of selected Atoms
@@ -104,7 +104,7 @@ class Species : public ListItem<Species>, public ObjectStore<Species>
 	// Return the nth atom in the Species
 	SpeciesAtom* atom(int n);
 	// Return the list of atoms
-	const std::list<SpeciesAtom*>& atoms() const;
+	const std::vector<SpeciesAtom*>& atoms() const;
 	// Set coordinates of specified atom
 	void setAtomCoordinates(SpeciesAtom* i, Vec3<double> r);
 	// Set coordinates of specified atom (by index and individual coordinates)

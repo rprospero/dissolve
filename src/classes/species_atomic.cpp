@@ -19,6 +19,7 @@
 	along with Dissolve.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <algorithm>
 #include "classes/species.h"
 #include "data/atomicmass.h"
 
@@ -68,13 +69,11 @@ SpeciesAtom* Species::firstAtom() const
 // Return the nth Atom in the Species
 SpeciesAtom* Species::atom(int n)
 {
-	auto it = atoms_.begin();
-	for(int i=0; i<n; i++)	++it;
-	return *it;
+	return atoms_[n];
 }
 
 // Return the list of SpeciesAtoms
-const std::list<SpeciesAtom*>& Species::atoms() const
+const std::vector<SpeciesAtom*>& Species::atoms() const
 {
 	return atoms_;
 }
@@ -100,9 +99,7 @@ void Species::setAtomCoordinates(int id, double x, double y, double z)
 	}
 #endif
 
-	auto it = atoms_.begin();
-	for(int i=0; i<id; ++i) it++;
-	(*it)->setCoordinates(x, y, z);
+	atoms_[id]->setCoordinates(x, y, z);
 }
 
 // Transmute specified SpeciesAtom
