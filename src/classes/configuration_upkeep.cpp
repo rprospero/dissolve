@@ -29,8 +29,7 @@
 void Configuration::updateCellContents()
 {
 	// Fold the coordinates of each atom into the box, and then check its Cell location, moving if necessary.
-	Atom** atoms = atoms_.array();
-	for (int n = 0; n < atoms_.nItems(); ++n) updateCellLocation(atoms[n]);
+	for(auto& atom : atoms_) updateCellLocation(&atom);
 }
 
 // Update Cell location of specified Atom
