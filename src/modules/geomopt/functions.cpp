@@ -80,7 +80,7 @@ void GeometryOptimisationModule::sortBoundsAndEnergies(Vec3<double>& bounds, Vec
 // Return energy of adjusted coordinates, following the force vectors by the supplied amount
 double GeometryOptimisationModule::energyAtGradientPoint(ProcessPool& procPool, Configuration* cfg, const PotentialMap& potentialMap, double delta)
 {
-	Atom** atoms = cfg->atoms().array();
+	DynamicArray<Atom>& atoms = cfg->atoms();
 	for (int n=0; n<cfg->nAtoms(); ++n) atoms[n]->setCoordinates(xRef_[n]+xForce_[n]*delta, yRef_[n]+yForce_[n]*delta, zRef_[n]+zForce_[n]*delta);
 	cfg->updateCellContents();
 

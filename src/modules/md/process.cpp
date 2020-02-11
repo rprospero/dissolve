@@ -120,7 +120,7 @@ bool MDModule::process(Dissolve& dissolve, ProcessPool& procPool)
 
 		// Variables
 		int n, nCapped = 0;
-		Atom** atoms = cfg->atoms().array();
+		DynamicArray<Atom>& atoms = cfg->atoms();
 		double tInstant, ke, tScale, peInter, peIntra;
 		double deltaTSq = deltaT*deltaT;
 

@@ -56,7 +56,7 @@ double EnergyModule::intraMolecularEnergy(ProcessPool& procPool, Configuration* 
 	int start = procPool.interleavedLoopStart(strategy);
 	int stride = procPool.interleavedLoopStride(strategy);
 
-	Molecule** molecules = cfg->molecules().array();
+	DynamicArray<Molecule>& molecules = cfg->molecules();
 	const Molecule* mol;
 	for (int m=start; m<cfg->nMolecules(); m += stride)
 	{

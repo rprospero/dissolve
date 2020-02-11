@@ -49,7 +49,7 @@ void ForcesModule::intramolecularForces(ProcessPool& procPool, Configuration* cf
 	int stride = procPool.interleavedLoopStride(ProcessPool::PoolStrategy);
 
 	// Loop over Molecules
-	Molecule** molecules = cfg->molecules().array();
+	DynamicArray<Molecule>& molecules = cfg->molecules();
 	const Molecule* mol;
 	for (int m=start; m<cfg->nMolecules(); m += stride)
 	{

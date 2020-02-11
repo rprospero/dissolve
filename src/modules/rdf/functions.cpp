@@ -45,7 +45,7 @@ bool RDFModule::calculateGRTestSerial(Configuration* cfg, PartialSet& partialSet
 {
 	// Calculate radial distribution functions with a simple double loop, in serial
 	const Box* box = cfg->box();
-	Atom** atoms = cfg->atoms().array();
+	DynamicArray<Atom>& atoms = cfg->atoms();
 	int ii, jj, typeI;
 	double distance;
 	Vec3<double> rI;
@@ -89,7 +89,7 @@ bool RDFModule::calculateGRSimple(ProcessPool& procPool, Configuration* cfg, Par
 	}
 
 	// Loop over Atoms and construct arrays
-	Atom** atoms = cfg->atoms().array();
+	DynamicArray<Atom>& atoms = cfg->atoms();
 	for (n=0; n< cfg->nAtoms(); ++n)
 	{
 		m = atoms[n]->localTypeIndex();

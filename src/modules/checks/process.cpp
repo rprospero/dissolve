@@ -52,7 +52,7 @@ bool ChecksModule::process(Dissolve& dissolve, ProcessPool& procPool)
 		Messenger::print("Checks: Threshold for distance checks is %f Angstroms\n", distanceThreshold);
 		Messenger::print("Checks: Threshold for angle checks is %f degrees\n", angleThreshold);
 
-		Atom** atoms = cfg->atoms().array();
+		DynamicArray<Atom>& atoms = cfg->atoms();
 
 		double actual, delta;
 		bool ok;

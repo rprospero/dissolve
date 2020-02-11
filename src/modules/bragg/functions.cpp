@@ -60,7 +60,6 @@ bool BraggModule::calculateBraggTerms(ProcessPool& procPool, Configuration* cfg,
 	const Box* box = cfg->box();
 	int nTypes = cfg->nUsedAtomTypes();
 	int nAtoms = cfg->nAtoms();
-	Atom** atoms = cfg->atoms().array();
 
 	// Set up reciprocal axes and lengths - take those from the Box and scale based on the multiplicity
 	Matrix3 rAxes = box->reciprocalAxes();
@@ -188,11 +187,12 @@ bool BraggModule::calculateBraggTerms(ProcessPool& procPool, Configuration* cfg,
 	timer.zero();
 	timer.start();
 	Vec3<double> v, rI;
-	for (n = 0; n<nAtoms; ++n)
+	n=0;
+	for (auto& atom : cfg -> atoms())
 	{
 		// Calculate reciprocal lattice atom coordinates
 		// TODO CHECK Test this in a non-cubic system!
-		v = atoms[n]->r();
+		v = atom.r();
 		rI.x = v.x*rAxes[0] + v.y*rAxes[1] + v.z*rAxes[2];
 		rI.y = v.x*rAxes[3] + v.y*rAxes[4] + v.z*rAxes[5];
 		rI.z = v.x*rAxes[6] + v.y*rAxes[7] + v.z*rAxes[8];
@@ -243,6 +243,7 @@ bool BraggModule::calculateBraggTerms(ProcessPool& procPool, Configuration* cfg,
 			sinTermsL[m] = cosTermsL[1] * sinTermsL[m-1] + sinTermsL[1] * cosTermsL[m-1];
 			sinTermsL[-m] = -sinTermsL[m];
 		}
+		++n;
 	}
 	timer.stop();
 	Messenger::print("Calculated atomic cos/sin terms (%s elapsed)\n", timer.totalTimeString());
@@ -257,10 +258,11 @@ bool BraggModule::calculateBraggTerms(ProcessPool& procPool, Configuration* cfg,
 
 	// Loop over atoms
 	timer.start();
-	for (n = 0; n<nAtoms; ++n)
+	n=0;
+	for (auto& atom : cfg->atoms())
 	{
 		// Grab localTypeIndex and array pointers for this atom
-		localTypeIndex = atoms[n]->localTypeIndex();
+		localTypeIndex = atom.localTypeIndex();
 		cosTermsH = braggAtomVectorXCos.pointerAt(n, 0);
 		cosTermsK = braggAtomVectorYCos.pointerAt(n, 0);
 		cosTermsL = braggAtomVectorZCos.pointerAt(n, 0);
@@ -290,6 +292,7 @@ bool BraggModule::calculateBraggTerms(ProcessPool& procPool, Configuration* cfg,
 			kvec.addCosTerm(localTypeIndex, hklCos);
 			kvec.addSinTerm(localTypeIndex, hklSin);
 		}
+		++n;
 	}
 	timer.stop();
 	Messenger::print("Calculated atomic contributions to k-vectors (%s elapsed)\n", timer.totalTimeString());
