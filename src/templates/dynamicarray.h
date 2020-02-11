@@ -120,44 +120,28 @@ template <class T> class DynamicArrayIterator
 {
 	public:
 	// Constructor
-	DynamicArrayIterator<T>(DynamicArray<T>& target) : arrayTarget_(target)
+	DynamicArrayIterator<T>(DynamicArray<T>& target)
 	{
-		if (arrayTarget_.nItems() == 0)
-		{
-			index_ = 0;
-			pointer_ = NULL;
-			result_ = NULL;
-		}
-		else
-		{
-			index_ = 0;
-			pointer_ = &arrayTarget_.array()[0];
-		}
+		index_ = 0;
+		it_ = target.begin();
+		end_ = target.end();
 	}
 
 	private:
 	// Target DynamicArray
-	DynamicArray<T>& arrayTarget_;
+	typename std::deque<T>::iterator it_;
+	typename std::deque<T>::iterator end_;
 	// Current index for iterator
 	int index_;
-	// Pointer to current item
-	T** pointer_;
-	// Result to return
-	T* result_;
 
 	public:
 	// Iterate
 	T* iterate()
 	{
-		if (index_ < arrayTarget_.nItems())
-		{
-			result_ = (*pointer_);
-			++pointer_;
-			++index_;
-		}
-		else return NULL;
-		
-		return result_;
+		if (it_ == end_) return nullptr;
+		++index_;
+		++it_;
+		return &*it_;
 	}
 	// Return index of current item
 	int currentIndex() const
