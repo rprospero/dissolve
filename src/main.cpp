@@ -44,7 +44,7 @@ int main(int argc, char **argv)
 	Dissolve dissolve(coreData);
 
 	// Parse CLI options...
-	CharString inputFile, redirectFileName, restartDataFile, outputInputFile;
+	string inputFile, redirectFileName, restartDataFile, outputInputFile;
 	int nIterations = 5;
 	bool ignoreRestart = false;
 
@@ -63,16 +63,16 @@ int main(int argc, char **argv)
 	  ("restart,r", po::value<int>()->value_name("FREQUENCY"), "Set restart file frequency (default = 10)")
 	  ("single,s", "Perform single main loop iteration and then quit")
 	  ("initial-restart-file,t",
-	   po::value<string>()->value_name("RESTART_FILE"),
+	   po::value<string>(&restartDataFile)->value_name("RESTART_FILE"),
 	   "Load restart data from specified file (but still write to standard restart file)")
 	  ("verbose,v", po::bool_switch()->notifier(Messenger::setVerbose),
 	   "Verbose mode - be a little more descriptive throughout")
-	  ("write,w", po::value<string>()->value_name("OUTPUT_FILE"), "Write input to specified file after reading it, and then quit")
+	  ("write,w", po::value<string>(&outputInputFile)->value_name("OUTPUT_FILE"), "Write input to specified file after reading it, and then quit")
 	  ("no-write,x", "Don't write restart or heartbeat files (but still read in the restart file if present)");
 
 	po::options_description hidden("Hidden Options");
 	hidden.add_options()
-	  ("input-file", po::value<string>()->value_name("INPUT_FILE"),
+	  ("input-file", po::value<string>(&inputFile)->value_name("INPUT_FILE"),
 	   "The file with the ");
 
 	po::positional_options_description positional;
@@ -97,9 +97,8 @@ int main(int argc, char **argv)
 	  Messenger::print("System input and set-up will be checked, then Dissolve will exit.\n");
 	}
 	if(vm.count("output-file")) {
-	  redirectFileName.sprintf("%s.%i", vm["output-file"].as<string>(),
-				   ProcessPool::worldRank());
-	  Messenger::enableRedirect(redirectFileName.get());
+	  redirectFileName = vm["output-file"].as<string>() + "." + std::to_string(ProcessPool::worldRank());
+	  Messenger::enableRedirect(redirectFileName.c_str());
 	}
 	if(vm.count("iterations")) {
 	  Messenger::print("%i main-loop iterations will be performed, then Dissolve will exit.\n", nIterations);
@@ -115,23 +114,18 @@ int main(int argc, char **argv)
 	  nIterations = 1;
 	}
 	if(vm.count("initial-restart-file")) {
-	  restartDataFile = vm["initial-restart-file"].as<string>().c_str();
-	  Messenger::print("Restart data will be loaded from '%s'.\n", restartDataFile.get());
+	  Messenger::print("Restart data will be loaded from '%s'.\n", restartDataFile.c_str());
 	}
 	if(vm.count("verbose")) {
 	  Messenger::printVerbose("Verbose mode enabled.\n");
 	}
 	if(vm.count("write")) {
-	  outputInputFile = vm["write"].as<string>().c_str();
-	  Messenger::print("Input file will be written to '%s' once read.\n", outputInputFile.get());
+	  Messenger::print("Input file will be written to '%s' once read.\n", outputInputFile.c_str());
 	}
 	if(vm.count("no-write")) {
 	  dissolve.setRestartFileFrequency(0);
 	  dissolve.setWriteHeartBeat(false);
 	  Messenger::print("No restart or heartbeat files will be written.\n");
-	}
-	if(vm.count("input-file")) {
-	  inputFile = vm["input-file"].as<string>().c_str();
 	}
 
 	// Print GPL license information
@@ -156,14 +150,14 @@ int main(int argc, char **argv)
 
 	// Load input file - if no input file was provided, exit here
 	Messenger::banner("Parse Input File");
-	if (inputFile.isEmpty())
+	if (inputFile.empty())
 	{
 		Messenger::print("No input file provided. Nothing more to do.\n");
 		ProcessPool::finalise();
 		Messenger::ceaseRedirect();
 		return 1;
 	}
-	if (!dissolve.loadInput(inputFile))
+        if (!dissolve.loadInput(inputFile.c_str()))
 	{
 		ProcessPool::finalise();
 		Messenger::ceaseRedirect();
@@ -171,18 +165,18 @@ int main(int argc, char **argv)
 	}
 
 	// Save input file to new output filename and quit?
-	if (!outputInputFile.isEmpty())
+	if (!outputInputFile.empty())
 	{
-		Messenger::print("Saving input file to '%s'...\n", outputInputFile.get());
+		Messenger::print("Saving input file to '%s'...\n", outputInputFile.c_str());
 		bool result;
 		if (dissolve.worldPool().isMaster())
 		{
-			result = dissolve.saveInput(outputInputFile);
+		        result = dissolve.saveInput(outputInputFile.c_str());
 			if (result) dissolve.worldPool().decideTrue();
 			else dissolve.worldPool().decideFalse();
 		}
 		else result = dissolve.worldPool().decision();
-		if (!result) Messenger::error("Failed to save input file to '%s'.\n", outputInputFile.get());
+		if (!result) Messenger::error("Failed to save input file to '%s'.\n", outputInputFile.c_str());
 		ProcessPool::finalise();
 		Messenger::ceaseRedirect();
 		return result ? 0 : 1;
@@ -193,14 +187,14 @@ int main(int argc, char **argv)
 	if (!ignoreRestart)
 	{
 		// We may have been provided the name of a restart file to read in...
-		CharString restartFile;
-		if (restartDataFile.isEmpty()) restartFile.sprintf("%s.restart", inputFile.get());
+		string restartFile;
+		if (restartDataFile.empty()) restartFile = inputFile + ".restart";
 		else restartFile = restartDataFile;
 		
-		if (DissolveSys::fileExists(restartFile))
+		if (DissolveSys::fileExists(restartFile.c_str()))
 		{
-			Messenger::print("Restart file '%s' exists and will be loaded.\n", restartFile.get());
-			if (!dissolve.loadRestart(restartFile.get()))
+			Messenger::print("Restart file '%s' exists and will be loaded.\n", restartFile.c_str());
+			if (!dissolve.loadRestart(restartFile.c_str()))
 			{
 				Messenger::error("Restart file contained errors.\n");
 				ProcessPool::finalise();
@@ -209,9 +203,9 @@ int main(int argc, char **argv)
 			}
 
 			// Reset the restart filename to be the standard one
-			dissolve.setRestartFilename(CharString("%s.restart", inputFile.get()));
+			dissolve.setRestartFilename(CharString("%s.restart", inputFile.c_str()));
 		}
-		else Messenger::print("Restart file '%s' does not exist.\n", restartFile.get());
+		else Messenger::print("Restart file '%s' does not exist.\n", restartFile.c_str());
 	}
 	else Messenger::print("Restart file (if it exists) will be ignored.\n");
 
