@@ -26,6 +26,10 @@ CMAKE_POLICY(SET CMP0020 NEW)
 # Request C++11 Standard Support (Required for Qt 5.7 and certain other parts of the code)
 set(CMAKE_CXX_STANDARD 11)
 
+find_package(Boost REQUIRED program_options)
+include_directories( ${Boost_INCLUDE_DIR} )
+message("Boost lib: ${Boost_LIBRARIES}")
+
 # Catch defines
 if(PARALLEL)
   ADD_DEFINITIONS("-DPARALLEL")
@@ -237,6 +241,8 @@ target_link_libraries( ${target_name}
   ${WHOLE_ARCHIVE_FLAG}
 
   ${BASIC_LINK_LIBS}
+
+  ${Boost_LIBRARIES}
 
   # Module 'nogui' libs
   analysemodulenogui

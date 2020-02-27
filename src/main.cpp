@@ -26,6 +26,11 @@
 #include <time.h>
 #include <ctime>
 #include <stdlib.h>
+#include <iostream>
+
+#include <boost/program_options.hpp>
+
+namespace po = boost::program_options;
 
 int main(int argc, char **argv)
 {
@@ -39,152 +44,94 @@ int main(int argc, char **argv)
 	Dissolve dissolve(coreData);
 
 	// Parse CLI options...
-	int n = 1;
 	CharString inputFile, redirectFileName, restartDataFile, outputInputFile;
 	int nIterations = 5;
 	bool ignoreRestart = false;
-	while (n < argc)
-	{
-		if (argv[n][0] == '-')
-		{
-			// Command-line switch
-			switch (argv[n][1])
-			{
-				case ('h'):
-#ifdef PARALLEL
-					printf("Dissolve PARALLEL version %s, Copyright (C) 2012-2020 T. Youngs.\n\n", DISSOLVEVERSION);
-#else
-					printf("Dissolve SERIAL version %s, Copyright (C) 2012-2020 T. Youngs.\n\n", DISSOLVEVERSION);
-#endif
-					printf("Recognised CLI options are:\n\n");
-					printf("\t-c\t\tCheck input and set-up only - don't perform any main-loop iterations\n");
-					printf("\t-h\t\tPrint what you're reading now\n");
-					printf("\t-f <file>\tRedirect output from all process to 'file.N', where N is the process rank\n");
-					printf("\t-i\t\tIgnore restart file\n");
-					printf("\t-m\t\tRestrict output to be from the master process alone (parallel code only)\n");
-					printf("\t-n <iterations>\tRun for the specified number of main loop iterations, then stop\n");
-					printf("\t-q\t\tQuiet mode - print no output\n");
-					printf("\t-r <N>\tSet restart file frequency (default = 10)\n");
-					printf("\t-s\t\tPerform single main loop iteration and then quit\n");
-					printf("\t-t <file>\tLoad restart data from specified file (but still write to standard restart file)\n");
-					printf("\t-v\t\tVerbose mode - be a little more descriptive throughout\n");
-					printf("\t-w <file>\tWrite input to specified file after reading it, and then quit\n");
-					printf("\t-x\t\tDon't write restart or heartbeat files (but still read in the restart file if present)\n");
-					ProcessPool::finalise();
-					Messenger::ceaseRedirect();
-					return 1;
-					break;
-				case ('c'):
-					nIterations = 0;
-					Messenger::print("System input and set-up will be checked, then Dissolve will exit.\n");
-					break;
-				case ('f'):
-					// Next argument is filename
-					++n;
-					if (n == argc)
-					{
-						Messenger::error("Expected redirection filename.\n");
-						Messenger::ceaseRedirect();
-						return 1;
-					}
-					redirectFileName.sprintf("%s.%i", argv[n], ProcessPool::worldRank());
-					Messenger::enableRedirect(redirectFileName.get());
-					break;
-				case ('i'):
-					Messenger::print("Restart file (if it exists) will be ignored.\n");
-					ignoreRestart = true;
-					break;
-				case ('m'):
-					Messenger::setMasterOnly(true);
-					break;
-				case ('n'):
-					++n;
-					if (n == argc)
-					{
-						Messenger::error("Expected number of iterations.\n");
-						Messenger::ceaseRedirect();
-						return 1;
-					}
-					nIterations = atoi(argv[n]);
-					Messenger::print("%i main-loop iterations will be performed, then Dissolve will exit.\n", nIterations);
-					break;
-				case ('q'):
-					Messenger::setQuiet(true);
-					break;
-				case ('r'):
-					// Next argument is integer restart file frequency
-					++n;
-					if (n == argc)
-					{
-						Messenger::error("Expected restart file frequency.\n");
-						Messenger::ceaseRedirect();
-						return 1;
-					}
-					dissolve.setRestartFileFrequency(atoi(argv[n]));
-					if (dissolve.restartFileFrequency() <= 0) Messenger::print("Restart file will not be written.\n");
-					else if (dissolve.restartFileFrequency() == 1) Messenger::print("Restart file will be written after every iteration.\n", dissolve.restartFileFrequency());
-					else Messenger::print("Restart file will be written after every %i iterations.\n", dissolve.restartFileFrequency());
-					break;
-				case ('s'):
-					Messenger::print("Single main-loop iteration will be performed, then Dissolve will exit.\n");
-					nIterations = 1;
-					break;
-				case ('t'):
-					// Next argument is filename
-					++n;
-					if (n == argc)
-					{
-						Messenger::error("Expected restart data filename.\n");
-						Messenger::ceaseRedirect();
-						return 1;
-					}
-					restartDataFile = argv[n];
-					Messenger::print("Restart data will be loaded from '%s'.\n", restartDataFile.get());
-					break;
-				case ('v'):
-					Messenger::setVerbose(true);
-					Messenger::printVerbose("Verbose mode enabled.\n");
-					break;
-				case ('w'):
-					// Next argument is filename
-					++n;
-					if (n == argc)
-					{
-						Messenger::error("Expected input filename to write.\n");
-						Messenger::ceaseRedirect();
-						return 1;
-					}
-					outputInputFile = argv[n];
-					Messenger::print("Input file will be written to '%s' once read.\n", outputInputFile.get());
-					break;
-				case ('x'):
-					dissolve.setRestartFileFrequency(0);
-					dissolve.setWriteHeartBeat(false);
-					Messenger::print("No restart or heartbeat files will be written.\n");
-					break;
-				default:
-					printf("Unrecognised command-line switch '%s'.\n", argv[n]);
-					printf("Run with -h to see available switches.\n");
-					Messenger::ceaseRedirect();
-					ProcessPool::finalise();
-					return 1;
-					break;
-			}
-		}
-		else
-		{
-			// Input filename?
-			if (inputFile.isEmpty()) inputFile = argv[n];
-			else
-			{
-				printf("Error: More than one input file specified?\n");
-				ProcessPool::finalise();
-				Messenger::ceaseRedirect();
-				return 1;
-			}
-		}
 
-		++n;
+	//
+	po::options_description desc("Allowed Options");
+	desc.add_options()
+	  ("check,c", "Check input and set-up only - don't perform any main-loop iterations")
+	  ("help,h", "Print what you're reading now")
+	  ("output-file,f", po::value<string>()->value_name("OUTPUT_FILE"), "Redirect output from all process to 'OUTPUT_FILE.N', where N is the process rank")
+	  ("ignore,i", po::bool_switch(&ignoreRestart), "Ignore restart file")
+	  ("master,m", po::bool_switch()->notifier(Messenger::setMasterOnly),
+	   "Restrict output to be from the master process alone (parallel code only)")
+	  ("iterations,n", po::value<int>(&nIterations)->value_name("LOOPS"), "Run for the specified number of main loop iterations, then stop")
+	  ("quiet,q", po::bool_switch()->notifier(Messenger::setQuiet),
+	   "Quiet mode - print no output")
+	  ("restart,r", po::value<int>()->value_name("FREQUENCY"), "Set restart file frequency (default = 10)")
+	  ("single,s", "Perform single main loop iteration and then quit")
+	  ("initial-restart-file,t",
+	   po::value<string>()->value_name("RESTART_FILE"),
+	   "Load restart data from specified file (but still write to standard restart file)")
+	  ("verbose,v", po::bool_switch()->notifier(Messenger::setVerbose),
+	   "Verbose mode - be a little more descriptive throughout")
+	  ("write,w", po::value<string>()->value_name("OUTPUT_FILE"), "Write input to specified file after reading it, and then quit")
+	  ("no-write,x", "Don't write restart or heartbeat files (but still read in the restart file if present)");
+
+	po::options_description hidden("Hidden Options");
+	hidden.add_options()
+	  ("input-file", po::value<string>()->value_name("INPUT_FILE"),
+	   "The file with the ");
+
+	po::positional_options_description positional;
+	positional.add("input-file", 1);
+
+	po::options_description cmdline_options;
+	cmdline_options.add(desc).add(hidden);
+
+	po::variables_map vm;
+	po::store(po::command_line_parser(argc, argv).options(cmdline_options).positional(positional).run(), vm);
+	po::notify(vm);
+
+	if(vm.count("help")) {
+	  std::cout << argv[0] << " INPUT" << std::endl;
+	  std::cout << desc << std::endl;
+	  ProcessPool::finalise();
+	  Messenger::ceaseRedirect();
+	  return 1;
+	}
+	if(vm.count("check")) {
+	  nIterations = 0;
+	  Messenger::print("System input and set-up will be checked, then Dissolve will exit.\n");
+	}
+	if(vm.count("output-file")) {
+	  redirectFileName.sprintf("%s.%i", vm["output-file"].as<string>(),
+				   ProcessPool::worldRank());
+	  Messenger::enableRedirect(redirectFileName.get());
+	}
+	if(vm.count("iterations")) {
+	  Messenger::print("%i main-loop iterations will be performed, then Dissolve will exit.\n", nIterations);
+	}
+	if(vm.count("restart")) {
+	  dissolve.setRestartFileFrequency(vm["restart"].as<int>());
+	  if (dissolve.restartFileFrequency() <= 0) Messenger::print("Restart file will not be written.\n");
+	  else if (dissolve.restartFileFrequency() == 1) Messenger::print("Restart file will be written after every iteration.\n", dissolve.restartFileFrequency());
+	  else Messenger::print("Restart file will be written after every %i iterations.\n", dissolve.restartFileFrequency());
+	}
+	if(vm.count("single")) {
+	  Messenger::print("Single main-loop iteration will be performed, then Dissolve will exit.\n");
+	  nIterations = 1;
+	}
+	if(vm.count("initial-restart-file")) {
+	  restartDataFile = vm["initial-restart-file"].as<string>().c_str();
+	  Messenger::print("Restart data will be loaded from '%s'.\n", restartDataFile.get());
+	}
+	if(vm.count("verbose")) {
+	  Messenger::printVerbose("Verbose mode enabled.\n");
+	}
+	if(vm.count("write")) {
+	  outputInputFile = vm["write"].as<string>().c_str();
+	  Messenger::print("Input file will be written to '%s' once read.\n", outputInputFile.get());
+	}
+	if(vm.count("no-write")) {
+	  dissolve.setRestartFileFrequency(0);
+	  dissolve.setWriteHeartBeat(false);
+	  Messenger::print("No restart or heartbeat files will be written.\n");
+	}
+	if(vm.count("input-file")) {
+	  inputFile = vm["input-file"].as<string>().c_str();
 	}
 
 	// Print GPL license information
