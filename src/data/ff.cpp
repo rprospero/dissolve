@@ -339,49 +339,46 @@ bool Forcefield::assignIntramolecular(Species* sp, bool useExistingTypes, bool g
 	}
 
 	// Assign bond terms
-	DynamicArrayIterator<SpeciesBond> bondIterator(sp->bonds());
-	while (SpeciesBond* bond = bondIterator.iterate())
+	for (auto& bond : sp->bonds())
 	{
-		ForcefieldAtomType* i = atomTypes[bond->indexI()];
-		ForcefieldAtomType* j = atomTypes[bond->indexJ()];
+		ForcefieldAtomType* i = atomTypes[bond.indexI()];
+		ForcefieldAtomType* j = atomTypes[bond.indexJ()];
 
 		ForcefieldBondTerm* term = bondTerm(i, j);
-		if (!term) return Messenger::error("Failed to locate parameters for bond %i-%i (%s-%s).\n", bond->indexI()+1, bond->indexJ()+1, i->equivalentName(), j->equivalentName());
+		if (!term) return Messenger::error("Failed to locate parameters for bond %i-%i (%s-%s).\n", bond.indexI()+1, bond.indexJ()+1, i->equivalentName(), j->equivalentName());
 
 		// Functional form is Harmonic : U = 0.5 * k * (r - eq)**2
-		bond->setForm(term->form());
-		bond->setParameters(term->parameters());
+		bond.setForm(term->form());
+		bond.setParameters(term->parameters());
 	}
 
 	// Generate angle parameters
-	DynamicArrayIterator<SpeciesAngle> angleIterator(sp->angles());
-	while (SpeciesAngle* angle = angleIterator.iterate())
+	for (auto& angle : sp->angles())
 	{
-		ForcefieldAtomType* i = atomTypes[angle->indexI()];
-		ForcefieldAtomType* j = atomTypes[angle->indexJ()];
-		ForcefieldAtomType* k = atomTypes[angle->indexK()];
+		ForcefieldAtomType* i = atomTypes[angle.indexI()];
+		ForcefieldAtomType* j = atomTypes[angle.indexJ()];
+		ForcefieldAtomType* k = atomTypes[angle.indexK()];
 
 		ForcefieldAngleTerm* term = angleTerm(i, j, k);
-		if (!term) return Messenger::error("Failed to locate parameters for angle %i-%i-%i (%s-%s-%s).\n", angle->indexI()+1, angle->indexJ()+1, angle->indexK()+1, i->equivalentName(), j->equivalentName(), k->equivalentName());
+		if (!term) return Messenger::error("Failed to locate parameters for angle %i-%i-%i (%s-%s-%s).\n", angle.indexI()+1, angle.indexJ()+1, angle.indexK()+1, i->equivalentName(), j->equivalentName(), k->equivalentName());
 
-		angle->setForm(term->form());
-		angle->setParameters(term->parameters());
+		angle.setForm(term->form());
+		angle.setParameters(term->parameters());
 	}
 
 	// Generate torsion parameters
-	DynamicArrayIterator<SpeciesTorsion> torsionIterator(sp->torsions());
-	while (SpeciesTorsion* torsion = torsionIterator.iterate())
+	for (auto& torsion : sp->torsions())
 	{
-		ForcefieldAtomType* i = atomTypes[torsion->indexI()];
-		ForcefieldAtomType* j = atomTypes[torsion->indexJ()];
-		ForcefieldAtomType* k = atomTypes[torsion->indexK()];
-		ForcefieldAtomType* l = atomTypes[torsion->indexL()];
+		ForcefieldAtomType* i = atomTypes[torsion.indexI()];
+		ForcefieldAtomType* j = atomTypes[torsion.indexJ()];
+		ForcefieldAtomType* k = atomTypes[torsion.indexK()];
+		ForcefieldAtomType* l = atomTypes[torsion.indexL()];
 
 		ForcefieldTorsionTerm* term = torsionTerm(i, j, k, l);
-		if (!term) return Messenger::error("Failed to locate parameters for torsion %i-%i-%i-%i (%s-%s-%s-%s).\n", torsion->indexI()+1, torsion->indexJ()+1, torsion->indexK()+1, torsion->indexL()+1, i->equivalentName(), j->equivalentName(), k->equivalentName(), l->equivalentName());
+		if (!term) return Messenger::error("Failed to locate parameters for torsion %i-%i-%i-%i (%s-%s-%s-%s).\n", torsion.indexI()+1, torsion.indexJ()+1, torsion.indexK()+1, torsion.indexL()+1, i->equivalentName(), j->equivalentName(), k->equivalentName(), l->equivalentName());
 
-		torsion->setForm(term->form());
-		torsion->setParameters(term->parameters());
+		torsion.setForm(term->form());
+		torsion.setParameters(term->parameters());
 	}
 
 	// Generate improper terms
