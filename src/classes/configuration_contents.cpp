@@ -192,22 +192,23 @@ Molecule* Configuration::molecule(int n)
 }
 
 // Add new Atom to Configuration, with Molecule parent specified
-Atom* Configuration::addAtom(const SpeciesAtom* sourceAtom, Molecule* molecule, Vec3<double> r)
+Atom& Configuration::addAtom(const SpeciesAtom* sourceAtom, Molecule* molecule, Vec3<double> r)
 {
 	// Create new Atom object and set its source pointer
-	Atom* newAtom = atoms_.add();
-	newAtom->setSpeciesAtom(sourceAtom);
+	atoms_.emplace_back();
+	auto& newAtom = atoms_.back();
+	newAtom.setSpeciesAtom(sourceAtom);
 
 	// Register the Atom in the specified Molecule (this will also set the Molecule pointer in the Atom)
-	molecule->addAtom(newAtom);
+	molecule->addAtom(&newAtom);
 
 	// Set the position
-	newAtom->setCoordinates(r);
+	newAtom.setCoordinates(r);
 
 	// Update our typeIndex (non-isotopic) and set local and master type indices
 	AtomTypeData* atd = usedAtomTypes_.add(sourceAtom->atomType(), 1);
-	newAtom->setLocalTypeIndex(atd->listIndex());
-	newAtom->setMasterTypeIndex(sourceAtom->atomType()->index());
+	newAtom.setLocalTypeIndex(atd->listIndex());
+	newAtom.setMasterTypeIndex(sourceAtom->atomType()->index());
 
 	return newAtom;
 }
@@ -215,28 +216,28 @@ Atom* Configuration::addAtom(const SpeciesAtom* sourceAtom, Molecule* molecule, 
 // Return number of Atoms in Configuration
 int Configuration::nAtoms() const
 {
-	return atoms_.nItems();
+	return atoms_.size();
 }
 
 // Return Atom array
-DynamicArray<Atom>& Configuration::atoms()
+std::deque<Atom>& Configuration::atoms()
 {
 	return atoms_;
 }
 
 // Return Atom array (const)
-const DynamicArray<Atom>& Configuration::constAtoms() const
+const std::deque<Atom>& Configuration::constAtoms() const
 {
 	return atoms_;
 }
 
 // Return nth atom
-Atom* Configuration::atom(int n)
+Atom& Configuration::atom(int n)
 {
 #ifdef CHECKS
-	if ((n < 0) || (n >= atoms_.nItems()))
+	if ((n < 0) || (n >= atoms_.size()))
 	{
-		Messenger::print("OUT_OF_RANGE - Atom index %i passed to Configuration::atom() is out of range (nAtoms = %i).\n", n, atoms_.nItems());
+		Messenger::print("OUT_OF_RANGE - Atom index %i passed to Configuration::atom() is out of range (nAtoms = %i).\n", n, atoms_.size());
 		return NULL;
 	}
 #endif

@@ -29,23 +29,24 @@
 void Configuration::updateCellContents()
 {
 	// Fold the coordinates of each atom into the box, and then check its Cell location, moving if necessary.
-	Atom** atoms = atoms_.array();
-	for (int n = 0; n < atoms_.nItems(); ++n) updateCellLocation(atoms[n]);
+  for(auto& atom : atoms_) {
+    updateCellLocation(atom);
+  }
 }
 
 // Update Cell location of specified Atom
-void Configuration::updateCellLocation(Atom* i)
+void Configuration::updateCellLocation(Atom& i)
 {
 	// Fold Atom coordinates into Box
-	i->setCoordinates(box_->fold(i->r()));
+	i.setCoordinates(box_->fold(i.r()));
 
 	// Determine new Cell position
-	Cell* cell = cells_.cell(i->r());
+	Cell* cell = cells_.cell(i.r());
 
 	// Need to move?
-	if (cell != i->cell())
+	if (cell != i.cell())
 	{
-		if (i->cell()) i->cell()->removeAtom(i);
+		if (i.cell()) i.cell()->removeAtom(i);
 		cell->addAtom(i);
 	}
 }

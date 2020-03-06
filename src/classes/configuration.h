@@ -22,6 +22,7 @@
 #ifndef DISSOLVE_CONFIGURATION_H
 #define DISSOLVE_CONFIGURATION_H
 
+#include <deque>
 #include "classes/atom.h"
 #include "classes/atomtypelist.h"
 #include "classes/cellarray.h"
@@ -115,7 +116,7 @@ class Configuration : public ListItem<Configuration>, public ObjectStore<Configu
 	// Array of Molecules
 	DynamicArray<Molecule> molecules_;
 	// Array of Atoms
-	DynamicArray<Atom> atoms_;
+	std::deque<Atom> atoms_;
 
 	public:
 	// Empty contents of Configuration, leaving core definitions intact
@@ -157,15 +158,15 @@ class Configuration : public ListItem<Configuration>, public ObjectStore<Configu
 	// Return nth Molecule
 	Molecule* molecule(int n);
 	// Add new Atom to Configuration
-	Atom* addAtom(const SpeciesAtom* sourceAtom, Molecule* molecule, Vec3<double> r = Vec3<double>());
+	Atom& addAtom(const SpeciesAtom* sourceAtom, Molecule* molecule, Vec3<double> r = Vec3<double>());
 	// Return number of Atoms in Configuration
 	int nAtoms() const;
 	// Return Atom array
-	DynamicArray<Atom>& atoms();
+	std::deque<Atom>& atoms();
 	// Return Atom array (const)
-	const DynamicArray<Atom>& constAtoms() const;
+	const std::deque<Atom>& constAtoms() const;
 	// Return nth Atom
-	Atom* atom(int n);
+	Atom& atom(int n);
 	// Scale geometric centres of molecules within box
 	void scaleMoleculeCentres(double factor);
 
@@ -217,7 +218,7 @@ class Configuration : public ListItem<Configuration>, public ObjectStore<Configu
 	// Update Cell contents
 	void updateCellContents();
 	// Update Cell location of specified Atom
-	void updateCellLocation(Atom* i);
+	void updateCellLocation(Atom& i);
 	// Update Cell location of specified Molecule
 	void updateCellLocation(Molecule* mol);
 	// Update Cell location of specified Atom indices (in array)
