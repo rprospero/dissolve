@@ -1,0 +1,59 @@
+#!/bin/bash -l
+
+test=$1
+SERIALBINARY=$2
+
+
+# Strip trailing directory delimiter if present
+test=`echo $test | sed -e 's/\(.*\)\//\1/g'`
+echo "Test directory: " $text
+
+# Descend into test directory, and print out first two lines from README (containing description of test)
+cd $test
+if [ -e README ]
+then
+    head -n2 README
+else
+    echo "<<< No README file in this directory >>>"
+fi
+
+# Loop over all input files (*.txt)
+for input in *.txt
+do
+	# Are there specific arguments for the test?
+	if [ -e ${input%.txt}.args ]
+	then
+		ARGS="$COMMONARGS $(<${input%.txt}.args)"
+	else
+		ARGS="$COMMONARGS"
+	fi
+
+	# Set output filename path
+	output=../${test}.${input%.txt}.out
+	echo -e "\nRunning test \"${input}\" (serial)..."
+	echo "Arguments are: $ARGS"
+	../$SERIALBINARY $ARGS $input > $output
+
+	if [ "$?" -eq "0" ]
+	then
+		echo "Success!"
+	else
+		echo "*****************"
+		echo "*  TEST FAILED  *"
+		echo "*****************"
+		echo ""
+		echo "Obvious errors (if any) from output file '$output' are:"
+		echo ""
+		grep "ERROR\|NOT OK" $output
+
+
+		# Exit early?
+		cd ../
+		exit 1
+	fi
+
+done
+
+# Done, so move up to base test directory
+cd ../
+echo ""
