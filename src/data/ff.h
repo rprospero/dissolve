@@ -32,12 +32,11 @@
 #include "data/ffimproperterm.h"
 #include "data/ffparameters.h"
 #include "data/fftorsionterm.h"
+#include "templates/optional.h"
 #include <algorithm>
 #include <functional>
 #include <tuple>
 #include <vector>
-
-template <class T> using optional = std::tuple<T, bool>;
 
 // Forward Declarations
 class CoreData;

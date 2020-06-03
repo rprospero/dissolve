@@ -24,9 +24,8 @@
 #include "base/enumoptions.h"
 #include "data/elements.h"
 #include "data/formfactordata.h"
+#include "templates/optional.h"
 #include <tuple>
-
-template <class T> using optional = std::tuple<T, bool>;
 
 // X-Ray Form Factors
 namespace XRayFormFactors

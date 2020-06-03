@@ -24,14 +24,13 @@
 #include "classes/atomtypedata.h"
 #include "classes/coredata.h"
 #include "genericitems/base.h"
+#include "templates/optional.h"
 #include <tuple>
 #include <vector>
 
 // Forward Declarations
 class AtomType;
 class Isotope;
-
-template <class T> using optional = std::tuple<T, bool>;
 
 // AtomTypeList
 class AtomTypeList : public GenericItemBase

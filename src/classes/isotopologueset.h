@@ -23,9 +23,8 @@
 
 #include "classes/isotopologues.h"
 #include "genericitems/base.h"
+#include "templates/optional.h"
 #include <vector>
-
-template <class T> using optional = std::tuple<T, bool>;
 
 // Forward Declarations
 class Configuration;

@@ -29,6 +29,7 @@
 #include "data/isotopes.h"
 #include "templates/broadcastlist.h"
 #include "templates/broadcastvector.h"
+#include "templates/optional.h"
 #include <algorithm>
 #include <string.h>
 
