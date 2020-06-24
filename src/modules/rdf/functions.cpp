@@ -434,12 +434,12 @@ bool RDFModule::calculateUnweightedGR(ProcessPool &procPool, Configuration *cfg,
         (intraBroadening.function() == PairBroadeningFunction::GaussianElementPairFunction))
     {
         auto &types = unweightedgr.atomTypes();
-        for_each_pair(types.begin(), types.end(), [&](int i, const AtomTypeData &typeI, int j, const AtomTypeData &typeJ) {
+        for_each_pair_parallel(types.begin(), types.end(), [&](const AtomTypeData &typeI, const AtomTypeData &typeJ) {
             // Set up the broadening function for these AtomTypes
             BroadeningFunction function = intraBroadening.broadeningFunction(typeI.atomType(), typeJ.atomType());
 
             // Convolute the bound partial with the broadening function
-            Filters::convolve(unweightedgr.boundPartial(i, j), function);
+            Filters::convolve(unweightedgr.boundPartial(typeI.atomType().index(), typeJ.atomType().index()), function);
         });
     }
     else if (intraBroadening.function() == PairBroadeningFunction::FrequencyFunction)
@@ -467,8 +467,8 @@ bool RDFModule::calculateUnweightedGR(ProcessPool &procPool, Configuration *cfg,
 
         // Make sure bound g(r) are zeroed
         auto &types = broadgr.atomTypes();
-        for_each_pair(types.begin(), types.end(), [&](int i, const AtomTypeData &typeI, int j, const AtomTypeData &typeJ) {
-            broadgr.boundPartial(i, j).values() = 0.0;
+        for_each_pair_parallel(types.begin(), types.end(), [&](const AtomTypeData &typeI, const AtomTypeData &typeJ) {
+							     broadgr.boundPartial(typeI.atomType().index(), typeJ.atomType().index()).values() = 0.0;
         });
 
         // 		// Assemble lists of unique intramolecular terms (in respect of their parameters)
@@ -631,21 +631,27 @@ bool RDFModule::calculateUnweightedGR(ProcessPool &procPool, Configuration *cfg,
         // TODO FIXME There is serious limitation for Frequency-broadening which means that it cannot be used with RDF
         // averaging (as we are calculating the intramolecular RDFs afresh).
 
-        for_each_pair(types.begin(), types.end(), [&](int i, const AtomTypeData &typeI, int j, const AtomTypeData &typeJ) {
-            unweightedgr.boundPartial(i, j) += broadgr.boundPartial(i, j);
+        for_each_pair_parallel(types.begin(), types.end(), [&](const AtomTypeData &typeI, const AtomTypeData &typeJ) {
+	    int i = typeI.atomType().index();
+	    int j = typeJ.atomType().index();
+	    unweightedgr.boundPartial(i, j) += broadgr.boundPartial(i, j);
         });
     }
 
     // Add broadened bound partials back in to full partials
     auto &types = unweightedgr.atomTypes();
-    for_each_pair(types.begin(), types.end(), [&](int i, const AtomTypeData &typeI, int j, const AtomTypeData &typeJ) {
+    for_each_pair_parallel(types.begin(), types.end(), [&](const AtomTypeData &typeI, const AtomTypeData &typeJ) {
+	int i = typeI.atomType().index();
+	int j = typeJ.atomType().index();
         unweightedgr.partial(i, j) += unweightedgr.constBoundPartial(i, j);
     });
 
     // Apply smoothing if requested
     if (smoothing > 0)
     {
-        for_each_pair(types.begin(), types.end(), [&](int i, const AtomTypeData &typeI, int j, const AtomTypeData &typeJ) {
+        for_each_pair_parallel(types.begin(), types.end(), [&](const AtomTypeData &typeI, const AtomTypeData &typeJ) {
+	    int i = typeI.atomType().index();
+	    int j = typeJ.atomType().index();
             Filters::movingAverage(unweightedgr.partial(i, j), smoothing);
             Filters::movingAverage(unweightedgr.boundPartial(i, j), smoothing);
             Filters::movingAverage(unweightedgr.unboundPartial(i, j), smoothing);
@@ -825,7 +831,10 @@ bool RDFModule::testReferencePartials(PartialSet &setA, PartialSet &setB, double
     AtomTypeList atomTypes = setA.atomTypes();
     double error;
 
-    for_each_pair(atomTypes.begin(), atomTypes.end(), [&](int n, const AtomTypeData &typeI, int m, const AtomTypeData &typeJ) {
+    for_each_pair_parallel(atomTypes.begin(), atomTypes.end(), [&](const AtomTypeData &typeI, const AtomTypeData &typeJ) {
+	int n = typeI.atomType().index();
+	int m = typeJ.atomType().index();
+
         // Full partial
         error = Error::percent(setA.partial(n, m), setB.partial(n, m));
         Messenger::print("Test reference full partial '%s-%s' has error of %7.3f%% with calculated data and is "

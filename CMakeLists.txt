@@ -26,6 +26,16 @@ CMAKE_POLICY(SET CMP0020 NEW)
 # Request C++17 Standard Support (Required for std::optional and auto types in lambda parameters)
 set(CMAKE_CXX_STANDARD 17)
 
+
+###################################
+# TBB linking
+###################################
+include_directories(${TBB_ROOT})
+link_directories(${TBB_ROOT}/lib)
+
+
+
+
 # Catch defines
 if(PARALLEL)
   ADD_DEFINITIONS("-DPARALLEL")
@@ -224,6 +234,8 @@ set(BASIC_LINK_LIBS
   skeletonmodule
   sqmodule
   testmodule
+
+  tbb
 )
 
 # Set linker options for complete/no archive
