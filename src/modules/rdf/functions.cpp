@@ -35,6 +35,8 @@
 #include "module/group.h"
 #include "modules/rdf/rdf.h"
 #include "templates/algorithms.h"
+#include <algorithm>
+#include <execution>
 #include <iterator>
 
 /*
@@ -221,17 +223,15 @@ bool RDFModule::calculateGRCells(ProcessPool &procPool, Configuration *cfg, Part
 
             // Perform minimum image calculation on all atom pairs - quicker than working out if we need to in the
             // absence of a 2D look-up array
-            for (auto *i : atomsI)
-            {
-                typeI = i->localTypeIndex();
-                rI = i->r();
-
+            std::for_each(std::execution::par, atomsI.begin(), atomsI.end(), [&partialSet, &atomsJ, &box](auto *i) {
+                auto typeI = i->localTypeIndex();
+                auto rI = i->r();
                 for (auto *j : atomsJ)
                 {
-                    distance = box->minimumDistance(j, rI);
+                    auto distance = box->minimumDistance(j, rI);
                     partialSet.fullHistogram(typeI, j->localTypeIndex()).bin(distance);
                 }
-            }
+            });
             // 			else
             // 			{
             // 				for (ii = 0; ii < nI; ++ii)
