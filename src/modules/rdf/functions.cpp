@@ -176,11 +176,6 @@ bool RDFModule::calculateGRSimple(ProcessPool &procPool, Configuration *cfg, Par
 // Calculate partial g(r) utilising Cell neighbour lists
 bool RDFModule::calculateGRCells(ProcessPool &procPool, Configuration *cfg, PartialSet &partialSet, const double rdfRange)
 {
-    Atom *i, *j;
-    int n, m, ii, jj, nI, nJ, typeI;
-    Cell *cellI, *cellJ;
-    double distance;
-    Vec3<double> rI;
 
     // Grab the Box pointer and Cell array
     const Box *box = cfg->box();
@@ -190,8 +185,16 @@ bool RDFModule::calculateGRCells(ProcessPool &procPool, Configuration *cfg, Part
     auto start = procPool.interleavedLoopStart(ProcessPool::PoolStrategy);
     auto stride = procPool.interleavedLoopStride(ProcessPool::PoolStrategy);
 
-    for (n = start; n < cellArray.nCells(); n += stride)
-    {
+    std::vector<int> indices;
+    indices.resize(cellArray.nCells());
+    std::iota(indices.begin(), indices.end(), 0);
+    std::for_each(std::execution::seq, indices.begin(), indices.end(), [box, &partialSet, rdfRange, &cellArray](int n) {
+        Atom *i, *j;
+        int m, ii, jj, nI, nJ, typeI;
+        Cell *cellI, *cellJ;
+        double distance;
+        Vec3<double> rI;
+
         cellI = cellArray.cell(n);
         OrderedVector<Atom *> &atomsI = cellI->atoms();
 
@@ -223,15 +226,16 @@ bool RDFModule::calculateGRCells(ProcessPool &procPool, Configuration *cfg, Part
 
             // Perform minimum image calculation on all atom pairs - quicker than working out if we need to in the
             // absence of a 2D look-up array
-            std::for_each(std::execution::par, atomsI.begin(), atomsI.end(), [&partialSet, &atomsJ, &box](auto *i) {
-                auto typeI = i->localTypeIndex();
-                auto rI = i->r();
+            for (auto *i : atomsI)
+            {
+                typeI = i->localTypeIndex();
+                rI = i->r();
                 for (auto *j : atomsJ)
                 {
                     auto distance = box->minimumDistance(j, rI);
                     partialSet.fullHistogram(typeI, j->localTypeIndex()).bin(distance);
                 }
-            });
+            }
             // 			else
             // 			{
             // 				for (ii = 0; ii < nI; ++ii)
@@ -250,7 +254,7 @@ bool RDFModule::calculateGRCells(ProcessPool &procPool, Configuration *cfg, Part
             // 				}
             // 			}
         }
-    }
+    });
 
     return true;
 }
