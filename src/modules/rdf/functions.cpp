@@ -472,7 +472,7 @@ bool RDFModule::calculateUnweightedGR(ProcessPool &procPool, Configuration *cfg,
         // Make sure bound g(r) are zeroed
         auto &types = broadgr.atomTypes();
         for_each_pair_parallel(types.begin(), types.end(), [&](const AtomTypeData &typeI, const AtomTypeData &typeJ) {
-							     broadgr.boundPartial(typeI.atomType().index(), typeJ.atomType().index()).values() = 0.0;
+            broadgr.boundPartial(typeI.atomType().index(), typeJ.atomType().index()).values() = 0.0;
         });
 
         // 		// Assemble lists of unique intramolecular terms (in respect of their parameters)
@@ -636,17 +636,17 @@ bool RDFModule::calculateUnweightedGR(ProcessPool &procPool, Configuration *cfg,
         // averaging (as we are calculating the intramolecular RDFs afresh).
 
         for_each_pair_parallel(types.begin(), types.end(), [&](const AtomTypeData &typeI, const AtomTypeData &typeJ) {
-	    int i = typeI.atomType().index();
-	    int j = typeJ.atomType().index();
-	    unweightedgr.boundPartial(i, j) += broadgr.boundPartial(i, j);
+            int i = typeI.atomType().index();
+            int j = typeJ.atomType().index();
+            unweightedgr.boundPartial(i, j) += broadgr.boundPartial(i, j);
         });
     }
 
     // Add broadened bound partials back in to full partials
     auto &types = unweightedgr.atomTypes();
     for_each_pair_parallel(types.begin(), types.end(), [&](const AtomTypeData &typeI, const AtomTypeData &typeJ) {
-	int i = typeI.atomType().index();
-	int j = typeJ.atomType().index();
+        int i = typeI.atomType().index();
+        int j = typeJ.atomType().index();
         unweightedgr.partial(i, j) += unweightedgr.constBoundPartial(i, j);
     });
 
@@ -654,8 +654,8 @@ bool RDFModule::calculateUnweightedGR(ProcessPool &procPool, Configuration *cfg,
     if (smoothing > 0)
     {
         for_each_pair_parallel(types.begin(), types.end(), [&](const AtomTypeData &typeI, const AtomTypeData &typeJ) {
-	    int i = typeI.atomType().index();
-	    int j = typeJ.atomType().index();
+            int i = typeI.atomType().index();
+            int j = typeJ.atomType().index();
             Filters::movingAverage(unweightedgr.partial(i, j), smoothing);
             Filters::movingAverage(unweightedgr.boundPartial(i, j), smoothing);
             Filters::movingAverage(unweightedgr.unboundPartial(i, j), smoothing);
@@ -836,8 +836,8 @@ bool RDFModule::testReferencePartials(PartialSet &setA, PartialSet &setB, double
     double error;
 
     for_each_pair_parallel(atomTypes.begin(), atomTypes.end(), [&](const AtomTypeData &typeI, const AtomTypeData &typeJ) {
-	int n = typeI.atomType().index();
-	int m = typeJ.atomType().index();
+        int n = typeI.atomType().index();
+        int m = typeJ.atomType().index();
 
         // Full partial
         error = Error::percent(setA.partial(n, m), setB.partial(n, m));
