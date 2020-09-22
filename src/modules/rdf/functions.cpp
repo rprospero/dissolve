@@ -443,7 +443,7 @@ bool RDFModule::calculateUnweightedGR(ProcessPool &procPool, Configuration *cfg,
             BroadeningFunction function = intraBroadening.broadeningFunction(typeI.atomType(), typeJ.atomType());
 
             // Convolute the bound partial with the broadening function
-            Filters::convolve(unweightedgr.boundPartial(typeI.atomType().index(), typeJ.atomType().index()), function);
+            Filters::convolve(unweightedgr.boundPartial(typeI.atomType()->index(), typeJ.atomType()->index()), function);
         });
     }
     else if (intraBroadening.function() == PairBroadeningFunction::FrequencyFunction)
@@ -472,7 +472,7 @@ bool RDFModule::calculateUnweightedGR(ProcessPool &procPool, Configuration *cfg,
         // Make sure bound g(r) are zeroed
         auto &types = broadgr.atomTypes();
         for_each_pair_parallel(types.begin(), types.end(), [&](const AtomTypeData &typeI, const AtomTypeData &typeJ) {
-            broadgr.boundPartial(typeI.atomType().index(), typeJ.atomType().index()).values() = 0.0;
+            broadgr.boundPartial(typeI.atomType()->index(), typeJ.atomType()->index()).values() = 0.0;
         });
 
         // 		// Assemble lists of unique intramolecular terms (in respect of their parameters)
@@ -636,8 +636,8 @@ bool RDFModule::calculateUnweightedGR(ProcessPool &procPool, Configuration *cfg,
         // averaging (as we are calculating the intramolecular RDFs afresh).
 
         for_each_pair_parallel(types.begin(), types.end(), [&](const AtomTypeData &typeI, const AtomTypeData &typeJ) {
-            int i = typeI.atomType().index();
-            int j = typeJ.atomType().index();
+            int i = typeI.atomType()->index();
+            int j = typeJ.atomType()->index();
             unweightedgr.boundPartial(i, j) += broadgr.boundPartial(i, j);
         });
     }
@@ -645,8 +645,8 @@ bool RDFModule::calculateUnweightedGR(ProcessPool &procPool, Configuration *cfg,
     // Add broadened bound partials back in to full partials
     auto &types = unweightedgr.atomTypes();
     for_each_pair_parallel(types.begin(), types.end(), [&](const AtomTypeData &typeI, const AtomTypeData &typeJ) {
-        int i = typeI.atomType().index();
-        int j = typeJ.atomType().index();
+        int i = typeI.atomType()->index();
+        int j = typeJ.atomType()->index();
         unweightedgr.partial(i, j) += unweightedgr.constBoundPartial(i, j);
     });
 
@@ -654,8 +654,8 @@ bool RDFModule::calculateUnweightedGR(ProcessPool &procPool, Configuration *cfg,
     if (smoothing > 0)
     {
         for_each_pair_parallel(types.begin(), types.end(), [&](const AtomTypeData &typeI, const AtomTypeData &typeJ) {
-            int i = typeI.atomType().index();
-            int j = typeJ.atomType().index();
+            int i = typeI.atomType()->index();
+            int j = typeJ.atomType()->index();
             Filters::movingAverage(unweightedgr.partial(i, j), smoothing);
             Filters::movingAverage(unweightedgr.boundPartial(i, j), smoothing);
             Filters::movingAverage(unweightedgr.unboundPartial(i, j), smoothing);
@@ -835,9 +835,10 @@ bool RDFModule::testReferencePartials(PartialSet &setA, PartialSet &setB, double
     AtomTypeList atomTypes = setA.atomTypes();
     double error;
 
+
     for_each_pair_parallel(atomTypes.begin(), atomTypes.end(), [&](const AtomTypeData &typeI, const AtomTypeData &typeJ) {
-        int n = typeI.atomType().index();
-        int m = typeJ.atomType().index();
+        int n = typeI.atomType()->index();
+        int m = typeJ.atomType()->index();
 
         // Full partial
         error = Error::percent(setA.partial(n, m), setB.partial(n, m));
@@ -865,6 +866,7 @@ bool RDFModule::testReferencePartials(PartialSet &setA, PartialSet &setB, double
                          testThreshold);
         if (error > testThreshold)
             return false;
+	return true;
     });
 
     // Total reference data supplied?
@@ -883,7 +885,7 @@ bool RDFModule::testReferencePartial(const PartialSet &partials, double testThre
 {
     // We either expect two AtomType names and a target next, or the target 'total'
     auto testResult = false;
-    if (DissolveSys::sameString(typeIorTotal, "total") && (typeJ == nullptr) && (target == nullptr))
+    if (DissolveSys::sameString(typeIorTotal, "total") && (typeJ == "") && (target == ""))
     {
         double error = Error::percent(partials.constTotal(), testData);
         testResult = (error <= testThreshold);
@@ -942,8 +944,8 @@ bool RDFModule::testReferencePartials(const Data1DStore &testData, double testTh
         if (!DissolveSys::sameString(prefix, parser.argsv(0)))
             return Messenger::error("Unrecognised test data name '{}'.\n", data->name());
 
-        if (!testReferencePartial(partials, testThreshold, *data, parser.argsv(1), parser.hasArg(2) ? parser.argsv(2) : nullptr,
-                                  parser.hasArg(3) ? parser.argsv(3) : nullptr))
+        if (!testReferencePartial(partials, testThreshold, *data, parser.argsv(1), parser.hasArg(2) ? parser.argsv(2) : "",
+                                  parser.hasArg(3) ? parser.argsv(3) : ""))
             return false;
     }
 
@@ -980,7 +982,7 @@ bool RDFModule::testReferencePartials(const Data1DStore &testData, double testTh
         const PartialSet &targetSet = (setA ? partialsA : partialsB);
 
         if (!testReferencePartial(targetSet, testThreshold, *data, parser.argsv(1),
-                                  parser.hasArg(2) ? parser.argsv(2) : nullptr, parser.hasArg(3) ? parser.argsv(3) : nullptr))
+                                  parser.hasArg(2) ? parser.argsv(2) : "", parser.hasArg(3) ? parser.argsv(3) : ""))
             return false;
     }
 
