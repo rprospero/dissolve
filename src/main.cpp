@@ -218,7 +218,7 @@ int main(int args, char **argv)
         ++n;
     }
 
-    tbb::global_control gc(tbb::global_control::max_allowed_parallelism, nThread);
+    tbb::global_control gc(tbb::global_control::max_allowed_parallelism, nThreads);
 
     // Print GPL license information
 #ifdef PARALLEL
