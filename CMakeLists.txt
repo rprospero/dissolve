@@ -49,6 +49,8 @@ include(FindBISON)
 find_package(BISON PATHS /usr/local/bin NO_DEFAULT_PATH QUIET)
 find_package(BISON REQUIRED)
 
+set(EXTRA_LINK_LIBS ${EXTRA_LINK_LIBS} tbb)
+
 if(GUI)
   # Add extra functions
   LIST(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/Modules")
@@ -284,6 +286,7 @@ target_link_libraries( ${target_name}
   INTERFACE
 
   CONAN_PKG::fmt
+  CONAN_PKG::tbb
 )
 
 # Build GUI target executables
@@ -346,5 +349,6 @@ if(GUI)
     INTERFACE
 
     CONAN_PKG::fmt
+    CONAN_PKG::tbb
   )
 endif(GUI)

@@ -26,6 +26,7 @@
 #include <ctime>
 #include <stdlib.h>
 #include <time.h>
+#include <tbb/global_control.h>
 
 int main(int args, char **argv)
 {
@@ -42,6 +43,7 @@ int main(int args, char **argv)
     auto n = 1;
     std::string inputFile, redirectFileName, restartDataFile, outputInputFile;
     auto nIterations = 5;
+    auto nThreads = 256;
     auto ignoreRestart = false;
     while (n < args)
     {
@@ -64,6 +66,7 @@ int main(int args, char **argv)
                                      "process "
                                      "rank\n");
                     Messenger::print("\t-i\t\tIgnore restart file\n");
+                    Messenger::print("\t-j <threads>\tThe number of threads to use.");
                     Messenger::print("\t-m\t\tRestrict output to be from the master process alone (parallel code "
                                      "only)\n");
                     Messenger::print("\t-n <iterations>\tRun for the specified number of main loop iterations, then "
@@ -102,6 +105,19 @@ int main(int args, char **argv)
                 case ('i'):
                     Messenger::print("Restart file (if it exists) will be ignored.\n");
                     ignoreRestart = true;
+                    break;
+                case ('j'):
+                    // Next argument is thread count
+                    ++n;
+                    if (n == args)
+                    {
+                        Messenger::error("Expected thread count.\n");
+                        Messenger::ceaseRedirect();
+                        return 1;
+                    }
+                    Messenger::print("{} threads will be used.\n", atoi(argv[n]));
+		    nThreads = atoi(argv[n]);
+                    Messenger::print("Global control re-established", nThreads);
                     break;
                 case ('m'):
                     Messenger::setMasterOnly(true);
@@ -201,6 +217,8 @@ int main(int args, char **argv)
 
         ++n;
     }
+
+    tbb::global_control gc(tbb::global_control::max_allowed_parallelism, nThread);
 
     // Print GPL license information
 #ifdef PARALLEL
