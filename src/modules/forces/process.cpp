@@ -22,6 +22,7 @@
 #include "base/lineparser.h"
 #include "base/sysfunc.h"
 #include "classes/box.h"
+#include "classes/forcekernel.h"
 #include "classes/species.h"
 #include "genericitems/listhelper.h"
 #include "main/dissolve.h"
@@ -36,12 +37,9 @@ bool ForcesModule::setUp(Dissolve &dissolve, ProcessPool &procPool)
         Messenger::print("Reading test reference forces.\n");
 
         // Realise some arrays to store the forces in
-        Array<double> &fx =
-            GenericListHelper<Array<double>>::realise(dissolve.processingModuleData(), "ReferenceFX", uniqueName());
-        Array<double> &fy =
-            GenericListHelper<Array<double>>::realise(dissolve.processingModuleData(), "ReferenceFY", uniqueName());
-        Array<double> &fz =
-            GenericListHelper<Array<double>>::realise(dissolve.processingModuleData(), "ReferenceFZ", uniqueName());
+        auto &fx = GenericListHelper<Array<double>>::realise(dissolve.processingModuleData(), "ReferenceFX", uniqueName());
+        auto &fy = GenericListHelper<Array<double>>::realise(dissolve.processingModuleData(), "ReferenceFY", uniqueName());
+        auto &fz = GenericListHelper<Array<double>>::realise(dissolve.processingModuleData(), "ReferenceFZ", uniqueName());
 
         // Read in the forces
         if (!referenceForces_.importData(fx, fy, fz, &procPool))
@@ -62,10 +60,10 @@ bool ForcesModule::process(Dissolve &dissolve, ProcessPool &procPool)
 
     // Check for zero Configuration targets
     if (targetConfigurations_.nItems() == 0)
-        return Messenger::error("No configuration targets set for module '%s'.\n", uniqueName());
+        return Messenger::error("No configuration targets set for module '{}'.\n", uniqueName());
 
     // Loop over target Configurations
-    for (RefListItem<Configuration> *ri = targetConfigurations_.first(); ri != NULL; ri = ri->next())
+    for (RefListItem<Configuration> *ri = targetConfigurations_.first(); ri != nullptr; ri = ri->next())
     {
         // Grab Configuration pointer
         Configuration *cfg = ri->item();
@@ -73,12 +71,12 @@ bool ForcesModule::process(Dissolve &dissolve, ProcessPool &procPool)
         // Set up process pool - must do this to ensure we are using all available processes
         procPool.assignProcessesToGroups(cfg->processPool());
 
-        // Retrieve control parameters from Configuration
-        const bool saveData = keywords_.asBool("Save");
-        const bool testMode = keywords_.asBool("Test");
-        const bool testAnalytic = keywords_.asBool("TestAnalytic");
-        const bool testInter = keywords_.asBool("TestInter");
-        const bool testIntra = keywords_.asBool("TestIntra");
+        // Retrieve control parameters
+        const auto saveData = exportedForces_.hasValidFileAndFormat();
+        const auto testMode = keywords_.asBool("Test");
+        const auto testAnalytic = keywords_.asBool("TestAnalytic");
+        const auto testInter = keywords_.asBool("TestInter");
+        const auto testIntra = keywords_.asBool("TestIntra");
         const auto testThreshold = keywords_.asDouble("TestThreshold");
 
         // Calculate the total forces
@@ -90,26 +88,26 @@ bool ForcesModule::process(Dissolve &dissolve, ProcessPool &procPool)
              * This is a serial routine, with all processes independently calculating their own value.
              */
 
-            Messenger::print("Forces: Calculating forces for Configuration '%s' in serial test mode...\n", cfg->name());
+            Messenger::print("Calculating forces for Configuration '{}' in serial test mode...\n", cfg->name());
             if (testAnalytic)
-                Messenger::print("Forces: Exact (analytic) forces will be calculated.\n");
-            Messenger::print("Forces: Test threshold for failure is %f%%.\n", testThreshold);
+                Messenger::print("Exact (analytic) forces will be calculated.\n");
+            Messenger::print("Test threshold for failure is {}%.\n", testThreshold);
 
             /*
              * Calculation Begins
              */
 
-            const PotentialMap &potentialMap = dissolve.potentialMap();
-            double cutoffSq = potentialMap.range() * potentialMap.range();
+            const auto &potentialMap = dissolve.potentialMap();
+            const auto cutoffSq = potentialMap.range() * potentialMap.range();
 
-            double angle, magjisq, magji, magjk, dp, force, r;
+            double magjisq, magji, magjk, dp, force, r;
             Atom *i, *j, *k, *l;
             Vec3<double> vecji, vecjk, veckl, forcei, forcek;
             Vec3<double> xpj, xpk, dcos_dxpj, dcos_dxpk, temp;
             Matrix3 dxpj_dij, dxpj_dkj, dxpk_dkj, dxpk_dlk;
-            double magxpj, magxpk, phi, du_dphi;
+            double phi, du_dphi;
             std::shared_ptr<Molecule> molN, molM;
-            const Box *box = cfg->box();
+            const auto *box = cfg->box();
             double scale;
 
             // Allocate the force arrays
@@ -136,17 +134,17 @@ bool ForcesModule::process(Dissolve &dissolve, ProcessPool &procPool)
 
             // Calculate interatomic and intramlecular energy in a loop over defined Molecules
             Timer timer;
-            for (int n = 0; n < cfg->nMolecules(); ++n)
+            for (auto n = 0; n < cfg->nMolecules(); ++n)
             {
                 molN = cfg->molecule(n);
 
                 // Intramolecular forces (excluding bound terms) in molecule N
                 if (testInter)
-                    for (int ii = 0; ii < molN->nAtoms() - 1; ++ii)
+                    for (auto ii = 0; ii < molN->nAtoms() - 1; ++ii)
                     {
                         i = molN->atom(ii);
 
-                        for (int jj = ii + 1; jj < molN->nAtoms(); ++jj)
+                        for (auto jj = ii + 1; jj < molN->nAtoms(); ++jj)
                         {
                             j = molN->atom(jj);
 
@@ -178,16 +176,16 @@ bool ForcesModule::process(Dissolve &dissolve, ProcessPool &procPool)
 
                 // Forces between molecule N and molecule M
                 if (testInter)
-                    for (int m = n + 1; m < cfg->nMolecules(); ++m)
+                    for (auto m = n + 1; m < cfg->nMolecules(); ++m)
                     {
                         molM = cfg->molecule(m);
 
                         // Double loop over atoms
-                        for (int ii = 0; ii < molN->nAtoms(); ++ii)
+                        for (auto ii = 0; ii < molN->nAtoms(); ++ii)
                         {
                             i = molN->atom(ii);
 
-                            for (int jj = 0; jj < molM->nAtoms(); ++jj)
+                            for (auto jj = 0; jj < molM->nAtoms(); ++jj)
                             {
                                 j = molM->atom(jj);
 
@@ -204,12 +202,6 @@ bool ForcesModule::process(Dissolve &dissolve, ProcessPool &procPool)
                                 else
                                     vecji *= potentialMap.force(i, j, r);
 
-                                // 							printf("%i
-                                // %i %f %15.9e %15.9e\n", i->arrayIndex()+1, j->arrayIndex()+1,
-                                // sqrt(magji), potentialMap.force(i->globalTypeIndex(),
-                                // j->globalTypeIndex(), magji),
-                                // potentialMap.analyticForce(i->globalTypeIndex(),
-                                // j->globalTypeIndex(), magji));
                                 interFx[i->arrayIndex()] += vecji.x;
                                 interFy[i->arrayIndex()] += vecji.y;
                                 interFz[i->arrayIndex()] += vecji.z;
@@ -223,17 +215,16 @@ bool ForcesModule::process(Dissolve &dissolve, ProcessPool &procPool)
                 if (testIntra)
                 {
                     // Bond forces
-                    DynamicArrayConstIterator<SpeciesBond> bondIterator(molN->species()->constBonds());
-                    while (const SpeciesBond *b = bondIterator.iterate())
+                    for (const auto &bond : molN->species()->constBonds())
                     {
                         // Grab pointers to atoms involved in bond
-                        i = molN->atom(b->indexI());
-                        j = molN->atom(b->indexJ());
+                        i = molN->atom(bond.indexI());
+                        j = molN->atom(bond.indexJ());
 
                         // Determine final forces
                         vecji = box->minimumVector(i, j);
                         r = vecji.magAndNormalise();
-                        vecji *= b->force(r);
+                        vecji *= bond.force(r);
                         intraFx[i->arrayIndex()] -= vecji.x;
                         intraFy[i->arrayIndex()] -= vecji.y;
                         intraFz[i->arrayIndex()] -= vecji.z;
@@ -243,25 +234,21 @@ bool ForcesModule::process(Dissolve &dissolve, ProcessPool &procPool)
                     }
 
                     // Angle forces
-                    DynamicArrayConstIterator<SpeciesAngle> angleIterator(molN->species()->constAngles());
-                    while (const SpeciesAngle *a = angleIterator.iterate())
+                    for (const auto &angle : molN->species()->constAngles())
                     {
                         // Grab pointers to atoms involved in angle
-                        i = molN->atom(a->indexI());
-                        j = molN->atom(a->indexJ());
-                        k = molN->atom(a->indexK());
+                        i = molN->atom(angle.indexI());
+                        j = molN->atom(angle.indexJ());
+                        k = molN->atom(angle.indexK());
 
                         // Get vectors 'j-i' and 'j-k'
                         vecji = box->minimumVector(j, i);
                         vecjk = box->minimumVector(j, k);
-
-                        // Calculate angle
                         magji = vecji.magAndNormalise();
                         magjk = vecjk.magAndNormalise();
-                        angle = Box::angleInDegrees(vecji, vecjk, dp);
 
                         // Determine Angle force vectors for atoms
-                        force = a->force(angle);
+                        force = angle.force(Box::angleInDegrees(vecji, vecjk, dp));
                         forcei = vecjk - vecji * dp;
                         forcei *= force / magji;
                         forcek = vecji - vecjk * dp;
@@ -280,59 +267,70 @@ bool ForcesModule::process(Dissolve &dissolve, ProcessPool &procPool)
                     }
 
                     // Torsion forces
-                    DynamicArrayConstIterator<SpeciesTorsion> torsionIterator(molN->species()->constTorsions());
-                    while (const SpeciesTorsion *t = torsionIterator.iterate())
+                    for (const auto &torsion : molN->species()->constTorsions())
                     {
                         // Grab pointers to atoms involved in angle
-                        i = molN->atom(t->indexI());
-                        j = molN->atom(t->indexJ());
-                        k = molN->atom(t->indexK());
-                        l = molN->atom(t->indexL());
+                        i = molN->atom(torsion.indexI());
+                        j = molN->atom(torsion.indexJ());
+                        k = molN->atom(torsion.indexK());
+                        l = molN->atom(torsion.indexL());
 
                         // Calculate vectors, ensuring we account for minimum image
                         vecji = box->minimumVector(j, i);
                         vecjk = box->minimumVector(j, k);
                         veckl = box->minimumVector(k, l);
 
-                        // Calculate cross products and torsion angle formed (in radians)
-                        xpj = vecji * vecjk;
-                        xpk = veckl * vecjk;
-                        magxpj = xpj.magAndNormalise();
-                        magxpk = xpk.magAndNormalise();
-                        dp = xpj.dp(xpk);
-                        if (dp < -1.0)
-                            dp = -1.0;
-                        else if (dp > 1.0)
-                            dp = 1.0;
-                        phi = acos(dp);
-                        du_dphi = t->force(phi * DEGRAD);
+                        // Calculate torsion force parameters
+                        ForceKernel::calculateTorsionParameters(vecji, vecjk, veckl, phi, dxpj_dij, dxpj_dkj, dxpk_dkj,
+                                                                dxpk_dlk, dcos_dxpj, dcos_dxpk);
+                        du_dphi = torsion.force(phi * DEGRAD);
 
-                        /* Construct derivatives of perpendicular axis (cross product) w.r.t. component
-                         *vectors. E.g. d (rij x rkj)
-                         *	------------- = rij[cp(n+2)] * U[cp(n+1)] - rij[cp(n+1)] * U[cp(n+2)]
-                         *	d rkj[n]
-                         *
-                         * where cp is a cylic permutation spanning {0,1,2} == {x,y,z}, and U[n] is a
-                         *unit vector in the n direction. So, d (rij x rkj)
-                         *	------------- = rij[2] * U[1] - rij[1] * U[2]
-                         *	d rkj[0]
-                         *			= rij[z] * (0,1,0) - rij[y] * (0,0,1)
-                         *
-                         *			= (0,rij[z],0) - (0,0,rij[y])
-                         *
-                         *			= (0,rij[z],-rij[y])
-                         */
+                        // Sum forces on Atoms
+                        auto index = i->arrayIndex();
+                        intraFx[index] += du_dphi * dcos_dxpj.dp(dxpj_dij.columnAsVec3(0));
+                        intraFy[index] += du_dphi * dcos_dxpj.dp(dxpj_dij.columnAsVec3(1));
+                        intraFz[index] += du_dphi * dcos_dxpj.dp(dxpj_dij.columnAsVec3(2));
 
-                        dxpj_dij.makeCrossProductMatrix(vecjk);
-                        temp = -vecji;
-                        dxpj_dkj.makeCrossProductMatrix(temp);
-                        temp = -veckl;
-                        dxpk_dkj.makeCrossProductMatrix(temp);
-                        dxpk_dlk.makeCrossProductMatrix(vecjk);
+                        index = j->arrayIndex();
+                        intraFx[index] += du_dphi * (dcos_dxpj.dp(-dxpj_dij.columnAsVec3(0) - dxpj_dkj.columnAsVec3(0)) -
+                                                     dcos_dxpk.dp(dxpk_dkj.columnAsVec3(0)));
+                        intraFy[index] += du_dphi * (dcos_dxpj.dp(-dxpj_dij.columnAsVec3(1) - dxpj_dkj.columnAsVec3(1)) -
+                                                     dcos_dxpk.dp(dxpk_dkj.columnAsVec3(1)));
+                        intraFz[index] += du_dphi * (dcos_dxpj.dp(-dxpj_dij.columnAsVec3(2) - dxpj_dkj.columnAsVec3(2)) -
+                                                     dcos_dxpk.dp(dxpk_dkj.columnAsVec3(2)));
 
-                        // Construct derivatives of cos(phi) w.r.t. perpendicular axes
-                        dcos_dxpj = (xpk - xpj * dp) / magxpj;
-                        dcos_dxpk = (xpj - xpk * dp) / magxpk;
+                        index = k->arrayIndex();
+                        intraFx[index] += du_dphi * (dcos_dxpk.dp(dxpk_dkj.columnAsVec3(0) - dxpk_dlk.columnAsVec3(0)) +
+                                                     dcos_dxpj.dp(dxpj_dkj.columnAsVec3(0)));
+                        intraFy[index] += du_dphi * (dcos_dxpk.dp(dxpk_dkj.columnAsVec3(1) - dxpk_dlk.columnAsVec3(1)) +
+                                                     dcos_dxpj.dp(dxpj_dkj.columnAsVec3(1)));
+                        intraFz[index] += du_dphi * (dcos_dxpk.dp(dxpk_dkj.columnAsVec3(2) - dxpk_dlk.columnAsVec3(2)) +
+                                                     dcos_dxpj.dp(dxpj_dkj.columnAsVec3(2)));
+
+                        index = l->arrayIndex();
+                        intraFx[index] += du_dphi * dcos_dxpk.dp(dxpk_dlk.columnAsVec3(0));
+                        intraFy[index] += du_dphi * dcos_dxpk.dp(dxpk_dlk.columnAsVec3(1));
+                        intraFz[index] += du_dphi * dcos_dxpk.dp(dxpk_dlk.columnAsVec3(2));
+                    }
+
+                    // Improper forces
+                    for (const auto &imp : molN->species()->constImpropers())
+                    {
+                        // Grab pointers to atoms involved in angle
+                        i = molN->atom(imp.indexI());
+                        j = molN->atom(imp.indexJ());
+                        k = molN->atom(imp.indexK());
+                        l = molN->atom(imp.indexL());
+
+                        // Calculate vectors, ensuring we account for minimum image
+                        vecji = box->minimumVector(j, i);
+                        vecjk = box->minimumVector(j, k);
+                        veckl = box->minimumVector(k, l);
+
+                        // Calculate improper force parameters
+                        ForceKernel::calculateTorsionParameters(vecji, vecjk, veckl, phi, dxpj_dij, dxpj_dkj, dxpk_dkj,
+                                                                dxpk_dlk, dcos_dxpj, dcos_dxpk);
+                        du_dphi = imp.force(phi * DEGRAD);
 
                         // Sum forces on Atoms
                         auto index = i->arrayIndex();
@@ -373,7 +371,7 @@ bool ForcesModule::process(Dissolve &dissolve, ProcessPool &procPool)
             intraFy *= 100.0;
             intraFz *= 100.0;
 
-            Messenger::print("Forces: Time to do total (test) forces was %s.\n", timer.totalTimeString());
+            Messenger::print("Time to do total (test) forces was {}.\n", timer.totalTimeString());
 
             /*
              * Test Calculation End
@@ -383,7 +381,7 @@ bool ForcesModule::process(Dissolve &dissolve, ProcessPool &procPool)
              * Production Calculation Begins
              */
 
-            Messenger::print("Forces: Calculating total forces for Configuration '%s'...\n", cfg->name());
+            Messenger::print("Calculating total forces for Configuration '{}'...\n", cfg->name());
 
             // Calculate interatomic forces
             if (testInter)
@@ -391,7 +389,7 @@ bool ForcesModule::process(Dissolve &dissolve, ProcessPool &procPool)
                 Timer interTimer;
                 interTimer.start();
 
-                interatomicForces(procPool, cfg, dissolve.potentialMap(), checkInterFx, checkInterFy, checkInterFz);
+                interAtomicForces(procPool, cfg, dissolve.potentialMap(), checkInterFx, checkInterFy, checkInterFz);
                 if (!procPool.allSum(checkInterFx, cfg->nAtoms()))
                     return false;
                 if (!procPool.allSum(checkInterFy, cfg->nAtoms()))
@@ -400,7 +398,7 @@ bool ForcesModule::process(Dissolve &dissolve, ProcessPool &procPool)
                     return false;
 
                 interTimer.stop();
-                Messenger::print("Forces: Time to do interatomic forces was %s.\n", interTimer.totalTimeString());
+                Messenger::print("Time to do interatomic forces was {}.\n", interTimer.totalTimeString());
             }
 
             // Calculate intramolecular forces
@@ -409,7 +407,7 @@ bool ForcesModule::process(Dissolve &dissolve, ProcessPool &procPool)
                 Timer intraTimer;
                 intraTimer.start();
 
-                intramolecularForces(procPool, cfg, dissolve.potentialMap(), checkIntraFx, checkIntraFy, checkIntraFz);
+                intraMolecularForces(procPool, cfg, dissolve.potentialMap(), checkIntraFx, checkIntraFy, checkIntraFz);
                 if (!procPool.allSum(checkIntraFx, cfg->nAtoms()))
                     return false;
                 if (!procPool.allSum(checkIntraFy, cfg->nAtoms()))
@@ -418,7 +416,7 @@ bool ForcesModule::process(Dissolve &dissolve, ProcessPool &procPool)
                     return false;
 
                 intraTimer.stop();
-                Messenger::print("Forces: Time to do intramolecular forces was %s.\n", intraTimer.totalTimeString());
+                Messenger::print("Time to do intramolecular forces was {}.\n", intraTimer.totalTimeString());
             }
 
             // Convert forces to 10J/mol
@@ -434,15 +432,15 @@ bool ForcesModule::process(Dissolve &dissolve, ProcessPool &procPool)
              */
 
             // Test 'correct' forces against production forces
-            int nFailed1 = 0;
+            auto nFailed1 = 0;
             bool failed;
             Vec3<double> interRatio, intraRatio;
-            double sumError;
+            auto sumError = 0.0;
 
-            Messenger::print("Forces: Testing calculated 'correct' forces against calculated production forces - "
+            Messenger::print("Testing calculated 'correct' forces against calculated production forces - "
                              "atoms with erroneous forces will be output...\n");
-            sumError = 0.0;
-            for (int n = 0; n < cfg->nAtoms(); ++n)
+
+            for (auto n = 0; n < cfg->nAtoms(); ++n)
             {
                 interRatio.set(interFx[n] - checkInterFx[n], interFy[n] - checkInterFy[n], interFz[n] - checkInterFz[n]);
                 intraRatio.set(intraFx[n] - checkIntraFx[n], intraFy[n] - checkIntraFy[n], intraFz[n] - checkIntraFz[n]);
@@ -480,23 +478,24 @@ bool ForcesModule::process(Dissolve &dissolve, ProcessPool &procPool)
 
                 if (failed)
                 {
-                    Messenger::print("Forces: Check atom %10i - errors are %15.8e (%5.2f%%) %15.8e "
-                                     "(%5.2f%%) %15.8e (%5.2f%%) (x y z) 10J/mol (inter)\n",
+                    Messenger::print("Check atom {:10d} - errors are {:15.8e} ({:5.2f}%) {:15.8e} "
+                                     "({:5.2f}%) {:15.8e} ({:5.2f}%) (x y z) 10J/mol (inter)\n",
                                      n + 1, interFx[n] - checkInterFx[n], interRatio.x, interFy[n] - checkInterFy[n],
                                      interRatio.y, interFz[n] - checkInterFz[n], interRatio.z);
-                    Messenger::print("                                     %15.8e (%5.2f%%) %15.8e "
-                                     "(%5.2f%%) %15.8e (%5.2f%%) (x y z) 10J/mol (intra)\n",
-                                     n + 1, intraFx[n] - checkIntraFx[n], intraRatio.x, intraFy[n] - checkIntraFy[n],
-                                     intraRatio.y, intraFz[n] - checkIntraFz[n], intraRatio.z);
+                    Messenger::print("                                   {:15.8e} ({:5.2f}%) {:15.8e} "
+                                     "({:5.2f}%) {:15.8e} ({:5.2f}%) (x y z) 10J/mol (intra)\n",
+                                     intraFx[n] - checkIntraFx[n], intraRatio.x, intraFy[n] - checkIntraFy[n], intraRatio.y,
+                                     intraFz[n] - checkIntraFz[n], intraRatio.z);
                     ++nFailed1;
                 }
             }
-            Messenger::print("Forces: Number of atoms with failed force components = %i = %s\n", nFailed1,
+
+            Messenger::print("Number of atoms with failed force components = {} = {}\n", nFailed1,
                              nFailed1 == 0 ? "OK" : "NOT OK");
-            Messenger::print("Forces: Average error in force components was %f%%.\n", sumError / (cfg->nAtoms() * 6));
+            Messenger::print("Average error in force components was {}%.\n", sumError / (cfg->nAtoms() * 6));
 
             // Test reference forces against production (if reference forces present)
-            int nFailed2 = 0, nFailed3 = 0;
+            auto nFailed2 = 0, nFailed3 = 0;
             Vec3<double> totalRatio;
             sumError = 0.0;
             GenericList &moduleData = dissolve.processingModuleData();
@@ -506,33 +505,24 @@ bool ForcesModule::process(Dissolve &dissolve, ProcessPool &procPool)
                 // Grab reference force arrays and check sizes
                 const auto &referenceFx = GenericListHelper<Array<double>>::value(moduleData, "ReferenceFX", uniqueName());
                 if (referenceFx.nItems() != cfg->nAtoms())
-                {
-                    Messenger::error("Number of force components in ReferenceFX is %i, but the "
-                                     "Configuration '%s' contains %i atoms.\n",
-                                     referenceFx.nItems(), cfg->name(), cfg->nAtoms());
-                    return false;
-                }
+                    return Messenger::error("Number of force components in ReferenceFX is {}, but the "
+                                            "Configuration '{}' contains {} atoms.\n",
+                                            referenceFx.nItems(), cfg->name(), cfg->nAtoms());
                 const auto &referenceFy = GenericListHelper<Array<double>>::value(moduleData, "ReferenceFY", uniqueName());
                 if (referenceFy.nItems() != cfg->nAtoms())
-                {
-                    Messenger::error("Number of force components in ReferenceFY is %i, but the "
-                                     "Configuration '%s' contains %i atoms.\n",
-                                     referenceFy.nItems(), cfg->name(), cfg->nAtoms());
-                    return false;
-                }
+                    return Messenger::error("Number of force components in ReferenceFY is {}, but the "
+                                            "Configuration '{}' contains {} atoms.\n",
+                                            referenceFy.nItems(), cfg->name(), cfg->nAtoms());
                 const auto &referenceFz = GenericListHelper<Array<double>>::value(moduleData, "ReferenceFZ", uniqueName());
                 if (referenceFz.nItems() != cfg->nAtoms())
-                {
-                    Messenger::error("Number of force components in ReferenceFZ is %i, but the "
-                                     "Configuration '%s' contains %i atoms.\n",
-                                     referenceFz.nItems(), cfg->name(), cfg->nAtoms());
-                    return false;
-                }
+                    return Messenger::error("Number of force components in ReferenceFZ is {}, but the "
+                                            "Configuration '{}' contains {} atoms.\n",
+                                            referenceFz.nItems(), cfg->name(), cfg->nAtoms());
 
-                Messenger::print("\nForces: Testing reference forces against calculated 'correct' forces - "
+                Messenger::print("\nTesting reference forces against calculated 'correct' forces - "
                                  "atoms with erroneous forces will be output...\n");
                 sumError = 0.0;
-                for (int n = 0; n < cfg->nAtoms(); ++n)
+                for (auto n = 0; n < cfg->nAtoms(); ++n)
                 {
                     totalRatio.x = referenceFx.constAt(n) - (interFx[n] + intraFx[n]);
                     totalRatio.y = referenceFy.constAt(n) - (interFy[n] + intraFy[n]);
@@ -558,23 +548,23 @@ bool ForcesModule::process(Dissolve &dissolve, ProcessPool &procPool)
 
                     if (failed)
                     {
-                        Messenger::print("Forces: Check atom %10i - errors are %15.8e (%5.2f%%) %15.8e "
-                                         "(%5.2f%%) %15.8e (%5.2f%%) (x y z) 10J/mol\n",
+                        Messenger::print("Check atom {:10d} - errors are {:15.8e} ({:5.2f}%) {:15.8e} "
+                                         "({:5.2f}%) {:15.8e} ({:5.2f}%) (x y z) 10J/mol\n",
                                          n + 1, referenceFx.constAt(n) - (interFx[n] + intraFx[n]), totalRatio.x,
                                          referenceFy.constAt(n) - (interFy[n] + intraFy[n]), totalRatio.y,
                                          referenceFz.constAt(n) - (interFz[n] + intraFz[n]), totalRatio.z);
                         ++nFailed2;
                     }
                 }
-                Messenger::print("Forces: Number of atoms with failed force components = %i = %s\n", nFailed2,
+                Messenger::print("Number of atoms with failed force components = {} = {}\n", nFailed2,
                                  nFailed2 == 0 ? "OK" : "NOT OK");
-                Messenger::print("Forces: Average error in force components was %f%%.\n", sumError / (cfg->nAtoms() * 3));
+                Messenger::print("Average error in force components was {}%.\n", sumError / (cfg->nAtoms() * 3));
 
-                Messenger::print("\nForces: Testing reference forces against calculated production forces - "
+                Messenger::print("\nTesting reference forces against calculated production forces - "
                                  "atoms with erroneous forces will be output...\n");
 
                 sumError = 0.0;
-                for (int n = 0; n < cfg->nAtoms(); ++n)
+                for (auto n = 0; n < cfg->nAtoms(); ++n)
                 {
                     totalRatio.x = referenceFx.constAt(n) - (checkInterFx[n] + checkIntraFx[n]);
                     totalRatio.y = referenceFy.constAt(n) - (checkInterFy[n] + checkIntraFy[n]);
@@ -600,17 +590,17 @@ bool ForcesModule::process(Dissolve &dissolve, ProcessPool &procPool)
 
                     if (failed)
                     {
-                        Messenger::print("Forces: Check atom %10i - errors are %15.8e (%5.2f%%) %15.8e "
-                                         "(%5.2f%%) %15.8e (%5.2f%%) (x y z) 10J/mol\n",
+                        Messenger::print("Check atom {:10d} - errors are {:15.8e} ({:5.2f}%) {:15.8e} "
+                                         "({:5.2f}%) {:15.8e} ({:5.2f}%) (x y z) 10J/mol\n",
                                          n + 1, referenceFx.constAt(n) - (checkInterFx[n] + checkIntraFx[n]), totalRatio.x,
                                          referenceFy.constAt(n) - (checkInterFy[n] + checkIntraFy[n]), totalRatio.y,
                                          referenceFz.constAt(n) - (checkInterFz[n] + checkIntraFz[n]), totalRatio.z);
                         ++nFailed3;
                     }
                 }
-                Messenger::print("Forces: Number of atoms with failed force components = %i = %s\n", nFailed3,
+                Messenger::print("Number of atoms with failed force components = {} = {}\n", nFailed3,
                                  nFailed3 == 0 ? "OK" : "NOT OK");
-                Messenger::print("Forces: Average error in force components was %f%%.\n", sumError / (cfg->nAtoms() * 6));
+                Messenger::print("Average error in force components was {}%.\n", sumError / (cfg->nAtoms() * 6));
             }
 
             if (!procPool.allTrue((nFailed1 + nFailed2 + nFailed3) == 0))
@@ -624,7 +614,7 @@ bool ForcesModule::process(Dissolve &dissolve, ProcessPool &procPool)
              * This is a serial routine (subroutines called from within are parallel).
              */
 
-            Messenger::print("Forces: Calculating total forces for Configuration '%s'...\n", cfg->name());
+            Messenger::print("Calculating total forces for Configuration '{}'...\n", cfg->name());
 
             // Realise the force arrays
             auto &fx = GenericListHelper<Array<double>>::realise(cfg->moduleData(), "FX", uniqueName());
@@ -639,33 +629,27 @@ bool ForcesModule::process(Dissolve &dissolve, ProcessPool &procPool)
             // Calculate interatomic forces
             Timer interTimer;
             interTimer.start();
-            interatomicForces(procPool, cfg, dissolve.potentialMap(), fx, fy, fz);
+            interAtomicForces(procPool, cfg, dissolve.potentialMap(), fx, fy, fz);
             interTimer.stop();
-            Messenger::printVerbose("Forces: Time to do interatomic forces was %s.\n", interTimer.totalTimeString());
+            Messenger::printVerbose("Time to do interatomic forces was {}.\n", interTimer.totalTimeString());
 
             // Calculate intramolecular forces
             Timer intraTimer;
             intraTimer.start();
-            intramolecularForces(procPool, cfg, dissolve.potentialMap(), fx, fy, fz);
+            intraMolecularForces(procPool, cfg, dissolve.potentialMap(), fx, fy, fz);
             intraTimer.stop();
 
-            Messenger::print("Forces: Time to do interatomic forces was %s, intramolecular forces was %s (%s comms).\n",
+            // Convert forces to 10J/mol
+            fx *= 100.0;
+            fy *= 100.0;
+            fz *= 100.0;
+
+            Messenger::print("Time to do interatomic forces was {}, intramolecular forces was {} ({} comms).\n",
                              interTimer.totalTimeString(), intraTimer.totalTimeString(), procPool.accumulatedTimeString());
 
             // If writing to a file, append it here
-            if (saveData)
-            {
-                LineParser parser;
-                CharString filename("%s.forces.txt", cfg->niceName());
-
-                parser.openOutput(filename);
-                parser.writeLineF("# Forces for Configuration '%s'.\n", cfg->name());
-                parser.writeLine("# Force units are 10J/mol.\n");
-                parser.writeLine("# Atom        FX            FY            FZ\n");
-                for (int n = 0; n < cfg->nAtoms(); ++n)
-                    parser.writeLineF("  %10i  %12.6e  %12.6e  %12.6e  %12.6e  %i\n", n + 1, fx[n], fy[n], fz[n]);
-                parser.closeFiles();
-            }
+            if (saveData && !exportedForces_.exportData(fx, fy, fz))
+                return Messenger::error("Failed to save forces.\n");
         }
     }
 

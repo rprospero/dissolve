@@ -36,6 +36,8 @@ class ForcefieldLibrary
     static std::vector<std::shared_ptr<Forcefield>> forcefields_;
 
     private:
+    // Set up supplied forcefield for use, and add to internal list
+    static bool registerForcefield(std::shared_ptr<Forcefield> ff);
     // Register Forcefields for use
     static void registerForcefields();
 
@@ -43,5 +45,5 @@ class ForcefieldLibrary
     // Return list of available Forcefields
     static std::vector<std::shared_ptr<Forcefield>> &forcefields();
     // Return named Forcefield, if it exists
-    static std::shared_ptr<Forcefield> forcefield(const std::string name);
+    static std::shared_ptr<Forcefield> forcefield(std::string_view name);
 };

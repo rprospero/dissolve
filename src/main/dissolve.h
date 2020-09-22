@@ -63,19 +63,19 @@ class Dissolve
 
     /*
      * Atom Types
-     * (Exposes List<AtomType> in coreData_)
+     * (Exposes std::vector<std::shared_ptr<AtomType>> in coreData_)
      */
     public:
     // Add AtomType with specified Element
-    AtomType *addAtomType(Element *el);
+    std::shared_ptr<AtomType> addAtomType(Element *el);
     // Return number of AtomTypes in list
     int nAtomTypes() const;
     // Return AtomTypes list
-    List<AtomType> &atomTypes();
+    std::vector<std::shared_ptr<AtomType>> &atomTypes();
     // Return nth AtomType in list
-    AtomType *atomType(int n);
+    std::shared_ptr<AtomType> atomType(int n);
     // Search for AtomType by name
-    AtomType *findAtomType(const char *name) const;
+    std::shared_ptr<AtomType> findAtomType(std::string_view name) const;
     // Clear all AtomTypes
     void clearAtomTypes();
 
@@ -109,11 +109,11 @@ class Dissolve
     // Return nth Species in the list
     Species *species(int n);
     // Search for Species by name
-    Species *findSpecies(const char *name) const;
+    Species *findSpecies(std::string_view name) const;
     // Copy AtomType, creating a new one if necessary
     void copyAtomType(const SpeciesAtom *sourceAtom, SpeciesAtom *destAtom);
     // Copy intramolecular interaction parameters, adding MasterIntra if necessary
-    void copySpeciesIntra(const SpeciesIntra *sourceIntra, SpeciesIntra *destIntra);
+    void copySpeciesIntra(const SpeciesIntra &sourceIntra, SpeciesIntra &destIntra);
     // Copy Species
     Species *copySpecies(const Species *species);
 
@@ -156,21 +156,21 @@ class Dissolve
     // Return number of defined PairPotentials
     int nPairPotentials() const;
     // Add new pair potential to list
-    PairPotential *addPairPotential(AtomType *at1, AtomType *at2);
+    PairPotential *addPairPotential(std::shared_ptr<AtomType> at1, std::shared_ptr<AtomType> at2);
     // Return PairPotentials list
     const List<PairPotential> &pairPotentials() const;
     // Return nth PairPotential in list
     PairPotential *pairPotential(int n);
     // Return whether specified PairPotential is defined
-    PairPotential *pairPotential(AtomType *at1, AtomType *at2) const;
+    PairPotential *pairPotential(std::shared_ptr<AtomType> at1, std::shared_ptr<AtomType> at2) const;
     // Return whether specified PairPotential is defined
-    PairPotential *pairPotential(const char *at1, const char *at2) const;
+    PairPotential *pairPotential(std::string_view at1, std::string_view at2) const;
     // Return map for PairPotentials
     const PotentialMap &potentialMap();
     // Clear and regenerate all PairPotentials, replacing those currently defined
     void regeneratePairPotentials();
     // Generate all necessary PairPotentials, adding missing terms where necessary
-    bool generatePairPotentials(AtomType *onlyInvolving = NULL);
+    bool generatePairPotentials(std::shared_ptr<AtomType> onlyInvolving = nullptr);
 
     /*
      * Configurations
@@ -190,9 +190,9 @@ class Dissolve
     // Return Configuration list (const)
     const List<Configuration> &constConfigurations() const;
     // Find configuration by name
-    Configuration *findConfiguration(const char *name) const;
+    Configuration *findConfiguration(std::string_view name) const;
     // Find configuration by 'nice' name
-    Configuration *findConfigurationByNiceName(const char *name) const;
+    Configuration *findConfigurationByNiceName(std::string_view name) const;
 
     /*
      * Modules
@@ -213,17 +213,17 @@ class Dissolve
     // Return master Module instances
     const List<Module> &masterModules() const;
     // Search for master Module of the named type
-    Module *findMasterModule(const char *moduleType) const;
+    Module *findMasterModule(std::string_view moduleType) const;
     // Create a Module instance for the named Module type
-    Module *createModuleInstance(const char *moduleType);
+    Module *createModuleInstance(std::string_view moduleType);
     // Create a Module instance for the named Module type, and add it to the specified layer
-    Module *createModuleInstance(const char *moduleType, ModuleLayer *destinationLayer, bool configurationLocal = false);
+    Module *createModuleInstance(std::string_view moduleType, ModuleLayer *destinationLayer, bool configurationLocal = false);
     // Search for any instance of any Module with the specified unique name
-    Module *findModuleInstance(const char *uniqueName);
+    Module *findModuleInstance(std::string_view uniqueName);
     // Search for any instance of any Module with the specified Module type
-    RefList<Module> findModuleInstances(const char *moduleType);
+    RefList<Module> findModuleInstances(std::string_view moduleType);
     // Generate unique Module name with base name provided
-    const char *uniqueModuleName(const char *name, Module *excludeThis = NULL);
+    std::string uniqueModuleName(std::string_view name, Module *excludeThis = nullptr);
     // Delete specified Module instance
     bool deleteModuleInstance(Module *instance);
 
@@ -242,19 +242,19 @@ class Dissolve
     // Remove specified processing layer
     void removeProcessingLayer(ModuleLayer *layer);
     // Find named processing layer
-    ModuleLayer *findProcessingLayer(const char *name) const;
+    ModuleLayer *findProcessingLayer(std::string_view name) const;
     // Own the specified processing layer
     bool ownProcessingLayer(ModuleLayer *layer);
     // Return number of defined processing layers
     int nProcessingLayers() const;
     // Generate unique processing layer name, with base name provided
-    const char *uniqueProcessingLayerName(const char *baseName) const;
+    std::string uniqueProcessingLayerName(std::string_view baseName) const;
     // Return list of processing layers
     List<ModuleLayer> &processingLayers();
     // Return data associated with main processing Modules
     GenericList &processingModuleData();
     // Create and add a named Module to the named layer (creating it if necessary), with optional Configuration target
-    Module *createModuleInLayer(const char *moduleType, const char *layerName, Configuration *cfg = NULL);
+    Module *createModuleInLayer(std::string_view moduleType, std::string_view layerName, Configuration *cfg = nullptr);
 
     /*
      * Simulation
@@ -304,9 +304,9 @@ class Dissolve
      */
     private:
     // Filename of current input file
-    CharString inputFilename_;
+    std::string inputFilename_;
     // Filename of current restart file
-    CharString restartFilename_;
+    std::string restartFilename_;
     // Accumulated timing information for saving restart file
     SampledDouble saveRestartTimes_;
     // Check if heartbeat file needs to be written or not
@@ -318,19 +318,19 @@ class Dissolve
 
     public:
     // Load input file
-    bool loadInput(const char *filename);
+    bool loadInput(std::string_view filename);
     // Load input from supplied string
-    bool loadInputFromString(const char *inputString);
+    bool loadInputFromString(std::string_view inputString);
     // Save input file
-    bool saveInput(const char *filename);
+    bool saveInput(std::string_view filename);
     // Load restart file
-    bool loadRestart(const char *filename);
+    bool loadRestart(std::string_view filename);
     // Load restart file as reference point
-    bool loadRestartAsReference(const char *filename, const char *dataSuffix);
+    bool loadRestartAsReference(std::string_view filename, std::string_view dataSuffix);
     // Save restart file
-    bool saveRestart(const char *filename);
+    bool saveRestart(std::string_view filename);
     // Save heartbeat file
-    bool saveHeartBeat(const char *filename, double estimatedNSecs);
+    bool saveHeartBeat(std::string_view filename, double estimatedNSecs);
     // Set bool for heartbeat file to be written
     void setWriteHeartBeat(bool b);
     // write heartbeat file
@@ -338,13 +338,13 @@ class Dissolve
     // Return whether an input filename has been set
     bool hasInputFilename() const;
     // Set current input filenamea
-    void setInputFilename(const char *filename);
+    void setInputFilename(std::string_view filename);
     // Return current input filename
-    const char *inputFilename() const;
+    std::string_view inputFilename() const;
     // Set restart filename
-    void setRestartFilename(const char *filename);
+    void setRestartFilename(std::string_view filename);
     // Return restart filename
-    const char *restartFilename() const;
+    std::string_view restartFilename() const;
     // Return whether a restart filename has been set
     bool hasRestartFilename() const;
 
@@ -373,7 +373,7 @@ class Dissolve
         nParallelStrategies
     };
     // Convert string to ParallelStrategy
-    static ParallelStrategy parallelStrategy(const char *s);
+    static ParallelStrategy parallelStrategy(std::string_view s);
 
     private:
     // Parallel strategy for Configuration work

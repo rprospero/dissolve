@@ -23,7 +23,7 @@
 
 #include "classes/isotopologues.h"
 #include "genericitems/base.h"
-#include <optional>
+#include "templates/optionalref.h"
 #include <vector>
 
 // Forward Declarations
@@ -80,7 +80,7 @@ class IsotopologueSet : public GenericItemBase
     // Return whether Isotopologues for the specified Species exists
     bool contains(const Species *sp) const;
     // Return Isotopologues for the specified Species
-    std::optional<const Isotopologues> getIsotopologues(const Species *sp) const;
+    OptionalReferenceWrapper<const Isotopologues> getIsotopologues(const Species *sp) const;
     // Return number of Isotopologues defined
     int nIsotopologues() const;
     // Return vector of all Isotopologues
@@ -93,7 +93,7 @@ class IsotopologueSet : public GenericItemBase
      */
     public:
     // Return class name
-    static const char *itemClassName();
+    static std::string_view itemClassName();
     // Read data through specified LineParser
     bool read(LineParser &parser, CoreData &coreData);
     // Write data through specified LineParser

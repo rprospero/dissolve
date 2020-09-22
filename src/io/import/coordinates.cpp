@@ -28,7 +28,7 @@ CoordinateImportFileFormat::CoordinateImportFileFormat(CoordinateImportFileForma
 {
     setUpKeywords();
 }
-CoordinateImportFileFormat::CoordinateImportFileFormat(const char *filename,
+CoordinateImportFileFormat::CoordinateImportFileFormat(std::string_view filename,
                                                        CoordinateImportFileFormat::CoordinateImportFormat format)
     : FileAndFormat(filename, format)
 {
@@ -49,12 +49,13 @@ void CoordinateImportFileFormat::setUpKeywords() {}
  */
 
 // Return enum options for CoordinateImportFormat
-EnumOptions<CoordinateImportFileFormat::CoordinateImportFormat> CoordinateImportFileFormat::coordinateImportFormats()
+EnumOptions<CoordinateImportFileFormat::CoordinateImportFormat> &CoordinateImportFileFormat::coordinateImportFormats()
 {
     static EnumOptionsList CoordinateImportFormats =
-        EnumOptionsList() << EnumOption(CoordinateImportFileFormat::XYZCoordinates, "xyz", "Simple XYZ")
-                          << EnumOption(CoordinateImportFileFormat::DLPOLYCoordinates, "dlpoly", "DL_POLY CONFIG")
-                          << EnumOption(CoordinateImportFileFormat::EPSRCoordinates, "epsr", "EPSR ATO");
+        EnumOptionsList() << EnumOption(CoordinateImportFileFormat::DLPOLYCoordinates, "dlpoly", "DL_POLY CONFIG")
+                          << EnumOption(CoordinateImportFileFormat::EPSRCoordinates, "epsr", "EPSR ATO")
+                          << EnumOption(CoordinateImportFileFormat::MoscitoCoordinates, "moscito", "Moscito structure file")
+                          << EnumOption(CoordinateImportFileFormat::XYZCoordinates, "xyz", "Simple XYZ");
 
     static EnumOptions<CoordinateImportFileFormat::CoordinateImportFormat> options("CoordinateImportFileFormat",
                                                                                    CoordinateImportFormats);
@@ -66,10 +67,13 @@ EnumOptions<CoordinateImportFileFormat::CoordinateImportFormat> CoordinateImport
 int CoordinateImportFileFormat::nFormats() const { return CoordinateImportFileFormat::nCoordinateImportFormats; }
 
 // Return format keyword for supplied index
-const char *CoordinateImportFileFormat::formatKeyword(int id) const { return coordinateImportFormats().keywordByIndex(id); }
+std::string_view CoordinateImportFileFormat::formatKeyword(int id) const
+{
+    return coordinateImportFormats().keywordByIndex(id);
+}
 
 // Return description string for supplied index
-const char *CoordinateImportFileFormat::formatDescription(int id) const
+std::string_view CoordinateImportFileFormat::formatDescription(int id) const
 {
     return coordinateImportFormats().descriptionByIndex(id);
 }
@@ -90,7 +94,7 @@ bool CoordinateImportFileFormat::importData(Array<Vec3<double>> &r, ProcessPool 
     // Open file and check that we're OK to proceed importing from it
     LineParser parser(procPool);
     if ((!parser.openInput(filename_)) || (!parser.isFileGoodForReading()))
-        return Messenger::error("Couldn't open file '%s' for loading Data2D data.\n", filename_.get());
+        return Messenger::error("Couldn't open file '{}' for loading coordinates data.\n", filename_);
 
     // Import the data
     auto result = importData(parser, r);
@@ -105,14 +109,23 @@ bool CoordinateImportFileFormat::importData(LineParser &parser, Array<Vec3<doubl
 {
     // Import the data
     auto result = false;
-    if (coordinateFormat() == CoordinateImportFileFormat::XYZCoordinates)
-        result = importXYZ(parser, r);
-    else if (coordinateFormat() == CoordinateImportFileFormat::DLPOLYCoordinates)
-        result = importDLPOLY(parser, r);
-    else if (coordinateFormat() == CoordinateImportFileFormat::EPSRCoordinates)
-        result = importEPSR(parser, r);
-    else
-        Messenger::error("Don't know how to load coordinates in format '%s'.\n", formatKeyword(coordinateFormat()));
+    switch (coordinateFormat())
+    {
+        case (CoordinateImportFileFormat::DLPOLYCoordinates):
+            result = importDLPOLY(parser, r);
+            break;
+        case (CoordinateImportFileFormat::EPSRCoordinates):
+            result = importEPSR(parser, r);
+            break;
+        case (CoordinateImportFileFormat::MoscitoCoordinates):
+            result = importMoscito(parser, r);
+            break;
+        case (CoordinateImportFileFormat::XYZCoordinates):
+            result = importXYZ(parser, r);
+            break;
+        default:
+            Messenger::error("Don't know how to load coordinates in format '{}'.\n", formatKeyword(coordinateFormat()));
+    }
 
     return result;
 }

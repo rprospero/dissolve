@@ -26,22 +26,6 @@
 #include "templates/variantpointer.h"
 #include <QComboBox>
 
-// ComboBox Populator
-class ComboPopulator
-{
-    public:
-    ComboPopulator(QComboBox *combo, int nItems, const char **itemArray, bool append = false)
-    {
-        // Clear the combobox
-        if (!append)
-            combo->clear();
-
-        // Add our text items to the list
-        for (int n = 0; n < nItems; ++n)
-            combo->addItem(itemArray[n]);
-    }
-};
-
 // ComboBox Populator from EnumOptions
 class ComboEnumOptionsPopulator
 {
@@ -54,7 +38,7 @@ class ComboEnumOptionsPopulator
 
         // Add our text items to the list
         for (int n = 0; n < options.nOptions(); ++n)
-            combo->addItem(options.keywordByIndex(n));
+            combo->addItem(QString::fromStdString(std::string(options.keywordByIndex(n))));
     }
 };
 
@@ -69,17 +53,18 @@ template <class T> class ComboNameListPopulator
             combo->clear();
 
         // Add our text items to the list
-        for (T *item = items.first(); item != NULL; item = item->next())
+        for (T *item = items.first(); item != nullptr; item = item->next())
             combo->addItem(item->name(), VariantPointer<T>(item));
     }
-    ComboNameListPopulator<T>(QComboBox *combo, const List<T> &items, const char *prefix, bool append = false)
+    ComboNameListPopulator<T>(QComboBox *combo, const List<T> &items, QString prefix, bool append = false)
     {
         // Clear the combobox
         if (!append)
             combo->clear();
 
         // Add our text items to the list
-        for (T *item = items.first(); item != NULL; item = item->next())
-            combo->addItem(QString("%1%2").arg(prefix, item->name()), VariantPointer<T>(item));
+        for (T *item = items.first(); item != nullptr; item = item->next())
+            combo->addItem(QString("%1%2").arg(prefix, QString::fromStdString(std::string(item->name()))),
+                           VariantPointer<T>(item));
     }
 };

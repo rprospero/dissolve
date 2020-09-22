@@ -24,24 +24,30 @@
 #include "data/ff.h"
 
 // Forward Declarations
-class CoreData;
-class SpeciesAtom;
+/* none */
 
 // SPC/Fw Forcefield
 class Forcefield_SPCFw : public Forcefield
 {
     public:
-    Forcefield_SPCFw();
-    ~Forcefield_SPCFw();
+    Forcefield_SPCFw() = default;
+    ~Forcefield_SPCFw() = default;
+
+    /*
+     * Set Up
+     */
+    protected:
+    // Set up / create all forcefield terms
+    bool setUp();
 
     /*
      * Definition
      */
     public:
     // Return name of Forcefield
-    const char *name() const;
+    std::string_view name() const;
     // Return description for Forcefield
-    const char *description() const;
+    std::string_view description() const;
     // Return short-range interaction style for AtomTypes
     Forcefield::ShortRangeType shortRangeType() const;
 };

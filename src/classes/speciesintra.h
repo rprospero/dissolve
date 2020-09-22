@@ -21,11 +21,9 @@
 
 #pragma once
 
-#include "base/charstring.h"
 #include "templates/array.h"
 #include "templates/reflist.h"
-
-#define MAXINTRAPARAMS 4
+#include <vector>
 
 // Forward Declarations
 class SpeciesAtom;
@@ -39,7 +37,11 @@ class SpeciesIntra
 {
     public:
     SpeciesIntra();
-    virtual ~SpeciesIntra();
+    virtual ~SpeciesIntra() = default;
+    SpeciesIntra(SpeciesIntra &source);
+    SpeciesIntra(SpeciesIntra &&source) = delete;
+    SpeciesIntra &operator=(const SpeciesIntra &source);
+    SpeciesIntra &operator=(SpeciesIntra &&source) = delete;
     // Interaction Type
     enum InteractionType
     {
@@ -71,7 +73,7 @@ class SpeciesIntra
     // Index of functional form of interaction
     int form_;
     // Parameters for interaction
-    double parameters_[MAXINTRAPARAMS];
+    std::vector<double> parameters_;
 
     public:
     // Set linked master from which parameters should be taken
@@ -86,20 +88,18 @@ class SpeciesIntra
     void setForm(int form);
     // Return functional form index of interaction
     int form() const;
-    // Set nth parameter
-    void setParameter(int id, double value);
+    // Add parameter to interaction
+    void addParameter(double param);
     // Set all parameters
-    void setParameters(double a, double b = 0.0, double c = 0.0, double d = 0.0);
+    void setParameters(const std::vector<double> &params);
+    // Set existing parameter
+    void setParameter(int id, double value);
+    // Return number of parameters defined
+    int nParameters() const;
     // Return nth parameter
     double parameter(int id) const;
     // Return array of parameters
-    const double *parameters() const;
-    // Return parameters as Array<double>
-    Array<double> parametersAsArray() const;
-    // Set parameters from double*
-    void setParameters(Array<double> params);
-    // Set parameters from Array<double>
-    void setParameters(const double *params);
+    const std::vector<double> &parameters() const;
     // Set up any necessary parameters
     virtual void setUp() = 0;
     // Calculate and return fundamental frequency for the interaction
@@ -112,25 +112,17 @@ class SpeciesIntra
      */
     private:
     // Number of SpeciesAtoms attached to termini (number of items stored in attached_ arrays)
-    int nAttached_[2];
-    // Arrays of indices (in)directly attached to termini
-    int *attached_[2];
-    // Size of attached_ SpeciesAtoms arrays (maximum number of items that may be stored)
-    int arraySize_[2];
+    std::vector<int> attached_[2];
     // Whether the term is contained within a cycle
     bool inCycle_;
 
     public:
-    // Clear and delete all arrays
-    void deleteAttachedAtomArrays();
     // Set attached SpeciesAtoms for terminus specified
     void setAttachedAtoms(int terminus, const RefList<SpeciesAtom> &atoms);
     // Set attached SpeciesAtoms for terminus specified (single SpeciesAtom)
     void setAttachedAtoms(int terminus, SpeciesAtom *atom);
-    // Return number of attached SpeciesAtoms for terminus specified
-    int nAttached(int terminus) const;
-    // Return array of attached indices for terminus specified
-    int *attached(int terminus) const;
+    // Return vector of attached indices for terminus specified
+    const std::vector<int> &attachedAtoms(int terminus) const;
     // Set whether the term is contained within a cycle
     void setInCycle(bool b);
     // Return whether the term is contained within a cycle

@@ -31,7 +31,7 @@ SpeciesKeywordWidget::SpeciesKeywordWidget(QWidget *parent, KeywordBase *keyword
     // Cast the pointer up into the parent class type
     keyword_ = dynamic_cast<SpeciesKeyword *>(keyword);
     if (!keyword_)
-        Messenger::error("Couldn't cast base keyword '%s' into SpeciesKeyword.\n", keyword->name());
+        Messenger::error("Couldn't cast base keyword '{}' into SpeciesKeyword.\n", keyword->name());
     else
     {
         // Set current information
@@ -56,7 +56,7 @@ void SpeciesKeywordWidget::myIndexChanged(int index)
     if (refreshing_)
         return;
 
-    Species *sp = (index == -1 ? NULL : VariantPointer<Species>(itemData(index, Qt::UserRole)));
+    Species *sp = (index == -1 ? nullptr : VariantPointer<Species>(itemData(index, Qt::UserRole)));
     keyword_->setData(sp);
 
     emit(keywordValueChanged(keyword_->optionMask()));

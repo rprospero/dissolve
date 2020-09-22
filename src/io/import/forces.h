@@ -34,12 +34,13 @@ class ForceImportFileFormat : public FileAndFormat
     // Forces Formats
     enum ForceImportFormat
     {
-        XYZForces,
         DLPOLYForces,
+        MoscitoForces,
+        SimpleForces,
         nForceImportFormats
     };
-    ForceImportFileFormat(ForceImportFormat format = XYZForces);
-    ForceImportFileFormat(const char *filename, ForceImportFormat format = XYZForces);
+    ForceImportFileFormat(ForceImportFormat format = SimpleForces);
+    ForceImportFileFormat(std::string_view filename, ForceImportFormat format = SimpleForces);
     ~ForceImportFileFormat();
 
     /*
@@ -52,15 +53,17 @@ class ForceImportFileFormat : public FileAndFormat
     /*
      * Format Access
      */
-    public:
+    private:
     // Return enum options for ForceImportFormat
-    static EnumOptions<ForceImportFileFormat::ForceImportFormat> forceImportFormats();
+    static EnumOptions<ForceImportFileFormat::ForceImportFormat> &forceImportFormats();
+
+    public:
     // Return number of available formats
     int nFormats() const;
     // Return format keyword for supplied index
-    const char *formatKeyword(int id) const;
+    std::string_view formatKeyword(int id) const;
     // Return description string for supplied index
-    const char *formatDescription(int id) const;
+    std::string_view formatDescription(int id) const;
     // Return current format as ForceImportFormat
     ForceImportFormat forceFormat() const;
 
@@ -75,14 +78,16 @@ class ForceImportFileFormat : public FileAndFormat
      * Import Functions
      */
     private:
-    // Import XYZ forces through specified parser
-    bool importXYZ(LineParser &parser, Array<double> &fx, Array<double> &fy, Array<double> &fz);
     // Import DL_POLY forces through specified parser
     bool importDLPOLY(LineParser &parser, Array<double> &fx, Array<double> &fy, Array<double> &fz);
+    // Import Moscito forces through specified parser
+    bool importMoscito(LineParser &parser, Array<double> &fx, Array<double> &fy, Array<double> &fz);
+    // Import simple formatted forces through specified parser
+    bool importSimple(LineParser &parser, Array<double> &fx, Array<double> &fy, Array<double> &fz);
 
     public:
     // Import forces using current filename and format
-    bool importData(Array<double> &fx, Array<double> &fy, Array<double> &fz, ProcessPool *procPool = NULL);
+    bool importData(Array<double> &fx, Array<double> &fy, Array<double> &fz, ProcessPool *procPool = nullptr);
     // Import forces using supplied parser and current format
     bool importData(LineParser &parser, Array<double> &fx, Array<double> &fy, Array<double> &fz);
 };

@@ -26,7 +26,7 @@
 #include "gui/render/renderablegroupmanager.h"
 #include "gui/render/view.h"
 
-RenderableSpecies::RenderableSpecies(const Species *source, const char *objectTag)
+RenderableSpecies::RenderableSpecies(const Species *source, std::string_view objectTag)
     : Renderable(Renderable::SpeciesRenderable, objectTag), source_(source)
 {
     // Set defaults
@@ -75,7 +75,7 @@ bool RenderableSpecies::validateDataSource()
 }
 
 // Invalidate the current data source
-void RenderableSpecies::invalidateDataSource() { source_ = NULL; }
+void RenderableSpecies::invalidateDataSource() { source_ = nullptr; }
 
 // Return version of data
 int RenderableSpecies::dataVersion() { return (validateDataSource() ? source_->version() : -99); }
@@ -208,19 +208,18 @@ void RenderableSpecies::recreatePrimitives(const View &view, const ColourDefinit
         }
 
         // Draw bonds
-        DynamicArrayConstIterator<SpeciesBond> bondIterator(source_->constBonds());
-        while (const SpeciesBond *b = bondIterator.iterate())
+        for (const auto &bond : source_->constBonds())
         {
             // Determine half delta i-j for bond
-            const auto ri = b->i()->r();
-            const auto rj = b->j()->r();
+            const auto ri = bond.i()->r();
+            const auto rj = bond.j()->r();
             const auto dij = (rj - ri) * 0.5;
 
             // Draw bond halves
             lineSpeciesPrimitive_->line(ri.x, ri.y, ri.z, ri.x + dij.x, ri.y + dij.y, ri.z + dij.z,
-                                        ElementColours::colour(b->i()->element()));
+                                        ElementColours::colour(bond.i()->element()));
             lineSpeciesPrimitive_->line(rj.x, rj.y, rj.z, rj.x - dij.x, rj.y - dij.y, rj.z - dij.z,
-                                        ElementColours::colour(b->j()->element()));
+                                        ElementColours::colour(bond.j()->element()));
         }
     }
     else if (displayStyle_ == SpheresStyle)
@@ -250,9 +249,8 @@ void RenderableSpecies::recreatePrimitives(const View &view, const ColourDefinit
         }
 
         // Draw bonds
-        DynamicArrayConstIterator<SpeciesBond> bondIterator(source_->constBonds());
-        while (const SpeciesBond *b = bondIterator.iterate())
-            createCylinderBond(speciesAssembly_, b->i(), b->j(), spheresBondRadius_);
+        for (const auto &bond : source_->constBonds())
+            createCylinderBond(speciesAssembly_, bond.i(), bond.j(), spheresBondRadius_);
     }
 }
 
@@ -317,10 +315,10 @@ void RenderableSpecies::recreateSelectionPrimitive()
             else
             {
                 // Draw all bonds from this atom
-                for (const auto *bond : i->bonds())
+                for (const SpeciesBond &bond : i->bonds())
                 {
                     const auto ri = i->r();
-                    const auto dij = (bond->partner(i)->r() - ri) * 0.5;
+                    const auto dij = (bond.partner(i)->r() - ri) * 0.5;
 
                     // Draw bond halves
                     lineSelectionPrimitive_->line(ri.x, ri.y, ri.z, ri.x + dij.x, ri.y + dij.y, ri.z + dij.z, colour);
@@ -546,7 +544,7 @@ bool RenderableSpecies::writeStyleBlock(LineParser &parser, int indentLevel) con
         indent[n] = ' ';
     indent[indentLevel * 2] = '\0';
 
-    if (!parser.writeLineF("%s%s  %s\n", indent, speciesStyleKeywords().keyword(RenderableSpecies::DisplayKeyword),
+    if (!parser.writeLineF("{}{}  {}\n", indent, speciesStyleKeywords().keyword(RenderableSpecies::DisplayKeyword),
                            speciesDisplayStyles().keyword(displayStyle_)))
         return false;
 
@@ -562,10 +560,10 @@ bool RenderableSpecies::readStyleBlock(LineParser &parser)
         if (parser.getArgsDelim(LineParser::SemiColonLineBreaks) != LineParser::Success)
             return false;
 
-        // Do we recognise this keyword and, if so, do we have the appropriate number of arguments?
-        if (!speciesStyleKeywords().isValid(parser.argc(0)))
-            return speciesStyleKeywords().errorAndPrintValid(parser.argc(0));
-        auto kwd = speciesStyleKeywords().enumeration(parser.argc(0));
+        // Do we recognise this keyword and, if so, do we have an appropriate number of arguments?
+        if (!speciesStyleKeywords().isValid(parser.argsv(0)))
+            return speciesStyleKeywords().errorAndPrintValid(parser.argsv(0));
+        auto kwd = speciesStyleKeywords().enumeration(parser.argsv(0));
         if (!speciesStyleKeywords().validNArgs(kwd, parser.nArgs() - 1))
             return false;
 
@@ -574,16 +572,16 @@ bool RenderableSpecies::readStyleBlock(LineParser &parser)
         {
             // Display style
             case (RenderableSpecies::DisplayKeyword):
-                if (!speciesDisplayStyles().isValid(parser.argc(1)))
-                    return speciesDisplayStyles().errorAndPrintValid(parser.argc(1));
-                displayStyle_ = speciesDisplayStyles().enumeration(parser.argc(1));
+                if (!speciesDisplayStyles().isValid(parser.argsv(1)))
+                    return speciesDisplayStyles().errorAndPrintValid(parser.argsv(1));
+                displayStyle_ = speciesDisplayStyles().enumeration(parser.argsv(1));
                 break;
             // End of block
             case (RenderableSpecies::EndStyleKeyword):
                 return true;
             // Unrecognised Keyword
             default:
-                Messenger::warn("Unrecognised display style keyword for RenderableSpecies: %s\n", parser.argc(0));
+                Messenger::warn("Unrecognised display style keyword for RenderableSpecies: {}\n", parser.argsv(0));
                 return false;
                 break;
         }

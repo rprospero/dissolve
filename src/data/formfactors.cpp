@@ -40,21 +40,21 @@ EnumOptions<XRayFormFactors::XRayFormFactorData> xRayFormFactorData()
 }
 
 // Return form factor data from specified dataset for given element and formal charge (if it exists)
-optional_reference_wrapper<const FormFactorData> formFactorData(XRayFormFactorData dataSet, int Z, int formalCharge)
+OptionalReferenceWrapper<const FormFactorData> formFactorData(XRayFormFactorData dataSet, int Z, int formalCharge)
 {
     switch (dataSet)
     {
         case (XRayFormFactors::WaasmaierKirfel1995):
             return wk1995Data(Z, formalCharge);
         default:
-            Messenger::error("Form factor data set type %i not recognised.\n");
+            Messenger::error("Form factor data set type {} not recognised.\n");
     }
 
     return {};
 }
 
 // Return form factor data from specified dataset for given element and formal charge (if it exists)
-optional_reference_wrapper<const FormFactorData> formFactorData(XRayFormFactorData dataSet, Element *el, int formalCharge)
+OptionalReferenceWrapper<const FormFactorData> formFactorData(XRayFormFactorData dataSet, Element *el, int formalCharge)
 {
     return formFactorData(dataSet, el->Z(), formalCharge);
 }

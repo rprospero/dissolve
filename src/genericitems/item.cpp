@@ -24,7 +24,7 @@
 // Static Members
 List<GenericItem> GenericItem::itemClasses_;
 
-GenericItem::GenericItem(const char *name, int flags) : ListItem<GenericItem>()
+GenericItem::GenericItem(std::string_view name, int flags) : ListItem<GenericItem>()
 {
     name_ = name;
     flags_ = flags;
@@ -41,18 +41,18 @@ GenericItem::~GenericItem(){};
 void GenericItem::addItemClass(GenericItem *item) { itemClasses_.own(item); }
 
 // Return new, empty GenericItem containing the class specified
-GenericItem *GenericItem::newItem(const char *className, const char *name, int flags)
+GenericItem *GenericItem::newItem(std::string_view className, std::string_view name, int flags)
 {
     // Search through registered item classes list for one matching the class name provided
-    for (auto *item = itemClasses_.first(); item != NULL; item = item->next())
+    for (auto *item = itemClasses_.first(); item != nullptr; item = item->next())
     {
         // See if the item can create a GenericItem of the desired type. If it can't, move on
         GenericItem *newItem = item->createItem(className, name, flags);
-        if (newItem != NULL)
+        if (newItem != nullptr)
             return newItem;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /*
@@ -60,10 +60,10 @@ GenericItem *GenericItem::newItem(const char *className, const char *name, int f
  */
 
 // Set item name
-void GenericItem::setName(const char *name) { name_ = name; }
+void GenericItem::setName(std::string_view name) { name_ = name; }
 
 // Return item name
-const char *GenericItem::name() { return name_.get(); }
+std::string_view GenericItem::name() const { return name_; }
 
 // Return version of the item
 int GenericItem::version() const { return version_; }

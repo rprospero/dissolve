@@ -66,9 +66,9 @@ class Configuration : public ListItem<Configuration>, public ObjectStore<Configu
      */
     private:
     // Name of the Configuration
-    CharString name_;
+    std::string name_;
     // Nice name (generated from name_) used for output files
-    CharString niceName_;
+    std::string niceName_;
     // Procedure to generate the Configuration
     Procedure generator_;
     // File / format of input coordinates file, if provided
@@ -78,11 +78,11 @@ class Configuration : public ListItem<Configuration>, public ObjectStore<Configu
 
     public:
     // Set name of the Configuration
-    void setName(const char *name);
+    void setName(std::string_view name);
     // Return name of the Configuration
-    const char *name() const;
+    std::string_view name() const;
     // Return nice name of the Configuration
-    const char *niceName() const;
+    std::string_view niceName() const;
     // Return the current generator
     Procedure &generator();
     // Create the Configuration according to its generator Procedure
@@ -119,7 +119,7 @@ class Configuration : public ListItem<Configuration>, public ObjectStore<Configu
     // Initialise content array
     void initialiseArrays(int nMolecules);
     // Return specified used type
-    AtomType &usedAtomType(int index);
+    std::shared_ptr<AtomType> usedAtomType(int index);
     // Return specified used type data
     AtomTypeData &usedAtomTypeData(int index);
     // Return first AtomTypeData for this Configuration
@@ -147,7 +147,7 @@ class Configuration : public ListItem<Configuration>, public ObjectStore<Configu
     // Increment version of current contents
     void incrementContentsVersion();
     // Add Molecule to Configuration based on the supplied Species
-    std::shared_ptr<Molecule> addMolecule(Species *sp, CoordinateSet *sourceCoordinates = NULL);
+    std::shared_ptr<Molecule> addMolecule(Species *sp, CoordinateSet *sourceCoordinates = nullptr);
     // Return number of Molecules in Configuration
     int nMolecules() const;
     // Return array of Molecules
@@ -216,8 +216,8 @@ class Configuration : public ListItem<Configuration>, public ObjectStore<Configu
     void updateCellLocation(Atom *i);
     // Update Cell location of specified Molecule
     void updateCellLocation(std::shared_ptr<Molecule> mol);
-    // Update Cell location of specified Atom indices (in array)
-    void updateCellLocation(int nIndices, int *atomIndices, int indexOffset);
+    // Update Cell location of specified Atom indices
+    void updateCellLocation(const std::vector<int> &targetAtoms, int indexOffset);
 
     /*
      * Modules

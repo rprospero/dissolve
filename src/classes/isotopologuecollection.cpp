@@ -126,7 +126,7 @@ bool IsotopologueCollection::contains(const Configuration *cfg) const
 }
 
 // Return IsotopologueSet for the specified Configuration
-std::optional<const IsotopologueSet> IsotopologueCollection::getIsotopologueSet(const Configuration *cfg) const
+OptionalReferenceWrapper<const IsotopologueSet> IsotopologueCollection::getIsotopologueSet(const Configuration *cfg) const
 {
     auto it = std::find_if(isotopologueSets_.cbegin(), isotopologueSets_.cend(),
                            [cfg](const auto &set) { return set.configuration() == cfg; });
@@ -146,7 +146,8 @@ bool IsotopologueCollection::contains(const Configuration *cfg, const Species *s
 }
 
 // Return Isotopologues for the Species in the specified Configuration
-std::optional<const Isotopologues> IsotopologueCollection::getIsotopologues(const Configuration *cfg, const Species *sp) const
+OptionalReferenceWrapper<const Isotopologues> IsotopologueCollection::getIsotopologues(const Configuration *cfg,
+                                                                                       const Species *sp) const
 {
     auto it = std::find_if(isotopologueSets_.cbegin(), isotopologueSets_.cend(),
                            [cfg](const auto &set) { return set.configuration() == cfg; });
@@ -180,7 +181,7 @@ void IsotopologueCollection::complete(const RefList<Configuration> &configuratio
         while (SpeciesInfo *spInfo = spInfoIterator.iterate())
         {
             // If the Species already exists in our set, nothing more to do...
-            if (it->contains(spInfo->species()))
+            if (setForCfg->contains(spInfo->species()))
                 continue;
 
             // Add the natural isotopologue for this Species
@@ -194,7 +195,7 @@ void IsotopologueCollection::complete(const RefList<Configuration> &configuratio
  */
 
 // Return class name
-const char *IsotopologueCollection::itemClassName() { return "IsotopologueCollection"; }
+std::string_view IsotopologueCollection::itemClassName() { return "IsotopologueCollection"; }
 
 // Read data through specified LineParser
 bool IsotopologueCollection::read(LineParser &parser, CoreData &coreData)
@@ -219,7 +220,7 @@ bool IsotopologueCollection::read(LineParser &parser, CoreData &coreData)
 bool IsotopologueCollection::write(LineParser &parser)
 {
     // Write number of Configurations in the collection
-    if (!parser.writeLineF("%i\n", isotopologueSets_.size()))
+    if (!parser.writeLineF("{}\n", isotopologueSets_.size()))
         return false;
 
     // Write details for each set of Isotopologues

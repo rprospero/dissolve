@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include "io/export/forces.h"
 #include "io/import/forces.h"
 #include "module/module.h"
 #include <memory>
@@ -52,11 +53,11 @@ class ForcesModule : public Module
      */
     public:
     // Return type of module
-    const char *type() const;
+    std::string_view type() const;
     // Return category for module
-    const char *category() const;
+    std::string_view category() const;
     // Return brief description of module
-    const char *brief() const;
+    std::string_view brief() const;
     // Return the number of Configuration targets this Module requires
     int nRequiredTargets() const;
 
@@ -73,6 +74,8 @@ class ForcesModule : public Module
     private:
     // Reference forces for test
     ForceImportFileFormat referenceForces_;
+    // Force export file and format
+    ForceExportFileFormat exportedForces_;
 
     /*
      * Processing
@@ -86,28 +89,37 @@ class ForcesModule : public Module
     bool setUp(Dissolve &dissolve, ProcessPool &procPool);
 
     /*
-     * Force Methods
+     * Functions
      */
     public:
-    // Calculate total intramolecular forces
-    static void intramolecularForces(ProcessPool &procPool, Configuration *cfg, const PotentialMap &potentialMap,
-                                     Array<double> &fx, Array<double> &fy, Array<double> &fz);
     // Calculate interatomic forces within the specified Configuration
-    static void interatomicForces(ProcessPool &procPool, Configuration *cfg, const PotentialMap &potentialMap,
+    static void interAtomicForces(ProcessPool &procPool, Configuration *cfg, const PotentialMap &potentialMap,
                                   Array<double> &fx, Array<double> &fy, Array<double> &fz);
+    // Calculate interatomic forces on specified atoms within the specified Configuration
+    static void interAtomicForces(ProcessPool &procPool, Configuration *cfg, const Array<int> &targetIndices,
+                                  const PotentialMap &potentialMap, Array<double> &fx, Array<double> &fy, Array<double> &fz);
+    // Calculate interatomic forces within the specified Species
+    static void interAtomicForces(ProcessPool &procPool, Species *sp, const PotentialMap &potentialMap, Array<double> &fx,
+                                  Array<double> &fy, Array<double> &fz);
+    // Calculate total intramolecular forces acting on specific atoms in the Configuration
+    static void intraMolecularForces(ProcessPool &procPool, Configuration *cfg, const Array<int> &targetIndices,
+                                     const PotentialMap &potentialMap, Array<double> &fx, Array<double> &fy, Array<double> &fz);
+    // Calculate total intramolecular forces in Configuration
+    static void intraMolecularForces(ProcessPool &procPool, Configuration *cfg, const PotentialMap &potentialMap,
+                                     Array<double> &fx, Array<double> &fy, Array<double> &fz);
+    // Calculate total intramolecular forces in Species
+    static void intraMolecularForces(ProcessPool &procPool, Species *sp, const PotentialMap &potentialMap, Array<double> &fx,
+                                     Array<double> &fy, Array<double> &fz);
     // Calculate total forces within the specified Configuration
     static void totalForces(ProcessPool &procPool, Configuration *cfg, const PotentialMap &potentialMap, Array<double> &fx,
                             Array<double> &fy, Array<double> &fz);
-    // Calculate total intramolecular forces acting on specific atoms
-    static void intramolecularForces(ProcessPool &procPool, Configuration *cfg, const Array<int> &targetIndices,
-                                     const PotentialMap &potentialMap, Array<double> &fx, Array<double> &fy, Array<double> &fz);
-    // Calculate interatomic forces on specified atoms within the specified Configuration
-    static void interatomicForces(ProcessPool &procPool, Configuration *cfg, const Array<int> &targetIndices,
-                                  const PotentialMap &potentialMap, Array<double> &fx, Array<double> &fy, Array<double> &fz);
     // Calculate forces acting on specific atoms within the specified Configuration (arising from all atoms)
     static void totalForces(ProcessPool &procPool, Configuration *cfg, const Array<int> &targetIndices,
                             const PotentialMap &potentialMap, Array<double> &fx, Array<double> &fy, Array<double> &fz);
     // Calculate forces acting on specific Molecules within the specified Configuration (arising from all atoms)
     static void totalForces(ProcessPool &procPool, Configuration *cfg, const Array<std::shared_ptr<Molecule>> &targetMolecules,
                             const PotentialMap &potentialMap, Array<double> &fx, Array<double> &fy, Array<double> &fz);
+    // Calculate total forces within the specified Species
+    static void totalForces(ProcessPool &procPool, Species *sp, const PotentialMap &potentialMap, Array<double> &fx,
+                            Array<double> &fy, Array<double> &fz);
 };

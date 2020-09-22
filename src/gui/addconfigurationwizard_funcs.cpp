@@ -32,8 +32,8 @@
 
 AddConfigurationWizard::AddConfigurationWizard(QWidget *parent)
 {
-    dissolveReference_ = NULL;
-    importTarget_ = NULL;
+    dissolveReference_ = nullptr;
+    importTarget_ = nullptr;
 
     // Set up our UI, and attach the wizard's widgets to placeholder widgets (if available)
     ui_.setupUi(this);
@@ -69,7 +69,7 @@ void AddConfigurationWizard::setMainDissolveReference(const Dissolve *dissolveRe
 Configuration *AddConfigurationWizard::importConfiguration(Dissolve &dissolve)
 {
     if (!importTarget_)
-        return NULL;
+        return nullptr;
 
     // Set the name of the Configuration from the name edit
     importTarget_->setName(qPrintable(ui_.FinishNameEdit->text()));
@@ -81,7 +81,7 @@ Configuration *AddConfigurationWizard::importConfiguration(Dissolve &dissolve)
 
     Configuration *newCfg = importTarget_;
 
-    importTarget_ = NULL;
+    importTarget_ = nullptr;
 
     return newCfg;
 }
@@ -95,7 +95,7 @@ bool AddConfigurationWizard::displayControlPage(int index)
 {
     // Check page index given
     if ((index < 0) || (index >= AddConfigurationWizard::nPages))
-        return Messenger::error("Page index %i not recognised.\n", index);
+        return Messenger::error("Page index {} not recognised.\n", index);
 
     // Update controls / check flow
     switch (index)
@@ -185,7 +185,8 @@ void AddConfigurationWizard::reset()
     importTarget_ = new Configuration;
 
     // Set a new, unique name ready on the final page
-    ui_.FinishNameEdit->setText(dissolveReference_->constCoreData().uniqueConfigurationName("NewConfiguration"));
+    ui_.FinishNameEdit->setText(
+        QString::fromStdString(std::string(dissolveReference_->constCoreData().uniqueConfigurationName("NewConfiguration"))));
 }
 
 /*
@@ -216,17 +217,14 @@ void AddConfigurationWizard::on_StartCreateTemplateButton_clicked(bool checked)
 void AddConfigurationWizard::on_FinishNameEdit_textChanged(const QString text)
 {
     if (!dissolveReference_)
-    {
-        printf("Internal Error: Dissolve pointer has not been set in AddConfigurationWizard.\n");
         return;
-    }
 
     // Name of the prospective Configuration has been changed, so make sure it is valid
     bool nameIsValid;
     if (text.isEmpty())
         nameIsValid = false;
     else
-        nameIsValid = dissolveReference_->findConfiguration(qPrintable(text)) == NULL;
+        nameIsValid = dissolveReference_->findConfiguration(qPrintable(text)) == nullptr;
 
     ui_.FinishNameIndicator->setOK(nameIsValid);
 

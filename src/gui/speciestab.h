@@ -21,6 +21,11 @@
 
 #pragma once
 
+#include "classes/speciesangle.h"
+#include "classes/speciesatom.h"
+#include "classes/speciesbond.h"
+#include "classes/speciesimproper.h"
+#include "classes/speciestorsion.h"
 #include "gui/maintab.h"
 #include "gui/ui_speciestab.h"
 
@@ -29,10 +34,12 @@ class AtomType;
 class Isotope;
 class Isotopologue;
 class Species;
-class SpeciesAtom;
-class SpeciesBond;
-class SpeciesAngle;
-class SpeciesTorsion;
+
+Q_DECLARE_METATYPE(SpeciesAtom *)
+Q_DECLARE_METATYPE(SpeciesBond *)
+Q_DECLARE_METATYPE(SpeciesAngle *)
+Q_DECLARE_METATYPE(SpeciesTorsion *)
+Q_DECLARE_METATYPE(SpeciesImproper *)
 
 // Species Tab
 class SpeciesTab : public QWidget, public ListItem<SpeciesTab>, public MainTab
@@ -41,7 +48,8 @@ class SpeciesTab : public QWidget, public ListItem<SpeciesTab>, public MainTab
     Q_OBJECT
 
     public:
-    SpeciesTab(DissolveWindow *dissolveWindow, Dissolve &dissolve, MainTabsWidget *parent, const char *title, Species *species);
+    SpeciesTab(DissolveWindow *dissolveWindow, Dissolve &dissolve, MainTabsWidget *parent, const QString title,
+               Species *species);
     ~SpeciesTab();
 
     /*
@@ -122,8 +130,8 @@ class SpeciesTab : public QWidget, public ListItem<SpeciesTab>, public MainTab
     void updateIsotopologuesTreeTopLevelItem(QTreeWidget *treeWidget, int topLevelItemIndex, Isotopologue *data,
                                              bool createItem);
     // IsotopologuesTree item update function
-    void updateIsotopologuesTreeChildItem(QTreeWidgetItem *parentItem, int childIndex, AtomType *item, Isotope *data,
-                                          bool createItem);
+    void updateIsotopologuesTreeChildItem(QTreeWidgetItem *parentItem, int childIndex, std::shared_ptr<AtomType> item,
+                                          Isotope *data, bool createItem);
     // Return currently-selected Isotopologue
     Isotopologue *currentIsotopologue();
 

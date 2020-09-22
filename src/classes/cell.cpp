@@ -70,6 +70,7 @@ const Vec3<double> &Cell::centre() const { return centre_; }
 
 // Return array of contained Atoms
 OrderedVector<Atom *> &Cell::atoms() { return atoms_; }
+const OrderedVector<Atom *> &Cell::atoms() const { return atoms_; }
 
 // Return array of contained Atoms, ordered by their array indices
 const OrderedVector<Atom *> &Cell::indexOrderedAtoms() const { return indexOrderedAtoms_; }
@@ -81,9 +82,9 @@ int Cell::nAtoms() const { return atoms_.size(); }
 bool Cell::addAtom(Atom *i)
 {
 #ifdef CHECKS
-    if (i == NULL)
+    if (i == nullptr)
     {
-        Messenger::print("NULL_POINTER - NULL Atom pointer given to Cell::addAtom().\n");
+        Messenger::print("NULL_POINTER - nullptr given to Cell::addAtom().\n");
         return false;
     }
 #endif
@@ -92,7 +93,7 @@ bool Cell::addAtom(Atom *i)
     indexOrderedAtoms_.insert(i);
 
     if (i->cell())
-        Messenger::warn("About to set Cell pointer in Atom %i, but this will overwrite an existing value.\n", i->arrayIndex());
+        Messenger::warn("About to set Cell pointer in Atom {}, but this will overwrite an existing value.\n", i->arrayIndex());
     i->setCell(this);
 
     return true;
@@ -102,9 +103,9 @@ bool Cell::addAtom(Atom *i)
 bool Cell::removeAtom(Atom *i)
 {
 #ifdef CHECKS
-    if (i == NULL)
+    if (i == nullptr)
     {
-        Messenger::print("NULL_POINTER - NULL Atom pointer given to Cell::removeAtom().\n");
+        Messenger::print("NULL_POINTER - nullptr given to Cell::removeAtom().\n");
         return false;
     }
 #endif
@@ -112,11 +113,11 @@ bool Cell::removeAtom(Atom *i)
     if (atoms_.erase(i))
     {
         indexOrderedAtoms_.erase(i);
-        i->setCell(NULL);
+        i->setCell(nullptr);
     }
     else
     {
-        Messenger::error("Tried to remove Atom %i from Cell %i, but it was not present.\n", i->arrayIndex(), index_);
+        Messenger::error("Tried to remove Atom {} from Cell {}, but it was not present.\n", i->arrayIndex(), index_);
         return false;
     }
 
@@ -145,10 +146,10 @@ void Cell::addCellNeighbours(OrderedVector<Cell *> &nearNeighbours, OrderedVecto
 
     // Create ordered list of CellNeighbours (including cells from both lists)
     OrderedVector<std::pair<Cell *, bool>> allCells;
-    for (auto *near : nearNeighbours)
-        allCells.emplace(near, false);
-    for (auto *mim : mimNeighbours)
-        allCells.emplace(mim, true);
+    for (auto *nearNbr : nearNeighbours)
+        allCells.emplace(nearNbr, false);
+    for (auto *mimNbr : mimNeighbours)
+        allCells.emplace(mimNbr, true);
 
     if (allCells.size() != (nCellNeighbours_ + nMimCellNeighbours_))
         Messenger::error("Cell neighbour lists are corrupt - same cell found in both near and mim lists.\n");
@@ -171,13 +172,13 @@ int Cell::nMimCellNeighbours() const { return nMimCellNeighbours_; }
 int Cell::nTotalCellNeighbours() const { return nCellNeighbours_ + nMimCellNeighbours_; }
 
 // Return adjacent Cell neighbour list
-std::vector<Cell *> Cell::cellNeighbours() { return cellNeighbours_; }
+const std::vector<Cell *> &Cell::cellNeighbours() const { return cellNeighbours_; }
 
 // Return specified adjacent Cell neighbour
 Cell *Cell::cellNeighbour(int id) const { return cellNeighbours_[id]; }
 
 // Return list of Cell neighbours requiring minimum image calculation
-std::vector<Cell *> Cell::mimCellNeighbours() { return mimCellNeighbours_; }
+const std::vector<Cell *> &Cell::mimCellNeighbours() const { return mimCellNeighbours_; }
 
 // Return specified Cell neighbour, requiring minimum image calculation
 Cell *Cell::mimCellNeighbour(int id) const { return mimCellNeighbours_[id]; }
@@ -192,4 +193,4 @@ bool Cell::mimRequired(const Cell *otherCell) const
 }
 
 // Return list of all Cell neighbours
-std::vector<CellNeighbour> Cell::allCellNeighbours() { return allCellNeighbours_; }
+const std::vector<CellNeighbour> &Cell::allCellNeighbours() const { return allCellNeighbours_; }

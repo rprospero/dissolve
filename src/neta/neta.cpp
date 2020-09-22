@@ -28,44 +28,30 @@
 #include <stdarg.h>
 #include <string.h>
 
-NETADefinition::NETADefinition(const char *netaDefinition, const Forcefield *associatedFF) : rootNode_(this)
-{
-    set(netaDefinition, associatedFF);
-}
+NETADefinition::NETADefinition() : rootNode_(this) {}
 
-NETADefinition::~NETADefinition() { clear(); }
+NETADefinition::~NETADefinition() { rootNode_.clear(); }
 
 /*
  * Data
  */
 
-// Clear contents of definition
-void NETADefinition::clear()
-{
-    definitionString_.clear();
-    rootNode_.clear();
-}
-
 // Return root node pointer
 NETARootNode *NETADefinition::rootNode() { return &rootNode_; }
 
-// Set NETADefinition from supplied string
-bool NETADefinition::set(const char *netaDefinition, const Forcefield *associatedFF)
+// Create definition from stored string
+bool NETADefinition::create(const Forcefield *associatedFF)
 {
-    clear();
+    rootNode_.clear();
 
-    definitionString_ = netaDefinition;
-
-    auto result = NETADefinitionGenerator::generate(*this, definitionString_.get(), associatedFF);
-
-    return result;
+    return NETADefinitionGenerator::generate(*this, definitionString_, associatedFF);
 }
 
 // Set generating string
-void NETADefinition::setDefinitionString(const char *definition) { definitionString_ = definition; }
+void NETADefinition::setDefinitionString(std::string_view definition) { definitionString_ = definition; }
 
 // Return original generating string
-const char *NETADefinition::definitionString() const { return definitionString_.get(); }
+std::string_view NETADefinition::definitionString() const { return definitionString_; }
 
 /*
  * Matching

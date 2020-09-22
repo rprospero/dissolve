@@ -21,7 +21,6 @@
 
 #pragma once
 
-#include "base/charstring.h"
 #include "math/histogram3d.h"
 #include "procedure/nodes/node.h"
 
@@ -35,8 +34,8 @@ class NodeScopeStack;
 class Collect3DProcedureNode : public ProcedureNode
 {
     public:
-    Collect3DProcedureNode(CalculateProcedureNodeBase *xObservable = NULL, CalculateProcedureNodeBase *yObservable = NULL,
-                           CalculateProcedureNodeBase *zObservable = NULL, double xMin = 0.0, double xMax = 10.0,
+    Collect3DProcedureNode(CalculateProcedureNodeBase *xObservable = nullptr, CalculateProcedureNodeBase *yObservable = nullptr,
+                           CalculateProcedureNodeBase *zObservable = nullptr, double xMin = 0.0, double xMax = 10.0,
                            double xBinWidth = 0.05, double yMin = 0.0, double yMax = 10.0, double yBinWidth = 0.05,
                            double zMin = 0.0, double zMax = 10.0, double zBinWidth = 0.05);
     Collect3DProcedureNode(CalculateProcedureNodeBase *xyzObservable, double xMin = 0.0, double xMax = 10.0,
@@ -112,10 +111,10 @@ class Collect3DProcedureNode : public ProcedureNode
      */
     public:
     // Prepare any necessary data, ready for execution
-    bool prepare(Configuration *cfg, const char *prefix, GenericList &targetList);
+    bool prepare(Configuration *cfg, std::string_view prefix, GenericList &targetList);
     // Execute node, targetting the supplied Configuration
-    ProcedureNode::NodeExecutionResult execute(ProcessPool &procPool, Configuration *cfg, const char *prefix,
+    ProcedureNode::NodeExecutionResult execute(ProcessPool &procPool, Configuration *cfg, std::string_view prefix,
                                                GenericList &targetList);
     // Finalise any necessary data after execution
-    bool finalise(ProcessPool &procPool, Configuration *cfg, const char *prefix, GenericList &targetList);
+    bool finalise(ProcessPool &procPool, Configuration *cfg, std::string_view prefix, GenericList &targetList);
 };

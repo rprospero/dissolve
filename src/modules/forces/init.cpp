@@ -33,10 +33,9 @@ void ForcesModule::initialise()
     keywords_.add("Test", new BoolKeyword(true), "TestIntra", "Include intramolecular forces in test");
     keywords_.add("Test", new FileAndFormatKeyword(referenceForces_, "EndTestReference"), "TestReference",
                   "Reference forces for test");
-    keywords_.add("Test", new DoubleKeyword(0.1), "TestThreshold",
-                  "Threshold of force (%%) at which test comparison will fail");
+    keywords_.add("Test", new DoubleKeyword(0.1), "TestThreshold", "Threshold of force (%) at which test comparison will fail");
 
     // Export
-    keywords_.add("Export", new BoolKeyword(false), "Save",
-                  "Save forces for the Configuration to the file '<name>.forces.txt'");
+    keywords_.add("Export", new FileAndFormatKeyword(exportedForces_, "EndSaveForces"), "SaveForces",
+                  "File to save calculated forces to");
 }

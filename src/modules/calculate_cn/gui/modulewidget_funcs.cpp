@@ -33,7 +33,7 @@ CalculateCNModuleWidget::CalculateCNModuleWidget(QWidget *parent, CalculateCNMod
     // Set up RDF graph
     rdfGraph_ = ui_.RDFPlotWidget;
 
-    View &view = rdfGraph_->view();
+    auto &view = rdfGraph_->view();
     view.setViewType(View::FlatXYView);
     view.axes().setTitle(0, "\\it{r}, \\sym{angstrom}");
     view.axes().setMax(0, 10.0);
@@ -91,7 +91,8 @@ void CalculateCNModuleWidget::setGraphDataTargets()
 
     // Get target RDF module
     auto found = false;
-    const CalculateRDFModule *rdfModule = module_->keywords().retrieve<const CalculateRDFModule *>("SourceRDF", NULL, &found);
+    const CalculateRDFModule *rdfModule =
+        module_->keywords().retrieve<const CalculateRDFModule *>("SourceRDF", nullptr, &found);
 
     // If the RDF data for the graph has not yet been found, attempt to locate it now
     if (!rdfDataLocated_)

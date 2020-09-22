@@ -71,9 +71,7 @@ template <class T> class ObjectChunk : public ListItem<ObjectChunk<T>>
     // Determine array offset of object
     int objectOffset(T *object)
     {
-        // 	printf("in objectoffset: %li %li\n", intptr_t(object), intptr_t(&objectArray_[0]));
         intptr_t offset = intptr_t(object) - intptr_t(&objectArray_[0]);
-        // 	printf("Offset = %li\n", offset);
         if (offset < 0)
             return -1;
         int index = offset / objectSize_;
@@ -85,7 +83,7 @@ template <class T> class ObjectChunk : public ListItem<ObjectChunk<T>>
     T *nextAvailable()
     {
         if (nextAvailableObject_ == -1)
-            return NULL;
+            return nullptr;
         T *object = &objectArray_[nextAvailableObject_];
         objectUsed_[nextAvailableObject_] = true;
         --nUnusedObjects_;
@@ -122,7 +120,7 @@ template <class T> class ObjectChunk : public ListItem<ObjectChunk<T>>
         }
 
         // Shouldn't get here!
-        printf("Internal Error - ObjectChunk.\n");
+        Messenger::error("ObjectChunk.\n");
         return object;
     }
     // Return specified object to pool
@@ -165,7 +163,7 @@ template <class T> class ObjectFactory
     public:
     ObjectFactory<T>()
     {
-        currentChunk_ = NULL;
+        currentChunk_ = nullptr;
         chunkSize_ = 256;
     }
 
@@ -191,7 +189,7 @@ template <class T> class ObjectFactory
     // Produce a new object
     T *produce()
     {
-        if (currentChunk_ == NULL)
+        if (currentChunk_ == nullptr)
         {
             currentChunk_ = new ObjectChunk<T>(chunkSize_);
             objectChunks_.own(currentChunk_);
@@ -203,7 +201,7 @@ template <class T> class ObjectFactory
         {
             // Must search current chunk list to see if any current chunks have available space. If not, we will
             // create a new one
-            for (ObjectChunk<T> *chunk = objectChunks_.first(); chunk != NULL; chunk = chunk->next())
+            for (ObjectChunk<T> *chunk = objectChunks_.first(); chunk != nullptr; chunk = chunk->next())
             {
                 if (chunk == currentChunk_)
                     continue;
@@ -221,24 +219,24 @@ template <class T> class ObjectFactory
         }
 
         // If we get here, then something has gone horribly wrong...
-        printf("Internal Error - Couldn't find an empty chunk to return an object from.\n");
-        return NULL;
+        Messenger::error("Couldn't find an empty chunk to return an object from.\n");
+        return nullptr;
     }
     // Return specified object to factory
     void returnObject(T *object)
     {
         // Must find chunk which owns this object
-        for (ObjectChunk<T> *chunk = objectChunks_.first(); chunk != NULL; chunk = chunk->next())
+        for (ObjectChunk<T> *chunk = objectChunks_.first(); chunk != nullptr; chunk = chunk->next())
             if (chunk->returnObject(object))
                 return;
 
         // Couldn't find it!
-        printf("Internal Error - Tried to return an object to an ObjectFactory which didn't produce it.\n");
+        Messenger::error("Tried to return an object to an ObjectFactory which didn't produce it.\n");
     }
     // Mark all objects as unused
     void markAllObjectsUnused()
     {
-        for (ObjectChunk<T> *chunk = objectChunks_.first(); chunk != NULL; chunk = chunk->next())
+        for (ObjectChunk<T> *chunk = objectChunks_.first(); chunk != nullptr; chunk = chunk->next())
             chunk->markAllObjectsUnused();
     }
 };

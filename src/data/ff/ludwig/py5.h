@@ -24,24 +24,30 @@
 #include "data/ff.h"
 
 // Forward Declarations
-class CoreData;
-class SpeciesAtom;
+/* none */
 
 // Py4OH Forcefield
-class Forcefield_Py5_Ludwig : public Forcefield
+class Forcefield_Ludwig_Py5 : public Forcefield
 {
     public:
-    Forcefield_Py5_Ludwig();
-    ~Forcefield_Py5_Ludwig();
+    Forcefield_Ludwig_Py5() = default;
+    ~Forcefield_Ludwig_Py5() = default;
+
+    /*
+     * Set Up
+     */
+    protected:
+    // Set up / create all forcefield terms
+    bool setUp();
 
     /*
      * Definition
      */
     public:
     // Return name of Forcefield
-    const char *name() const;
+    std::string_view name() const;
     // Return description for Forcefield
-    const char *description() const;
+    std::string_view description() const;
     // Return short-range interaction style for AtomTypes
     Forcefield::ShortRangeType shortRangeType() const;
 };

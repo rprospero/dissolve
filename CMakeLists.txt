@@ -26,14 +26,9 @@ CMAKE_POLICY(SET CMP0020 NEW)
 # Request C++17 Standard Support (Required for std::optional and auto types in lambda parameters)
 set(CMAKE_CXX_STANDARD 17)
 
-
-###################################
-# TBB linking
-###################################
-include_directories(${TBB_ROOT})
-link_directories(${TBB_ROOT}/lib)
-
-
+# Include Conan Packages
+include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+conan_basic_setup(CMAKE_TARGETS)
 
 
 # Catch defines
@@ -215,6 +210,7 @@ set(BASIC_LINK_LIBS
   calculatesdfmodule
   calibrationmodule
   checksmodule
+  checkspeciesmodule
   datatestmodule
   energymodule
   epsrmodule
@@ -249,6 +245,9 @@ endif()
 
 # Build CLI target executable
 target_link_libraries( ${target_name}
+
+  PUBLIC
+
   ${WHOLE_ARCHIVE_FLAG}
 
   ${BASIC_LINK_LIBS}
@@ -278,7 +277,13 @@ target_link_libraries( ${target_name}
   testmodulenogui
   ${NO_WHOLE_ARCHIVE_FLAG}
 
+  PRIVATE
+
   ${EXTRA_LINK_LIBS}
+
+  INTERFACE
+
+  CONAN_PKG::fmt
 )
 
 # Build GUI target executables
@@ -286,6 +291,9 @@ if(GUI)
 
   # Main Dissolve GUI
   target_link_libraries( ${gui_target_name}
+
+    PUBLIC
+
     ${WHOLE_ARCHIVE_FLAG}
 
     ${BASIC_LINK_LIBS}
@@ -325,6 +333,8 @@ if(GUI)
 
     ${NO_WHOLE_ARCHIVE_FLAG}
 
+    PRIVATE
+
     # External libs
     Qt5::Widgets Qt5::Core Qt5::PrintSupport
     ${FTGL_LIBRARIES}
@@ -332,6 +342,9 @@ if(GUI)
     ${FREETYPE_LIBRARIES}
 
     ${EXTRA_LINK_LIBS}
+
+    INTERFACE
+
+    CONAN_PKG::fmt
   )
 endif(GUI)
-

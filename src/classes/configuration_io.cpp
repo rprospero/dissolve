@@ -31,25 +31,25 @@ bool Configuration::write(LineParser &parser) const
 {
     int molId;
 
-    if (!parser.writeLineF("'%s'  %i  # nMolecules\n", name(), molecules_.size()))
+    if (!parser.writeLineF("'{}'  {}  # nMolecules\n", name(), molecules_.size()))
         return false;
 
     // Write unit cell (box) lengths and angles
     const auto lengths = box()->axisLengths();
     const auto angles = box()->axisAngles();
-    if (!parser.writeLineF("%12e %12e %12e  %f  %s\n", lengths.x, lengths.y, lengths.z, requestedSizeFactor_,
+    if (!parser.writeLineF("{:12e} {:12e} {:12e}  {}  {}\n", lengths.x, lengths.y, lengths.z, requestedSizeFactor_,
                            DissolveSys::btoa(box()->type() == Box::NonPeriodicBoxType)))
         return false;
-    if (!parser.writeLineF("%12e %12e %12e\n", angles.x, angles.y, angles.z))
+    if (!parser.writeLineF("{:12e} {:12e} {:12e}\n", angles.x, angles.y, angles.z))
         return false;
 
     // Write total number of Molecules
-    if (!parser.writeLineF("%i\n", molecules_.size()))
+    if (!parser.writeLineF("{}\n", molecules_.size()))
         return false;
 
     // Write Molecule types - write sequential Molecules with same type as single line
     auto moleculeCount = 0;
-    const Species *lastType = NULL;
+    const Species *lastType = nullptr;
     for (int n = 0; n < molecules_.size(); ++n)
     {
         // If the last Molecule's Species is the same as this one, increment counter and move on
@@ -60,22 +60,22 @@ bool Configuration::write(LineParser &parser) const
         }
 
         // Species is different between this molecule and the last - write this info, and reset the counter
-        if (lastType && (!parser.writeLineF("%i  '%s'\n", moleculeCount, lastType->name())))
+        if (lastType && (!parser.writeLineF("{}  '{}'\n", moleculeCount, lastType->name())))
             return false;
         moleculeCount = 1;
         lastType = molecules_[n]->species();
     }
     // Write final molecule count / type
-    if ((moleculeCount > 0) && (!parser.writeLineF("%i  '%s'\n", moleculeCount, lastType->name())))
+    if ((moleculeCount > 0) && (!parser.writeLineF("{}  '{}'\n", moleculeCount, lastType->name())))
         return false;
 
     // Write all Atoms - for each write index and coordinates
-    if (!parser.writeLineF("%i  # nAtoms\n", atoms_.nItems()))
+    if (!parser.writeLineF("{}  # nAtoms\n", atoms_.nItems()))
         return false;
     for (int n = 0; n < atoms_.nItems(); ++n)
     {
         const Atom *i = atoms_.constValue(n);
-        if (!parser.writeLineF("%i %e %e %e\n", i->molecule()->arrayIndex(), i->x(), i->y(), i->z()))
+        if (!parser.writeLineF("{} {:e} {:e} {:e}\n", i->molecule()->arrayIndex(), i->x(), i->y(), i->z()))
             return false;
     }
 
@@ -91,7 +91,7 @@ bool Configuration::read(LineParser &parser, const List<Species> &availableSpeci
     // Read configuration name and nMolecules
     if (parser.getArgsDelim(LineParser::Defaults) != LineParser::Success)
         return false;
-    setName(parser.argc(0));
+    setName(parser.argsv(0));
 
     /*
      * Read box definition
@@ -118,17 +118,17 @@ bool Configuration::read(LineParser &parser, const List<Species> &availableSpeci
 
     // Read Species types for Molecules
     auto nMolsRead = 0;
-    Species *sp = NULL;
+    Species *sp = nullptr;
     while (nMolsRead < expectedNMols)
     {
         // Read line containing number of molecules and Species name
         if (parser.getArgsDelim(LineParser::Defaults) != LineParser::Success)
             return false;
-        for (sp = availableSpecies.first(); sp != NULL; sp = sp->next())
-            if (DissolveSys::sameString(sp->name(), parser.argc(1)))
+        for (sp = availableSpecies.first(); sp != nullptr; sp = sp->next())
+            if (DissolveSys::sameString(sp->name(), parser.argsv(1)))
                 break;
         if (!sp)
-            return Messenger::error("Unrecognised Species '%s' found in Configuration '%s' in restart file.\n", parser.argc(1),
+            return Messenger::error("Unrecognised Species '{}' found in Configuration '{}' in restart file.\n", parser.argsv(1),
                                     name());
 
         // Set Species pointers for this range of Molecules

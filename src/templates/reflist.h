@@ -21,9 +21,9 @@
 
 #pragma once
 
+#include "base/messenger.h"
 #include <iterator>
 #include <stddef.h>
-#include <stdio.h>
 
 // Forward Declarations
 template <class T> class RefList;
@@ -37,9 +37,9 @@ template <class T> class RefListItem : public std::iterator<std::forward_iterato
     public:
     RefListItem<T>()
     {
-        item_ = NULL;
-        next_ = NULL;
-        prev_ = NULL;
+        item_ = nullptr;
+        next_ = nullptr;
+        prev_ = nullptr;
     }
 
     /*
@@ -95,17 +95,17 @@ template <class T> class RefList
     public:
     RefList<T>()
     {
-        listHead_ = NULL;
-        listTail_ = NULL;
-        items_ = NULL;
+        listHead_ = nullptr;
+        listTail_ = nullptr;
+        items_ = nullptr;
         regenerate_ = true;
         nItems_ = 0;
     }
     RefList<T>(T *singleItem)
     {
-        listHead_ = NULL;
-        listTail_ = NULL;
-        items_ = NULL;
+        listHead_ = nullptr;
+        listTail_ = nullptr;
+        items_ = nullptr;
         regenerate_ = true;
         nItems_ = 0;
 
@@ -115,25 +115,25 @@ template <class T> class RefList
     ~RefList() { clear(); }
     RefList<T>(const RefList<T> &source)
     {
-        listHead_ = NULL;
-        listTail_ = NULL;
-        items_ = NULL;
+        listHead_ = nullptr;
+        listTail_ = nullptr;
+        items_ = nullptr;
         regenerate_ = true;
         nItems_ = 0;
-        for (RefListItem<T> *ri = source.first(); ri != NULL; ri = ri->next_)
+        for (RefListItem<T> *ri = source.first(); ri != nullptr; ri = ri->next_)
             append(ri->item_);
     }
     void operator=(const RefList<T> &source)
     {
         // Clear any current data...
         clear();
-        for (RefListItem<T> *ri = source.first(); ri != NULL; ri = ri->next_)
+        for (RefListItem<T> *ri = source.first(); ri != nullptr; ri = ri->next_)
             append(ri->item_);
     }
     void operator+=(const RefList<T> &source)
     {
         // Add unique items in the source list to our own
-        for (RefListItem<T> *ri = source.first(); ri != NULL; ri = ri->next_)
+        for (RefListItem<T> *ri = source.first(); ri != nullptr; ri = ri->next_)
             addUnique(ri->item_);
     }
     RefListItem<T> *operator[](int index)
@@ -141,8 +141,8 @@ template <class T> class RefList
 #ifdef CHECKS
         if ((index < 0) || (index >= nItems_))
         {
-            printf("Array index (%i) out of bounds (%i items in RefList)\n", index, nItems_);
-            return NULL;
+            Messenger::error("Array index ({}) out of bounds ({} items in RefList)\n", index, nItems_);
+            return nullptr;
         }
 #endif
         // Use array() function to return item
@@ -181,19 +181,19 @@ template <class T> class RefList
     {
         // Clear the list
         RefListItem<T> *xitem = listHead_;
-        while (xitem != NULL)
+        while (xitem != nullptr)
         {
             remove(xitem);
             xitem = listHead_;
         }
-        listHead_ = NULL;
-        listTail_ = NULL;
+        listHead_ = nullptr;
+        listTail_ = nullptr;
         nItems_ = 0;
 
         // Delete static items array if its there
-        if (items_ != NULL)
+        if (items_ != nullptr)
             delete[] items_;
-        items_ = NULL;
+        items_ = nullptr;
         regenerate_ = true;
     }
     // Returns the head of the item list
@@ -206,7 +206,7 @@ template <class T> class RefList
         if (listHead_)
             return listHead_->item_;
         else
-            return NULL;
+            return nullptr;
     }
     // Returns the T referenced by the tail of the item list
     T *lastItem() const
@@ -214,7 +214,7 @@ template <class T> class RefList
         if (listTail_)
             return listTail_->item_;
         else
-            return NULL;
+            return nullptr;
     }
     // Returns the number of atoms in the list
     int nItems() const { return nItems_; }
@@ -223,7 +223,7 @@ template <class T> class RefList
     {
         RefListItem<T> *newitem = new RefListItem<T>;
         // Add the pointer to the list
-        listHead_ == NULL ? listHead_ = newitem : listTail_->next_ = newitem;
+        listHead_ == nullptr ? listHead_ = newitem : listTail_->next_ = newitem;
         newitem->prev_ = listTail_;
         listTail_ = newitem;
         newitem->item_ = item;
@@ -237,7 +237,7 @@ template <class T> class RefList
         RefListItem<T> *newitem = new RefListItem<T>;
         // Add the pointer to the beginning of the list
         newitem->next_ = listHead_;
-        listHead_ == NULL ? listHead_ = newitem : listHead_->prev_ = newitem;
+        listHead_ == nullptr ? listHead_ = newitem : listHead_->prev_ = newitem;
         listHead_ = newitem;
         newitem->item_ = item;
         ++nItems_;
@@ -247,13 +247,13 @@ template <class T> class RefList
     // Add reference after the specified item
     RefListItem<T> *addAfter(RefListItem<T> *target, T *item)
     {
-        if (target == NULL)
+        if (target == nullptr)
             return add(item);
 
         RefListItem<T> *newitem = new RefListItem<T>;
         newitem->prev_ = target;
         newitem->next_ = target->next_;
-        if (target->next_ != NULL)
+        if (target->next_ != nullptr)
             target->next->prev_ = newitem;
         target->next_ = newitem;
         if (target == listTail_)
@@ -272,19 +272,18 @@ template <class T> class RefList
         if (target)
             return addAfter(target, item);
 
-        printf("Couldn't find specified item %p in RefList, so adding to end.\n", item);
         return add(item);
     }
     // Add reference before the specified item
     RefListItem<T> *addBefore(RefListItem<T> *target, T *item)
     {
-        if (target == NULL)
+        if (target == nullptr)
             return add(item);
 
         RefListItem<T> *newitem = new RefListItem<T>;
         newitem->next_ = target;
         newitem->prev_ = target->prev_;
-        if (target->prev_ != NULL)
+        if (target->prev_ != nullptr)
             target->prev->next_ = newitem;
         target->prev_ = newitem;
         if (target == listHead_)
@@ -303,14 +302,13 @@ template <class T> class RefList
         if (target)
             return addBefore(target, item);
 
-        printf("Couldn't find specified item %p in RefList, so adding to start.\n", item);
         return addStart(item);
     }
     // Add reference to list, unless already there
     RefListItem<T> *addUnique(T *item)
     {
         RefListItem<T> *srch = contains(item);
-        if (srch == NULL)
+        if (srch == nullptr)
             return append(item);
         else
             return srch;
@@ -318,39 +316,37 @@ template <class T> class RefList
     // Cut item from list (orphan it)
     void cut(RefListItem<T> *item)
     {
-        if (item == NULL)
-        {
-            printf("Internal Error: NULL pointer passed to RefList<T>::cut().\n");
+        if (item == nullptr)
             return;
-        }
+
         RefListItem<T> *prev, *next;
         prev = item->prev_;
         next = item->next_;
-        if (prev == NULL)
+        if (prev == nullptr)
             listHead_ = next;
         else
             prev->next_ = next;
-        if (next == NULL)
+        if (next == nullptr)
             listTail_ = prev;
         else
             next->prev_ = prev;
-        item->next_ = NULL;
-        item->prev_ = NULL;
+        item->next_ = nullptr;
+        item->prev_ = nullptr;
         --nItems_;
         regenerate_ = true;
     }
     // Add an orphaned item into this list
     void own(RefListItem<T> *item)
     {
-        // In the interests of 'pointer cleanliness, refuse to own the item if its pointers are not NULL
-        if ((item->next_ != NULL) || (item->prev_ != NULL))
+        // In the interests of 'pointer cleanliness, refuse to own the item if its pointers are not nullptr
+        if ((item->next_ != nullptr) || (item->prev_ != nullptr))
         {
-            printf("RefList::own() <<<< Refused to own an item that still had links to other items >>>>\n");
+            fmt::print("RefList::own() <<<< Refused to own an item that still had links to other items >>>>\n");
             return;
         }
-        listHead_ == NULL ? listHead_ = item : listTail_->next_ = item;
+        listHead_ == nullptr ? listHead_ = item : listTail_->next_ = item;
         item->prev_ = listTail_;
-        item->next_ = NULL;
+        item->next_ = nullptr;
         listTail_ = item;
         ++nItems_;
         regenerate_ = true;
@@ -358,14 +354,12 @@ template <class T> class RefList
     // Delete the item from the list
     void remove(RefListItem<T> *item)
     {
-        if (item == NULL)
-        {
-            printf("Internal Error: NULL pointer passed to RefList<T>::remove().\n");
+        if (item == nullptr)
             return;
-        }
+
         // Delete a specific RefDataItem from the list
-        item->prev_ == NULL ? listHead_ = item->next_ : item->prev_->next_ = item->next_;
-        item->next_ == NULL ? listTail_ = item->prev_ : item->next_->prev_ = item->prev_;
+        item->prev_ == nullptr ? listHead_ = item->next_ : item->prev_->next_ = item->next_;
+        item->next_ == nullptr ? listTail_ = item->prev_ : item->next_->prev_ = item->prev_;
         delete item;
         nItems_--;
         regenerate_ = true;
@@ -375,39 +369,33 @@ template <class T> class RefList
     {
         // Delete a specific item from the list
         RefListItem<T> *r = contains(item);
-        if (r != NULL)
+        if (r != nullptr)
             remove(r);
     }
     // Remove the first item in the list
     void removeFirst()
     {
-        if (listHead_ == NULL)
-        {
-            printf("Internal Error: No item to delete in  RefList<T>::removeFirst().\n");
+        if (listHead_ == nullptr)
             return;
-        }
+
         remove(listHead_);
         regenerate_ = true;
     }
     // Remove the last item in the list
     void removeLast()
     {
-        if (listTail_ == NULL)
-        {
-            printf("Internal Error: No item to delete in  RefList<T>::removeFirst().\n");
+        if (listTail_ == nullptr)
             return;
-        }
+
         remove(listTail_);
         regenerate_ = true;
     }
     // Swap the two items specified
     void swap(T *item1, T *item2)
     {
-        if ((item1 == NULL) || (item2 == NULL))
-        {
-            printf("Internal Error: NULL pointer(s) passed to RefList<T>::swap().\n", item1, item2);
+        if ((item1 == nullptr) || (item2 == nullptr))
             return;
-        }
+
         T *prev1 = item1->prev, *next1 = item1->next_;
         item1->prev_ = item2->prev_;
         item1->next_ = item2->next_;
@@ -420,30 +408,24 @@ template <class T> class RefList
     {
         int count = 0;
         RefListItem<T> *ri = listHead_;
-        while (ri != NULL)
+        while (ri != nullptr)
         {
             destArray[count] = ri->item;
             count++;
             if (count == n)
                 break;
             ri = ri->next_;
-            if (ri == NULL)
-                printf("Internal Error: Not enough items in list (requested %i, had %i) in "
-                       "RefList::fillArray()\n",
-                       n, nItems_);
+            if (ri == nullptr)
+                return;
         }
         regenerate_ = true;
     }
     // Return nth item in list
     T *item(int n)
     {
-#ifdef CHECKS
         if ((n < 0) || (n >= nItems_))
-        {
-            printf("Array index (%i) out of bounds (%i items in RefList).\n", n, nItems_);
-            return NULL;
-        }
-#endif
+            throw std::runtime_error(fmt::format("Array index ({}) out of bounds ({} items in RefList).", n, nItems_));
+
         // Use array() function to return item
         return array()[n]->item();
     }
@@ -454,7 +436,7 @@ template <class T> class RefList
             return items_;
 
         // Delete old atom list (if there is one)
-        if (items_ != NULL)
+        if (items_ != nullptr)
             delete[] items_;
 
         // Create new list
@@ -462,7 +444,7 @@ template <class T> class RefList
 
         // Fill in pointers
         int count = 0;
-        for (RefListItem<T> *ri = listHead_; ri != NULL; ri = ri->next_)
+        for (RefListItem<T> *ri = listHead_; ri != nullptr; ri = ri->next_)
             items_[count++] = ri;
 
         regenerate_ = false;
@@ -478,10 +460,10 @@ template <class T> class RefList
     RefListItem<T> *contains(const T *item) const
     {
         // Search references for specified item
-        for (RefListItem<T> *r = listHead_; r != NULL; r = r->next_)
+        for (RefListItem<T> *r = listHead_; r != nullptr; r = r->next_)
             if (r->item_ == item)
                 return r;
 
-        return NULL;
+        return nullptr;
     }
 };

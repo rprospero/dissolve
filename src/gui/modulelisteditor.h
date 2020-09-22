@@ -21,7 +21,6 @@
 
 #pragma once
 
-#include "base/charstring.h"
 #include "gui/ui_modulelisteditor.h"
 #include "templates/refdatalist.h"
 
@@ -41,7 +40,7 @@ class ModuleListEditor : public QWidget
     Q_OBJECT
 
     public:
-    ModuleListEditor(QWidget *parent = NULL);
+    ModuleListEditor(QWidget *parent = nullptr);
     ~ModuleListEditor();
 
     /*
@@ -76,11 +75,11 @@ class ModuleListEditor : public QWidget
     // Parent Configuration (if we are local to one)
     Configuration *localConfiguration_;
     // Module categories and their associated MimeTreeWidgetItems
-    RefDataList<MimeTreeWidgetItem, CharString> moduleCategories_;
+    RefDataList<MimeTreeWidgetItem, QString> moduleCategories_;
 
     public:
     // Set up the ModuleListEditor for the specified ModuleLayer
-    bool setUp(DissolveWindow *dissolveWindow, ModuleLayer *moduleLayer, Configuration *localConfiguration = NULL);
+    bool setUp(DissolveWindow *dissolveWindow, ModuleLayer *moduleLayer, Configuration *localConfiguration = nullptr);
 
     /*
      * Widget Functions

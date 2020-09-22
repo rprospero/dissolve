@@ -38,30 +38,35 @@
  * All energy values are in kJ/mol.
  */
 
-Forcefield_SPCFw::Forcefield_SPCFw()
+/*
+ * Set Up
+ */
+
+// Set up / create all forcefield terms
+bool Forcefield_SPCFw::setUp()
 {
     // Atom types
     addAtomType(ELEMENT_H, 1, "HW", "-O(nh=2)", "Water hydrogen", 0.41, 0.0, 0.0);
     addAtomType(ELEMENT_O, 2, "OW", "-H(n=2)", "Water oxygen", -0.82, 0.6503, 3.165492);
 
     // Bond terms
-    addBondTerm("HW", "OW", SpeciesBond::HarmonicForm, 4431.53, 1.0);
+    addBondTerm("HW", "OW", SpeciesBond::HarmonicForm, {4431.53, 1.0});
 
     // Angle terms
-    addAngleTerm("HW", "OW", "HW", SpeciesAngle::HarmonicForm, 317.5656, 113.24);
-}
+    addAngleTerm("HW", "OW", "HW", SpeciesAngle::HarmonicForm, {317.5656, 113.24});
 
-Forcefield_SPCFw::~Forcefield_SPCFw() {}
+    return true;
+}
 
 /*
  * Definition
  */
 
 // Return name of Forcefield
-const char *Forcefield_SPCFw::name() const { return "SPC/Fw"; }
+std::string_view Forcefield_SPCFw::name() const { return "SPC/Fw"; }
 
 // Return description for Forcefield
-const char *Forcefield_SPCFw::description() const
+std::string_view Forcefield_SPCFw::description() const
 {
     return "Implements Yujie Wu, Harald L. Tepper and Gregory A. Voth, 'Flexible simple point-charge water model with "
            "improved liquid-state properties', <i>Journal of Chemical Physics</i> "

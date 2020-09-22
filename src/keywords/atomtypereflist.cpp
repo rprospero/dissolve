@@ -24,8 +24,8 @@
 #include "classes/atomtype.h"
 #include "classes/coredata.h"
 
-AtomTypeRefListKeyword::AtomTypeRefListKeyword(RefList<AtomType> &targetRefList)
-    : KeywordData<RefList<AtomType> &>(KeywordBase::AtomTypeRefListData, targetRefList)
+AtomTypeRefListKeyword::AtomTypeRefListKeyword(std::vector<std::shared_ptr<AtomType>> &targetRefList)
+    : KeywordData<std::vector<std::shared_ptr<AtomType>> &>(KeywordBase::AtomTypeRefListData, targetRefList)
 {
 }
 
@@ -48,16 +48,16 @@ bool AtomTypeRefListKeyword::read(LineParser &parser, int startArg, CoreData &co
     for (int n = startArg; n < parser.nArgs(); ++n)
     {
         // Do we recognise the AtomType?
-        AtomType *atomType = coreData.findAtomType(parser.argc(n));
+        auto atomType = coreData.findAtomType(parser.argsv(n));
         if (!atomType)
-            return Messenger::error("Unrecognised AtomType '%s' found in list.\n", parser.argc(n));
+            return Messenger::error("Unrecognised AtomType '{}' found in list.\n", parser.argsv(n));
 
         // If the AtomType is in the list already, complain
-        if (data_.contains(atomType))
-            return Messenger::error("AtomType '%s' specified in list twice.\n", parser.argc(n));
+        if (std::find(data_.begin(), data_.end(), atomType) != data_.end())
+            return Messenger::error("AtomType '{}' specified in list twice.\n", parser.argsv(n));
 
         // All OK - add it to our selection list
-        data_.append(atomType);
+        data_.push_back(atomType);
     }
 
     set_ = true;
@@ -66,18 +66,18 @@ bool AtomTypeRefListKeyword::read(LineParser &parser, int startArg, CoreData &co
 }
 
 // Write keyword data to specified LineParser
-bool AtomTypeRefListKeyword::write(LineParser &parser, const char *keywordName, const char *prefix)
+bool AtomTypeRefListKeyword::write(LineParser &parser, std::string_view keywordName, std::string_view prefix)
 {
     // Don't write anything if there are no items in the list
-    if (data_.nItems() == 0)
+    if (data_.empty())
         return true;
 
     // Loop over the AtomType selection list
-    CharString atomTypes;
+    std::string atomTypes;
     for (auto at : data_)
-        atomTypes.strcatf("  %s", at->name());
+        atomTypes += fmt::format("  {}", at->name());
 
-    if (!parser.writeLineF("%s%s%s\n", prefix, keywordName, atomTypes.get()))
+    if (!parser.writeLineF("{}{}{}\n", prefix, keywordName, atomTypes))
         return false;
 
     return true;
@@ -88,4 +88,7 @@ bool AtomTypeRefListKeyword::write(LineParser &parser, const char *keywordName, 
  */
 
 // Prune any references to the supplied AtomType in the contained data
-void AtomTypeRefListKeyword::removeReferencesTo(AtomType *at) { data_.remove(at); }
+void AtomTypeRefListKeyword::removeReferencesTo(std::shared_ptr<AtomType> at)
+{
+    data_.erase(std::remove(data_.begin(), data_.end(), at));
+}

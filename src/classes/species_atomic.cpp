@@ -45,7 +45,7 @@ void Species::removeAtom(SpeciesAtom *i)
 
     // Remove any bond terms that involve 'i'
     while (i->nBonds())
-        removeBond(i, i->bond(0)->partner(i));
+        removeBond(i, i->bond(0).partner(i));
 
     // Now remove the atom
     atoms_.remove(i);
@@ -82,7 +82,7 @@ void Species::setAtomCoordinates(int id, double x, double y, double z)
 #ifdef CHECKS
     if ((id < 0) || (id >= atoms_.nItems()))
     {
-        Messenger::error("Atom index %i is out of range - nAtoms = %i\n", id, atoms_.nItems());
+        Messenger::error("Atom index {} is out of range - nAtoms = {}\n", id, atoms_.nItems());
         return;
     }
 #endif
@@ -101,7 +101,7 @@ void Species::transmuteAtom(SpeciesAtom *i, Element *el)
         return;
 
     // Remove any existing AtomType assignment
-    i->setAtomType(NULL);
+    i->setAtomType(nullptr);
     i->setElement(el);
 
     ++version_;
@@ -110,7 +110,7 @@ void Species::transmuteAtom(SpeciesAtom *i, Element *el)
 // Clear current Atom selection
 void Species::clearAtomSelection()
 {
-    for (auto *i = atoms_.first(); i != NULL; i = i->next())
+    for (auto *i = atoms_.first(); i != nullptr; i = i->next())
         i->setSelected(false);
 
     selectedAtoms_.clear();
@@ -154,20 +154,20 @@ void Species::toggleAtomSelection(SpeciesAtom *i)
 }
 
 // Select Atoms along any path from the specified one, ignoring the bond(s) provided
-void Species::selectFromAtom(SpeciesAtom *i, SpeciesBond *exclude, SpeciesBond *excludeToo)
+void Species::selectFromAtom(SpeciesAtom *i, SpeciesBond &exclude, OptionalReferenceWrapper<SpeciesBond> excludeToo)
 {
     // Loop over Bonds on specified Atom
     selectAtom(i);
-    for (const auto *bond : i->bonds())
+    for (const SpeciesBond &bond : i->bonds())
     {
         // Is this either of the excluded bonds?
-        if (exclude == bond)
+        if (&exclude == &bond)
             continue;
-        if (excludeToo == bond)
+        if (excludeToo && &(*excludeToo).get() == &bond)
             continue;
 
         // Get the partner atom in the bond and select it (if it is not selected already)
-        auto *partner = bond->partner(i);
+        auto *partner = bond.partner(i);
 
         if (selectedAtoms_.contains(partner))
             continue;
@@ -182,8 +182,8 @@ const RefList<SpeciesAtom> &Species::selectedAtoms() const { return selectedAtom
 SpeciesAtom *Species::selectedAtom(int n)
 {
     RefListItem<SpeciesAtom> *ri = selectedAtoms_[n];
-    if (ri == NULL)
-        return NULL;
+    if (ri == nullptr)
+        return nullptr;
     else
         return ri->item();
 }
@@ -192,7 +192,7 @@ SpeciesAtom *Species::selectedAtom(int n)
 double Species::totalChargeOnAtoms()
 {
     double totalQ = 0.0;
-    for (auto *i = atoms_.first(); i != NULL; i = i->next())
+    for (auto *i = atoms_.first(); i != nullptr; i = i->next())
         totalQ += i->charge();
     return totalQ;
 }
@@ -210,7 +210,7 @@ int Species::atomSelectionVersion() const { return atomSelectionVersion_; }
 double Species::mass() const
 {
     double m = 0.0;
-    for (auto *i = atoms_.first(); i != NULL; i = i->next())
+    for (auto *i = atoms_.first(); i != nullptr; i = i->next())
         m += AtomicMass::mass(i->element());
     return m;
 }
@@ -224,9 +224,9 @@ const AtomTypeList &Species::usedAtomTypes()
     if (usedAtomTypesPoint_ != atomTypesVersion_)
     {
         usedAtomTypes_.clear();
-        for (auto *i = atoms_.first(); i != NULL; i = i->next())
+        for (auto *i = atoms_.first(); i != nullptr; i = i->next())
             if (i->atomType())
-                usedAtomTypes_.add(*i->atomType(), 1);
+                usedAtomTypes_.add(i->atomType(), 1);
 
         usedAtomTypesPoint_ = atomTypesVersion_;
     }
@@ -237,8 +237,8 @@ const AtomTypeList &Species::usedAtomTypes()
 // Clear AtomType assignments for all atoms
 void Species::clearAtomTypes()
 {
-    for (auto *i = atoms_.first(); i != NULL; i = i->next())
-        i->setAtomType(NULL);
+    for (auto *i = atoms_.first(); i != nullptr; i = i->next())
+        i->setAtomType(nullptr);
 
     ++atomTypesVersion_;
 }

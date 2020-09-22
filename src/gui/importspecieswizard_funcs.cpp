@@ -29,10 +29,13 @@
 #include <QFileDialog>
 #include <QInputDialog>
 
+Q_DECLARE_SMART_POINTER_METATYPE(std::shared_ptr)
+Q_DECLARE_METATYPE(std::shared_ptr<AtomType>)
+
 ImportSpeciesWizard::ImportSpeciesWizard(QWidget *parent) : temporaryDissolve_(temporaryCoreData_)
 {
-    dissolveReference_ = NULL;
-    importTarget_ = NULL;
+    dissolveReference_ = nullptr;
+    importTarget_ = nullptr;
 
     // Set up our UI, and attach the wizard's widgets to placeholder widgets (if available)
     ui_.setupUi(this);
@@ -85,7 +88,7 @@ Species *ImportSpeciesWizard::importSpecies(Dissolve &dissolve)
     if (!importTarget_)
     {
         Messenger::error("No target Species to import!\n");
-        return NULL;
+        return nullptr;
     }
 
     // Set the final name of the new Species
@@ -106,7 +109,7 @@ bool ImportSpeciesWizard::displayControlPage(int index)
 {
     // Check page index given
     if ((index < 0) || (index >= ImportSpeciesWizard::nPages))
-        return Messenger::error("Page index %i not recognised.\n", index);
+        return Messenger::error("Page index {} not recognised.\n", index);
 
     // Page index is valid, so show it - no need to switch/case
     ui_.MainStack->setCurrentIndex(index);
@@ -155,9 +158,9 @@ bool ImportSpeciesWizard::prepareForNextPage(int currentIndex)
             }
             // Update the Species and AtomTypes lists
             ui_.SpeciesList->clear();
-            for (auto *sp = temporaryDissolve_.species().first(); sp != NULL; sp = sp->next())
+            for (auto *sp = temporaryDissolve_.species().first(); sp != nullptr; sp = sp->next())
             {
-                QListWidgetItem *item = new QListWidgetItem(sp->name());
+                QListWidgetItem *item = new QListWidgetItem(QString::fromStdString(std::string(sp->name())));
                 item->setData(Qt::UserRole, VariantPointer<Species>(sp));
                 ui_.SpeciesList->addItem(item);
             }
@@ -224,7 +227,8 @@ void ImportSpeciesWizard::reset()
     temporaryDissolve_.clear();
 
     // Set a new, unique name ready on the final page
-    ui_.SpeciesNameEdit->setText(dissolveReference_->constCoreData().uniqueSpeciesName("NewSpecies"));
+    ui_.SpeciesNameEdit->setText(
+        QString::fromStdString(std::string(dissolveReference_->constCoreData().uniqueSpeciesName("NewSpecies"))));
 }
 
 /*
@@ -250,11 +254,11 @@ void ImportSpeciesWizard::on_SpeciesList_currentRowChanged(int currentRow)
 {
     // Set import target from current row
     if (currentRow == -1)
-        importTarget_ = NULL;
+        importTarget_ = nullptr;
     else
     {
         importTarget_ = VariantPointer<Species>(ui_.SpeciesList->currentItem()->data(Qt::UserRole));
-        ui_.SpeciesNameEdit->setText(importTarget_->name());
+        ui_.SpeciesNameEdit->setText(QString::fromStdString(std::string(importTarget_->name())));
     }
 
     updateProgressionControls();
@@ -265,13 +269,14 @@ void ImportSpeciesWizard::on_SpeciesList_currentRowChanged(int currentRow)
  */
 
 // Row update function for AtomTypesList
-void ImportSpeciesWizard::updateAtomTypesListRow(int row, AtomType *atomType, bool createItem)
+void ImportSpeciesWizard::updateAtomTypesListRow(int row, std::shared_ptr<AtomType> atomType, bool createItem)
 {
     QListWidgetItem *item;
     if (createItem)
     {
         item = new QListWidgetItem;
-        item->setData(Qt::UserRole, VariantPointer<AtomType>(atomType));
+        QVariant variant = QVariant::fromValue(atomType);
+        item->setData(Qt::UserRole, variant);
         item->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsEditable);
         ui_.AtomTypesList->insertItem(row, item);
     }
@@ -279,7 +284,7 @@ void ImportSpeciesWizard::updateAtomTypesListRow(int row, AtomType *atomType, bo
         item = ui_.AtomTypesList->item(row);
 
     // Set item data
-    item->setText(atomType->name());
+    item->setText(QString::fromStdString(std::string(atomType->name())));
     item->setIcon(QIcon(dissolveReference_->findAtomType(atomType->name()) ? ":/general/icons/general_warn.svg"
                                                                            : ":/general/icons/general_true.svg"));
 }
@@ -293,13 +298,10 @@ void ImportSpeciesWizard::updateAtomTypesPage()
 
     // Determine whether we have any naming conflicts
     auto conflicts = false;
-    ListIterator<AtomType> typeIterator(temporaryCoreData_.constAtomTypes());
-    while (AtomType *at = typeIterator.iterate())
-        if (dissolveReference_->findAtomType(at->name()))
-        {
-            conflicts = true;
-            break;
-        }
+    auto it = std::find_if(temporaryCoreData_.constAtomTypes().begin(), temporaryCoreData_.constAtomTypes().end(),
+                           [this](const auto at) { return dissolveReference_->findAtomType(at->name()); });
+    if (it != temporaryCoreData_.constAtomTypes().end())
+        conflicts = true;
     ui_.AtomTypesIndicator->setNotOK(conflicts);
     if (conflicts)
         ui_.AtomTypesIndicatorLabel->setText("One or more AtomTypes in the imported Species conflict with existing types");
@@ -322,7 +324,7 @@ void ImportSpeciesWizard::atomTypesListEdited(QWidget *lineEdit)
     for (int n = 0; n < ui_.AtomTypesList->count(); ++n)
     {
         QListWidgetItem *item = ui_.AtomTypesList->item(n);
-        AtomType *at = VariantPointer<AtomType>(item->data(Qt::UserRole));
+        std::shared_ptr<AtomType> at = item->data(Qt::UserRole).value<std::shared_ptr<AtomType>>();
         if (!at)
             continue;
 
@@ -344,8 +346,8 @@ void ImportSpeciesWizard::on_AtomTypesPrefixButton_clicked(bool checked)
     QList<QListWidgetItem *>::iterator i;
     for (i = selectedItems.begin(); i != selectedItems.end(); ++i)
     {
-        AtomType *at = VariantPointer<AtomType>((*i)->data(Qt::UserRole));
-        at->setName(CharString("%s%s", qPrintable(prefix), at->name()));
+        std::shared_ptr<AtomType> at = (*i)->data(Qt::UserRole).value<std::shared_ptr<AtomType>>();
+        at->setName(fmt::format("{}{}", qPrintable(prefix), at->name()));
     }
 
     updateAtomTypesPage();
@@ -363,8 +365,8 @@ void ImportSpeciesWizard::on_AtomTypesSuffixButton_clicked(bool checked)
     QList<QListWidgetItem *>::iterator i;
     for (i = selectedItems.begin(); i != selectedItems.end(); ++i)
     {
-        AtomType *at = VariantPointer<AtomType>((*i)->data(Qt::UserRole));
-        at->setName(CharString("%s%s", at->name(), qPrintable(suffix)));
+        std::shared_ptr<AtomType> at = (*i)->data(Qt::UserRole).value<std::shared_ptr<AtomType>>();
+        at->setName(fmt::format("{}{}", at->name(), qPrintable(suffix)));
     }
 
     updateAtomTypesPage();
@@ -390,7 +392,7 @@ void ImportSpeciesWizard::updateMasterTermsTreeChild(QTreeWidgetItem *parent, in
         item = parent->child(childIndex);
 
     // Set item data
-    item->setText(0, masterIntra->name());
+    item->setText(0, QString::fromStdString(std::string(masterIntra->name())));
     item->setIcon(0, QIcon(dissolveReference_->constCoreData().findMasterTerm(masterIntra->name())
                                ? ":/general/icons/general_warn.svg"
                                : ":/general/icons/general_true.svg"));
@@ -493,7 +495,7 @@ void ImportSpeciesWizard::on_MasterTermsPrefixButton_clicked(bool checked)
     for (i = selectedItems.begin(); i != selectedItems.end(); ++i)
     {
         MasterIntra *intra = VariantPointer<MasterIntra>((*i)->data(0, Qt::UserRole));
-        intra->setName(CharString("%s%s", qPrintable(prefix), intra->name()));
+        intra->setName(fmt::format("{}{}", qPrintable(prefix), intra->name()));
     }
 
     updateMasterTermsPage();
@@ -512,7 +514,7 @@ void ImportSpeciesWizard::on_MasterTermsSuffixButton_clicked(bool checked)
     for (i = selectedItems.begin(); i != selectedItems.end(); ++i)
     {
         MasterIntra *intra = VariantPointer<MasterIntra>((*i)->data(0, Qt::UserRole));
-        intra->setName(CharString("%s%s", intra->name(), qPrintable(suffix)));
+        intra->setName(fmt::format("{}{}", intra->name(), qPrintable(suffix)));
     }
 
     updateMasterTermsPage();
@@ -526,17 +528,14 @@ void ImportSpeciesWizard::on_MasterTermsSuffixButton_clicked(bool checked)
 void ImportSpeciesWizard::on_SpeciesNameEdit_textChanged(const QString text)
 {
     if (!dissolveReference_)
-    {
-        printf("Internal Error: Dissolve pointer has not been set in ImportSpeciesWizard.\n");
         return;
-    }
 
     // Name of the prospective Species has been changed, so make sure it is valid
     bool readyForImport;
     if (text.isEmpty())
         readyForImport = false;
     else
-        readyForImport = dissolveReference_->findSpecies(qPrintable(text)) == NULL;
+        readyForImport = dissolveReference_->findSpecies(qPrintable(text)) == nullptr;
 
     ui_.SpeciesNameIndicator->setOK(readyForImport);
 

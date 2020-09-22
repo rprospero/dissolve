@@ -28,7 +28,7 @@ WizardWidget::WizardWidget()
     footerAvailable_ = false;
     closeButtonAvailable_ = true;
 
-    currentPage_ = NULL;
+    currentPage_ = nullptr;
 }
 
 WizardWidget::~WizardWidget() {}
@@ -51,7 +51,7 @@ void WizardWidget::setUpHeaderAndFooter(QWidget *widget)
         connect(headerUi_.CloseButton, SIGNAL(clicked(bool)), this, SLOT(closeWizard(bool)));
     }
     else
-        printf("Header widget not found.\n");
+        Messenger::error("Header widget not found.\n");
 
     QWidget *footerWidget = widget->findChild<QWidget *>("WizardFooterWidget");
     if (footerWidget)
@@ -67,7 +67,7 @@ void WizardWidget::setUpHeaderAndFooter(QWidget *widget)
         connect(footerUi_.FinishButton, SIGNAL(clicked(bool)), this, SLOT(finishWizard(bool)));
     }
     else
-        printf("Footer widget not found.\n");
+        Messenger::error("Footer widget not found.\n");
 }
 
 // Set icon in header
@@ -139,9 +139,9 @@ void WizardWidget::clearPages()
 {
     pages_.clear();
     history_.clear();
-    currentPage_ = NULL;
+    currentPage_ = nullptr;
 
-    updateHeaderAndFooter(NULL);
+    updateHeaderAndFooter(nullptr);
 }
 
 // Add empty page
@@ -154,12 +154,12 @@ WizardWidgetPageInfo *WizardWidget::addPage()
 }
 
 // Register page
-WizardWidgetPageInfo *WizardWidget::registerPage(int index, const char *title, int nextIndex)
+WizardWidgetPageInfo *WizardWidget::registerPage(int index, QString title, int nextIndex)
 {
     // Check that the specified index isn't already registered...
     WizardWidgetPageInfo *page = findPage(index);
     if (page)
-        printf("Internal Error: Page with index %i has already been registered.\n", index);
+        Messenger::error("Page with index {} has already been registered.\n", index);
     else
         page = pages_.add();
 
@@ -170,7 +170,7 @@ WizardWidgetPageInfo *WizardWidget::registerPage(int index, const char *title, i
 }
 
 // Register choice page (no Finish / Next buttons)
-void WizardWidget::registerChoicePage(int index, const char *title)
+void WizardWidget::registerChoicePage(int index, QString title)
 {
     WizardWidgetPageInfo *page = registerPage(index, title);
 
@@ -185,7 +185,7 @@ WizardWidgetPageInfo *WizardWidget::findPage(int index)
         if (page->index() == index)
             return page;
 
-    return NULL;
+    return nullptr;
 }
 
 /*
@@ -265,14 +265,14 @@ void WizardWidget::goToPage(int index)
     currentPage_ = findPage(index);
     if (!currentPage_)
     {
-        updateHeaderAndFooter(NULL);
+        updateHeaderAndFooter(nullptr);
         return;
     }
 
     // Instruct the derived class to switch pages
     if (!displayControlPage(index))
     {
-        updateHeaderAndFooter(NULL);
+        updateHeaderAndFooter(nullptr);
         return;
     }
 
@@ -289,7 +289,7 @@ void WizardWidget::goBack()
     // We cannot go back further than the first item in history_, so if there is only one item in the history_ do nothing
     if (history_.nItems() == 1)
     {
-        printf("Can't go back further than the first page visited.\n");
+        Messenger::warn("Can't go back further than the first page visited.\n");
         return;
     }
 
@@ -300,14 +300,14 @@ void WizardWidget::goBack()
     currentPage_ = history_.lastItem();
     if (!currentPage_)
     {
-        updateHeaderAndFooter(NULL);
+        updateHeaderAndFooter(nullptr);
         return;
     }
 
     // Instruct the derived class to switch pages
     if (!displayControlPage(currentPage_->index()))
     {
-        updateHeaderAndFooter(NULL);
+        updateHeaderAndFooter(nullptr);
         return;
     }
 

@@ -31,7 +31,7 @@
 
 ElementSelector::ElementSelector(QWidget *parent) : QWidget(parent)
 {
-    currentElement_ = NULL;
+    currentElement_ = nullptr;
 
     // Create grid layout for widget
     auto *gl = new QGridLayout;
@@ -54,10 +54,11 @@ ElementSelector::ElementSelector(QWidget *parent) : QWidget(parent)
         button->setCheckable(true);
         button->setAutoExclusive(true);
         elementButtons_.append(button, &Elements::element(n));
-        button->setText(Elements::symbol(n));
+        button->setText(QString::fromStdString(std::string(Elements::symbol(n))));
         button->setMinimumSize(24, 24);
         // 		button->setMaximumSize(24,24);
-        button->setToolTip(QString("%1 (%2)").arg(Elements::name(n), Elements::symbol(n)));
+        button->setToolTip(QString("%1 (%2)").arg(QString::fromStdString(std::string(Elements::name(n))),
+                                                  QString::fromStdString(std::string(Elements::symbol(n)))));
 
         QObject::connect(button, SIGNAL(clicked(bool)), this, SLOT(elementButtonClicked(bool)));
     }
@@ -160,13 +161,10 @@ void ElementSelector::elementButtonClicked(bool checked)
     // Cast sender
     auto *button = qobject_cast<QToolButton *>(sender());
     if (!button)
-    {
-        printf("ElementSelector::elementButtonClicked - Sender was not a QToolButton.\n");
-        currentElement_ = NULL;
-    }
+        currentElement_ = nullptr;
 
     RefDataItem<QToolButton, Element *> *ri = elementButtons_.contains(button);
-    currentElement_ = ri ? ri->data() : NULL;
+    currentElement_ = ri ? ri->data() : nullptr;
 
     // Was this a double-click? Check the timer
     if (doubleClickTimer_.isActive())
@@ -197,7 +195,7 @@ void ElementSelector::setCurrentElement(Element *element)
     currentElement_ = element;
 
     // Find and check the related button
-    if (currentElement_ != NULL)
+    if (currentElement_ != nullptr)
     {
         QToolButton *button = elementButtons_.itemWithData(currentElement_);
         if (button)
@@ -213,7 +211,7 @@ Element *ElementSelector::currentElement() const { return currentElement_; }
  */
 
 // Get Element from user via input dialog
-Element *ElementSelector::getElement(QWidget *parent, const char *title, const char *labelText, Element *element, bool *ok,
+Element *ElementSelector::getElement(QWidget *parent, QString title, QString labelText, Element *element, bool *ok,
                                      Qt::WindowFlags flags)
 {
     // Create a QDialog for use
@@ -234,7 +232,7 @@ Element *ElementSelector::getElement(QWidget *parent, const char *title, const c
         new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, Qt::Horizontal, &inputDialog);
     QObject::connect(buttonBox, SIGNAL(accepted()), &inputDialog, SLOT(accept()));
     QObject::connect(buttonBox, SIGNAL(rejected()), &inputDialog, SLOT(reject()));
-    buttonBox->button(QDialogButtonBox::Ok)->setEnabled(element != NULL);
+    buttonBox->button(QDialogButtonBox::Ok)->setEnabled(element != nullptr);
     QObject::connect(elementSelector, SIGNAL(elementSelected(bool)), buttonBox->button(QDialogButtonBox::Ok),
                      SLOT(setEnabled(bool)));
 

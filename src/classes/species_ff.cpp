@@ -50,11 +50,13 @@ bool Species::autoUpdateIntramolecularTerms() const { return autoUpdateIntramole
 bool Species::applyForcefieldTerms(CoreData &coreData)
 {
     if (!forcefield_)
-        return Messenger::error("No forcefield set in Species '%s', so can't apply terms.\n", name());
+        return Messenger::error("No forcefield set in Species '{}', so can't apply terms.\n", name());
 
-    // Apply the specified Forcefield
+    // Assign atom types to the species
     if (forcefield_->assignAtomTypes(this, coreData, Forcefield::TypeAll) != 0)
         return false;
+
+    // Assign intramolecular terms
     if (!forcefield_->assignIntramolecular(this))
         return false;
 

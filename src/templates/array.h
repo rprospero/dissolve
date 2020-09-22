@@ -33,7 +33,7 @@ template <class A> class Array : public ListItem<Array<A>>
     Array(int initialSize = 0) : ListItem<Array<A>>()
     {
         chunkSize_ = 128;
-        array_ = NULL;
+        array_ = nullptr;
         size_ = 0;
         nItems_ = 0;
         if (initialSize > 0)
@@ -41,20 +41,20 @@ template <class A> class Array : public ListItem<Array<A>>
     }
     Array(const Array<A> &source, int firstIndex, int lastIndex) : ListItem<Array<A>>()
     {
-        array_ = NULL;
+        array_ = nullptr;
         size_ = 0;
         nItems_ = 0;
         copy(source, firstIndex, lastIndex);
     }
     ~Array()
     {
-        if (array_ != NULL)
+        if (array_ != nullptr)
             delete[] array_;
     }
     Array(const Array<A> &source)
     {
         chunkSize_ = source.chunkSize_;
-        array_ = NULL;
+        array_ = nullptr;
         size_ = 0;
         nItems_ = 0;
         initialise(source.size_);
@@ -95,7 +95,7 @@ template <class A> class Array : public ListItem<Array<A>>
             return;
 
         // Copy old data to temporary array
-        A *oldItems = NULL;
+        A *oldItems = nullptr;
         if (nItems_ > 0)
         {
             oldItems = new A[nItems_];
@@ -104,7 +104,7 @@ template <class A> class Array : public ListItem<Array<A>>
         }
 
         // Delete old, and create new array
-        if (array_ != NULL)
+        if (array_ != nullptr)
             delete[] array_;
         size_ = newSize;
         try
@@ -113,7 +113,7 @@ template <class A> class Array : public ListItem<Array<A>>
         }
         catch (std::bad_alloc &alloc)
         {
-            Messenger::error("Array<T>() - Failed to allocate sufficient memory for array_. Exception was : %s\n",
+            Messenger::error("Array<T>() - Failed to allocate sufficient memory for array_. Exception was : {}\n",
                              alloc.what());
             return;
         }
@@ -192,7 +192,7 @@ template <class A> class Array : public ListItem<Array<A>>
 #ifdef CHECKS
         if ((position < 0) || (position >= nItems_))
         {
-            Messenger::print("OUT_OF_RANGE - Position index %i is out of range in Array::insert() (nItems = %i).\n", position,
+            Messenger::print("OUT_OF_RANGE - Position index {} is out of range in Array::insert() (nItems = {}).\n", position,
                              nItems_);
             return;
         }
@@ -215,9 +215,9 @@ template <class A> class Array : public ListItem<Array<A>>
     void clear()
     {
         nItems_ = 0;
-        if (array_ != NULL)
+        if (array_ != nullptr)
             delete[] array_;
-        array_ = NULL;
+        array_ = nullptr;
         size_ = 0;
     }
     // Drop the first item from the array
@@ -250,7 +250,7 @@ template <class A> class Array : public ListItem<Array<A>>
 #ifdef CHECKS
         if ((position < 0) || (position >= nItems_))
         {
-            Messenger::print("OUT_OF_RANGE - Array index %i is out of range in Array::remove() (nItems = %i).\n", position,
+            Messenger::print("OUT_OF_RANGE - Array index {} is out of range in Array::remove() (nItems = {}).\n", position,
                              nItems_);
             return;
         }
@@ -272,7 +272,7 @@ template <class A> class Array : public ListItem<Array<A>>
         if ((n < 0) || (n >= nItems_))
         {
             static A dummy;
-            Messenger::print("OUT_OF_RANGE - Array index %i is out of range in Array::operator[] (nItems = %i).\n", n, nItems_);
+            Messenger::print("OUT_OF_RANGE - Array index {} is out of range in Array::operator[] (nItems = {}).\n", n, nItems_);
             return dummy;
         }
 #endif
@@ -285,7 +285,7 @@ template <class A> class Array : public ListItem<Array<A>>
         if ((n < 0) || (n >= nItems_))
         {
             static A dummy;
-            Messenger::print("OUT_OF_RANGE - Array index %i is out of range in Array::at() (nItems = %i).\n", n, nItems_);
+            Messenger::print("OUT_OF_RANGE - Array index {} is out of range in Array::at() (nItems = {}).\n", n, nItems_);
             return dummy;
         }
 #endif
@@ -298,7 +298,7 @@ template <class A> class Array : public ListItem<Array<A>>
         if ((n < 0) || (n >= nItems_))
         {
             static A dummy;
-            Messenger::print("OUT_OF_RANGE - Array index %i is out of range in Array::constAt() (nItems = %i).\n", n, nItems_);
+            Messenger::print("OUT_OF_RANGE - Array index {} is out of range in Array::constAt() (nItems = {}).\n", n, nItems_);
             return dummy;
         }
 #endif
@@ -357,7 +357,7 @@ template <class A> class Array : public ListItem<Array<A>>
 #ifdef CHECKS
         if ((position < 0) || (position >= nItems_))
         {
-            Messenger::print("OUT_OF_RANGE - Array index %i is out of range in Array::shiftUp() (nItems = %i).\n", position,
+            Messenger::print("OUT_OF_RANGE - Array index {} is out of range in Array::shiftUp() (nItems = {}).\n", position,
                              nItems_);
             return;
         }
@@ -376,7 +376,7 @@ template <class A> class Array : public ListItem<Array<A>>
 #ifdef CHECKS
         if ((position < 0) || (position >= nItems_))
         {
-            Messenger::print("OUT_OF_RANGE - Array index %i is out of range in Array::shiftDown() (nItems = %i).\n", position,
+            Messenger::print("OUT_OF_RANGE - Array index {} is out of range in Array::shiftDown() (nItems = {}).\n", position,
                              nItems_);
             return;
         }

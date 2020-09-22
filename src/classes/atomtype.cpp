@@ -24,9 +24,9 @@
 #include "data/elements.h"
 #include <string.h>
 
-AtomType::AtomType() : ListItem<AtomType>()
+AtomType::AtomType()
 {
-    element_ = NULL;
+    element_ = nullptr;
     name_ = "XX";
     exchangeable_ = false;
     shortRangeType_ = Forcefield::UndefinedType;
@@ -39,10 +39,10 @@ AtomType::~AtomType() {}
  */
 
 // Set name of AtomType
-void AtomType::setName(const char *name) { name_ = name; }
+void AtomType::setName(std::string_view name) { name_ = name; }
 
 // Return name of AtomType
-const char *AtomType::name() const { return name_.get(); }
+std::string_view AtomType::name() const { return name_; }
 
 // Set atomic element
 void AtomType::setElement(Element *el) { element_ = el; }

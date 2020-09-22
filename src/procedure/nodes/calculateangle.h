@@ -31,8 +31,8 @@ class SelectProcedureNode;
 class CalculateAngleProcedureNode : public CalculateProcedureNodeBase
 {
     public:
-    CalculateAngleProcedureNode(SelectProcedureNode *site0 = NULL, SelectProcedureNode *site1 = NULL,
-                                SelectProcedureNode *site2 = NULL);
+    CalculateAngleProcedureNode(SelectProcedureNode *site0 = nullptr, SelectProcedureNode *site1 = nullptr,
+                                SelectProcedureNode *site2 = nullptr);
     ~CalculateAngleProcedureNode();
 
     /*
@@ -49,6 +49,6 @@ class CalculateAngleProcedureNode : public CalculateProcedureNodeBase
      */
     public:
     // Execute node, targetting the supplied Configuration
-    ProcedureNode::NodeExecutionResult execute(ProcessPool &procPool, Configuration *cfg, const char *prefix,
+    ProcedureNode::NodeExecutionResult execute(ProcessPool &procPool, Configuration *cfg, std::string_view prefix,
                                                GenericList &targetList);
 };

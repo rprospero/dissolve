@@ -54,7 +54,7 @@ void SelectGenericItemDialog::updateGenericItemTable(GenericItem *current, QStri
         else
         {
             // Check name
-            QString name = genericItem->name();
+            QString name = QString::fromStdString(std::string(genericItem->name()));
             auto inName = name.contains(QRegExp(filter, Qt::CaseInsensitive, QRegExp::Wildcard));
 
             // Check object tag
@@ -68,14 +68,14 @@ void SelectGenericItemDialog::updateGenericItemTable(GenericItem *current, QStri
             // If the item was hidden, and it was selected, reset the current index
             if (hide && item->isSelected())
             {
-                ui_.ItemsTable->setCurrentItem(NULL);
+                ui_.ItemsTable->setCurrentItem(nullptr);
                 emit(genericItemSelectionChanged(false));
             }
         }
     }
 }
 
-void SelectGenericItemDialog::on_FilterEdit_textChanged(const QString &text) { updateGenericItemTable(NULL, text); }
+void SelectGenericItemDialog::on_FilterEdit_textChanged(const QString &text) { updateGenericItemTable(nullptr, text); }
 
 void SelectGenericItemDialog::on_ItemsTable_currentItemChanged(QTableWidgetItem *currentItem, QTableWidgetItem *prevItem)
 {

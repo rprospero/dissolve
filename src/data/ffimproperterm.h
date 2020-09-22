@@ -21,7 +21,6 @@
 
 #pragma once
 
-#include "base/charstring.h"
 #include "base/parameters.h"
 #include "classes/speciesimproper.h"
 
@@ -33,28 +32,28 @@ class ForcefieldAtomType;
 class ForcefieldImproperTerm
 {
     public:
-    ForcefieldImproperTerm(const char *typeI = NULL, const char *typeJ = NULL, const char *typeK = NULL,
-                           const char *typeL = NULL, SpeciesImproper::ImproperFunction form = SpeciesImproper::NoForm,
-                           double data0 = 0.0, double data1 = 0.0, double data2 = 0.0, double data3 = 0.0);
-    ~ForcefieldImproperTerm();
+    ForcefieldImproperTerm(std::string_view typeI = "", std::string_view typeJ = "", std::string_view typeK = "",
+                           std::string_view typeL = "", SpeciesImproper::ImproperFunction form = SpeciesImproper::NoForm,
+                           const std::vector<double> parameters = {});
+    ~ForcefieldImproperTerm() = default;
 
     /*
      * Data
      */
     private:
     // Type names involved in interaction
-    CharString typeI_, typeJ_, typeK_, typeL_;
+    std::string typeI_, typeJ_, typeK_, typeL_;
     // Functional form of interaction
     SpeciesImproper::ImproperFunction form_;
     // Parameters for interaction
-    double parameters_[MAXINTRAPARAMS];
+    std::vector<double> parameters_;
 
     public:
     // Return if this term matches the atom types supplied
-    bool isMatch(const ForcefieldAtomType *i, const ForcefieldAtomType *j, const ForcefieldAtomType *k,
-                 const ForcefieldAtomType *l) const;
+    bool isMatch(const ForcefieldAtomType &i, const ForcefieldAtomType &j, const ForcefieldAtomType &k,
+                 const ForcefieldAtomType &l) const;
     // Return functional form index of interaction
     SpeciesImproper::ImproperFunction form() const;
     // Return array of parameters
-    const double *parameters() const;
+    const std::vector<double> &parameters() const;
 };

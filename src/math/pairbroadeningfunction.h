@@ -21,11 +21,11 @@
 
 #pragma once
 
-#include "base/charstring.h"
 #include "genericitems/base.h"
 #include "math/broadeningfunction.h"
 #include "templates/array.h"
 #include "templates/array2d.h"
+#include <memory>
 
 // Forward Declarations
 class AtomType;
@@ -47,9 +47,9 @@ class PairBroadeningFunction : public GenericItemBase
         nFunctionTypes
     };
     // Return FunctionType from supplied string
-    static FunctionType functionType(const char *s);
+    static FunctionType functionType(std::string_view s);
     // Return FunctionType name
-    static const char *functionType(FunctionType func);
+    static std::string_view functionType(FunctionType func);
     // Return number of parameters needed to define FunctionType
     static int nFunctionParameters(FunctionType func);
 
@@ -80,7 +80,7 @@ class PairBroadeningFunction : public GenericItemBase
     // Read function data from LineParser source
     bool readAsKeyword(LineParser &parser, int startArg, CoreData &coreData);
     // Write function data to LineParser source
-    bool writeAsKeyword(LineParser &parser, const char *prefix, bool writeBlockMarker = true);
+    bool writeAsKeyword(LineParser &parser, std::string_view prefix, bool writeBlockMarker = true);
     // Set function type
     void setFunction(FunctionType function);
     // Return function type
@@ -100,16 +100,17 @@ class PairBroadeningFunction : public GenericItemBase
     // Return array of pointers to all adjustable parameters
     Array<double *> parameters();
     // Return short summary of function and its parameters
-    CharString summary() const;
+    std::string summary() const;
     // Return a BroadeningFunction tailored to the specified AtomType pair
-    BroadeningFunction broadeningFunction(AtomType &at1, AtomType &at2, SpeciesIntra *intra = NULL);
+    BroadeningFunction broadeningFunction(std::shared_ptr<AtomType> at1, std::shared_ptr<AtomType> at2,
+                                          SpeciesIntra *intra = nullptr);
 
     /*
      * GenericItemBase Implementations
      */
     public:
     // Return class name
-    static const char *itemClassName();
+    static std::string_view itemClassName();
     // Read data through specified LineParser
     bool read(LineParser &parser, CoreData &coreData);
     // Write data through specified LineParser

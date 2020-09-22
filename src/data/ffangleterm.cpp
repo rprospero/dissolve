@@ -23,34 +23,30 @@
 #include "data/ff.h"
 #include "data/ffatomtype.h"
 
-ForcefieldAngleTerm::ForcefieldAngleTerm(const char *typeI, const char *typeJ, const char *typeK,
-                                         SpeciesAngle::AngleFunction form, double data0, double data1, double data2,
-                                         double data3)
+ForcefieldAngleTerm::ForcefieldAngleTerm(std::string_view typeI, std::string_view typeJ, std::string_view typeK,
+                                         SpeciesAngle::AngleFunction form, const std::vector<double> parameters)
 {
     typeI_ = typeI;
     typeJ_ = typeJ;
     typeK_ = typeK;
     form_ = form;
-    parameters_[0] = data0;
-    parameters_[1] = data1;
-    parameters_[2] = data2;
-    parameters_[3] = data3;
+    parameters_ = parameters;
+    if (!SpeciesAngle::angleFunctions().validNArgs(form, parameters_.size()))
+        throw(std::runtime_error("Incorrect number of parameters in constructed ForcefieldAngleTerm."));
 }
-
-ForcefieldAngleTerm::~ForcefieldAngleTerm() {}
 
 /*
  * Data
  */
 
 // Return if this term matches the atom types supplied
-bool ForcefieldAngleTerm::isMatch(const ForcefieldAtomType *i, const ForcefieldAtomType *j, const ForcefieldAtomType *k) const
+bool ForcefieldAngleTerm::isMatch(const ForcefieldAtomType &i, const ForcefieldAtomType &j, const ForcefieldAtomType &k) const
 {
-    if (!DissolveSys::sameWildString(typeJ_, j->equivalentName()))
+    if (!DissolveSys::sameWildString(typeJ_, j.equivalentName()))
         return false;
-    if (DissolveSys::sameWildString(typeI_, i->equivalentName()) && DissolveSys::sameWildString(typeK_, k->equivalentName()))
+    if (DissolveSys::sameWildString(typeI_, i.equivalentName()) && DissolveSys::sameWildString(typeK_, k.equivalentName()))
         return true;
-    if (DissolveSys::sameWildString(typeK_, i->equivalentName()) && DissolveSys::sameWildString(typeI_, k->equivalentName()))
+    if (DissolveSys::sameWildString(typeK_, i.equivalentName()) && DissolveSys::sameWildString(typeI_, k.equivalentName()))
         return true;
 
     return false;
@@ -60,4 +56,4 @@ bool ForcefieldAngleTerm::isMatch(const ForcefieldAtomType *i, const ForcefieldA
 SpeciesAngle::AngleFunction ForcefieldAngleTerm::form() const { return form_; }
 
 // Return array of parameters
-const double *ForcefieldAngleTerm::parameters() const { return parameters_; }
+const std::vector<double> &ForcefieldAngleTerm::parameters() const { return parameters_; }

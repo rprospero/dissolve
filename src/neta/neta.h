@@ -21,7 +21,6 @@
 
 #pragma once
 
-#include "base/charstring.h"
 #include "base/enumoptions.h"
 #include "neta/connection.h"
 #include "neta/logic.h"
@@ -36,7 +35,7 @@ class SpeciesAtom;
 class NETADefinition
 {
     public:
-    NETADefinition(const char *netaDefinition = NULL, const Forcefield *associatedFF = NULL);
+    NETADefinition();
     ~NETADefinition();
 
     /*
@@ -46,19 +45,17 @@ class NETADefinition
     // Root node of the definition
     NETARootNode rootNode_;
     // Original definition string
-    CharString definitionString_;
+    std::string definitionString_;
 
     public:
-    // Clear all definition data
-    void clear();
     // Return root node pointer
     NETARootNode *rootNode();
-    // Set NETADefinition from supplied string
-    bool set(const char *netaDefinition, const Forcefield *associatedFF = NULL);
+    // Create definition from stored string
+    bool create(const Forcefield *associatedFF = nullptr);
     // Set generating string
-    void setDefinitionString(const char *definition);
+    void setDefinitionString(std::string_view definition);
     // Return original generating string
-    const char *definitionString() const;
+    std::string_view definitionString() const;
 
     /*
      * Matching

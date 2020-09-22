@@ -26,7 +26,8 @@
 #include "templates/refdatalist.h"
 
 NETAConnectionNode::NETAConnectionNode(NETADefinition *parent, std::vector<Element *> targetElements,
-                                       std::vector<ForcefieldAtomType *> targetAtomTypes, SpeciesBond::BondType bt)
+                                       std::vector<std::reference_wrapper<const ForcefieldAtomType>> targetAtomTypes,
+                                       SpeciesBond::BondType bt)
     : NETANode(parent, NETANode::ConnectionNode)
 {
     allowedElements_ = targetElements;
@@ -35,7 +36,7 @@ NETAConnectionNode::NETAConnectionNode(NETADefinition *parent, std::vector<Eleme
 
     // Modifiers
     repeatCount_ = 1;
-    repeatCountOperator_ = NETANode::EqualTo;
+    repeatCountOperator_ = NETANode::GreaterThanEqualTo;
     nBondsValue_ = -1;
     nBondsValueOperator_ = NETANode::EqualTo;
     nHydrogensValue_ = -1;
@@ -64,14 +65,14 @@ EnumOptions<NETAConnectionNode::NETAConnectionModifier> NETAConnectionNode::modi
 }
 
 // Return whether the specified modifier is valid for this node
-bool NETAConnectionNode::isValidModifier(const char *s) const { return (modifiers().isValid(s)); }
+bool NETAConnectionNode::isValidModifier(std::string_view s) const { return (modifiers().isValid(s)); }
 
 // Set value and comparator for specified modifier
-bool NETAConnectionNode::setModifier(const char *modifier, ComparisonOperator op, int value)
+bool NETAConnectionNode::setModifier(std::string_view modifier, ComparisonOperator op, int value)
 {
     // Check that the supplied index is valid
     if (!modifiers().isValid(modifier))
-        return Messenger::error("Invalid modifier '%s' passed to NETAConnectionNode.\n", modifier);
+        return Messenger::error("Invalid modifier '{}' passed to NETAConnectionNode.\n", modifier);
 
     switch (modifiers().enumeration(modifier))
     {
@@ -88,7 +89,7 @@ bool NETAConnectionNode::setModifier(const char *modifier, ComparisonOperator op
             repeatCountOperator_ = op;
             break;
         default:
-            return Messenger::error("Don't know how to handle modifier '%s' in connection node.\n", modifier);
+            return Messenger::error("Don't know how to handle modifier '{}' in connection node.\n", modifier);
     }
 
     return true;
@@ -109,14 +110,14 @@ EnumOptions<NETAConnectionNode::NETAConnectionFlag> NETAConnectionNode::flags()
 }
 
 // Return whether the specified flag is valid for this node
-bool NETAConnectionNode::isValidFlag(const char *s) const { return (flags().isValid(s)); }
+bool NETAConnectionNode::isValidFlag(std::string_view s) const { return (flags().isValid(s)); }
 
 // Set specified flag
-bool NETAConnectionNode::setFlag(const char *flag, bool state)
+bool NETAConnectionNode::setFlag(std::string_view flag, bool state)
 {
     // Check that the supplied index is valid
     if (!flags().isValid(flag))
-        return Messenger::error("Invalid flag '%s' passed to NETAConnectionNode.\n", flag);
+        return Messenger::error("Invalid flag '{}' passed to NETAConnectionNode.\n", flag);
 
     switch (flags().enumeration(flag))
     {
@@ -124,7 +125,7 @@ bool NETAConnectionNode::setFlag(const char *flag, bool state)
             allowRootMatch_ = state;
             break;
         default:
-            return Messenger::error("Don't know how to handle flag '%s' in connection node.\n", flag);
+            return Messenger::error("Don't know how to handle flag '{}' in connection node.\n", flag);
     }
 
     return true;
@@ -137,15 +138,11 @@ bool NETAConnectionNode::setFlag(const char *flag, bool state)
 // Evaluate the node and return its score
 int NETAConnectionNode::score(const SpeciesAtom *i, RefList<const SpeciesAtom> &matchPath) const
 {
-    // 	printf("I AM THE CONNECTION - matchPath size = %i:\n", matchPath.nItems());
-    // 	for (const SpeciesAtom* iii : matchPath) printf("   -- %p %i %s\n", iii, iii->userIndex(),
-    // iii->element()->symbol()); 	printf("SITTING ON SPECIESATOM %i (%s)\n", i->userIndex(), i->element()->symbol());
-
     // Get directly connected atoms about 'i', excluding any that have already been matched
     RefDataList<const SpeciesAtom, int> neighbours;
-    for (const auto *bond : i->bonds())
+    for (const SpeciesBond &bond : i->bonds())
     {
-        const auto *partner = bond->partner(i);
+        const auto *partner = bond.partner(i);
         if (partner == matchPath.firstItem())
         {
             // We may allow the path's root atom to be matched again, if the allowRootMatch_ is set...
@@ -186,10 +183,10 @@ int NETAConnectionNode::score(const SpeciesAtom *i, RefList<const SpeciesAtom> &
             break;
         }
         if (atomScore == NETANode::NoMatch)
-            for (auto type : allowedAtomTypes_)
+            for (const ForcefieldAtomType &atomType : allowedAtomTypes_)
             {
                 // Evaluate the neighbour against the atom type
-                auto typeScore = type->neta().score(j);
+                auto typeScore = atomType.neta().score(j);
                 if (typeScore == NETANode::NoMatch)
                     continue;
 
@@ -221,12 +218,10 @@ int NETAConnectionNode::score(const SpeciesAtom *i, RefList<const SpeciesAtom> &
         if (nHydrogensValue_ >= 0)
         {
             // Count number of hydrogens attached to this atom
-            auto nH = 0;
-            for (const auto *bond : j->bonds())
-                if (bond->partner(j)->element()->Z() == ELEMENT_H)
-                    ++nH;
+            auto nH = std::count_if(j->bonds().begin(), j->bonds().end(),
+                                    [j](const SpeciesBond &bond) { return bond.partner(j)->element()->Z() == ELEMENT_H; });
             if (!compareValues(nH, nHydrogensValueOperator_, nHydrogensValue_))
-                return NETANode::NoMatch;
+                continue;
 
             ++atomScore;
         }
@@ -235,8 +230,9 @@ int NETAConnectionNode::score(const SpeciesAtom *i, RefList<const SpeciesAtom> &
         ++nMatches;
         neighbourIterator.currentData() = atomScore;
 
-        // Have we matched enough? If so break out early.
-        if (compareValues(nMatches, repeatCountOperator_, repeatCount_))
+        // Exit early in the case of GreaterThan GreaterThanEqualTo logic
+        if ((repeatCountOperator_ == NETANode::GreaterThan || repeatCountOperator_ == NETANode::GreaterThanEqualTo) &&
+            compareValues(nMatches, repeatCountOperator_, repeatCount_))
             break;
     }
 
@@ -244,7 +240,7 @@ int NETAConnectionNode::score(const SpeciesAtom *i, RefList<const SpeciesAtom> &
     if (!compareValues(nMatches, repeatCountOperator_, repeatCount_))
         return NETANode::NoMatch;
 
-    // Generate total score and add matched atoms to path
+    // Generate total score and add matched atoms to the path
     auto totalScore = 0;
     neighbourIterator.restart();
     while (const SpeciesAtom *j = neighbourIterator.iterate())

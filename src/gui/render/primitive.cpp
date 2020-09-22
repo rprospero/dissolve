@@ -53,7 +53,7 @@ void Primitive::initialise(GLenum type, bool colourData, int arrayChunkSize)
     else if (type_ == GL_POINTS)
         verticesPerType_ = 1;
     else
-        printf("Warning - Invalid GLenum type given to VertexChunk::initialise (%i)\n", type_);
+        Messenger::error("Invalid GLenum type given to VertexChunk::initialise ({})\n", type_);
 
     if (arrayChunkSize > 0)
     {
@@ -138,7 +138,7 @@ void Primitive::pushInstance(const QOpenGLContext *context)
         if (glGetError() != GL_NO_ERROR)
         {
             glFunctions->glBindBuffer(GL_ARRAY_BUFFER, 0);
-            printf("Error occurred while generating vertex buffer object for Primitive.\n");
+            Messenger::error("Error occurred while generating vertex buffer object for Primitive.\n");
             glFunctions->glDeleteBuffers(1, &vertexVBO);
             vertexVBO = 0;
             return;
@@ -160,7 +160,7 @@ void Primitive::pushInstance(const QOpenGLContext *context)
             if (glGetError() != GL_NO_ERROR)
             {
                 glFunctions->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-                printf("Error occurred while generating index buffer object for Primitive.\n");
+                Messenger::error("Error occurred while generating index buffer object for Primitive.\n");
                 glFunctions->glDeleteBuffers(1, &indexVBO);
                 indexVBO = 0;
                 return;
@@ -176,7 +176,7 @@ void Primitive::pushInstance(const QOpenGLContext *context)
         // Generate display list
         auto listId = glGenLists(1);
         if (listId == 0)
-            printf("Internal Error: Primitive::pushInstance - glGenLists(1) returned 0!\n!");
+            Messenger::error("Internal Error: Primitive::pushInstance - glGenLists(1) returned 0!\n!");
         else
         {
             glNewList(listId, GL_COMPILE);
@@ -209,7 +209,7 @@ void Primitive::popInstance(const QOpenGLContext *context)
     QOpenGLFunctions *glFunctions = context->functions();
 
     PrimitiveInstance *pi = instances_.last();
-    if (pi != NULL)
+    if (pi != nullptr)
     {
         if (pi->context() == context)
         {
@@ -248,8 +248,8 @@ void Primitive::sendToGL() const
     {
         // Grab topmost instance
         PrimitiveInstance *pi = instances_.last();
-        if (pi == NULL)
-            printf("Internal Error: No instance on stack in primitive %p.\n", this);
+        if (pi == nullptr)
+            Messenger::error("Internal Error: No instance on stack in primitive.\n");
         else if (pi->type() == PrimitiveInstance::VBOInstance)
         {
             // Get QOpenGLFunctions object from supplied context
@@ -268,7 +268,7 @@ void Primitive::sendToGL() const
             if (indexData_.nItems() != 0)
                 functions->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, pi->vboIndexObject());
 
-            glInterleavedArrays(colouredVertexData_ ? GL_C4F_N3F_V3F : GL_N3F_V3F, 0, NULL);
+            glInterleavedArrays(colouredVertexData_ ? GL_C4F_N3F_V3F : GL_N3F_V3F, 0, nullptr);
             if (indexData_.nItems() != 0)
                 glDrawElements(type_, indexData_.nItems(), GL_UNSIGNED_INT, 0);
             else
@@ -309,9 +309,9 @@ GLuint Primitive::defineVertex(GLfloat x, GLfloat y, GLfloat z, GLfloat nx, GLfl
 {
     if (colouredVertexData_)
     {
-        if (rgba == NULL)
+        if (rgba == nullptr)
         {
-            printf("Internal Error: No colour given to defineVertex(), but the Primitive requires one.\n");
+            Messenger::error("Internal Error: No colour given to defineVertex(), but the Primitive requires one.\n");
             return -1;
         }
 
@@ -321,9 +321,9 @@ GLuint Primitive::defineVertex(GLfloat x, GLfloat y, GLfloat z, GLfloat nx, GLfl
         vertexData_.add(rgba[2]);
         vertexData_.add(rgba[3]);
     }
-    else if (rgba != NULL)
+    else if (rgba != nullptr)
     {
-        printf("Internal Error: Colour given to defineVertex(), but the Primitive does not require one.\n");
+        Messenger::error("Internal Error: Colour given to defineVertex(), but the Primitive does not require one.\n");
         return -1;
     }
 

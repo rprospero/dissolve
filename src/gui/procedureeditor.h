@@ -21,7 +21,6 @@
 
 #pragma once
 
-#include "base/charstring.h"
 #include "gui/ui_procedureeditor.h"
 #include "templates/refdatalist.h"
 
@@ -40,7 +39,7 @@ class ProcedureEditor : public QWidget
     Q_OBJECT
 
     public:
-    ProcedureEditor(QWidget *parent = NULL);
+    ProcedureEditor(QWidget *parent = nullptr);
     ~ProcedureEditor();
 
     /*
@@ -50,7 +49,7 @@ class ProcedureEditor : public QWidget
     // Procedure to be edited
     Procedure *procedure_;
     // Module categories and their associated MimeTreeWidgetItems
-    RefDataList<MimeTreeWidgetItem, CharString> moduleCategories_;
+    RefDataList<MimeTreeWidgetItem, QString> moduleCategories_;
 
     public:
     // Set up to display / edit the target Procedure

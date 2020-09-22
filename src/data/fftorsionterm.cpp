@@ -23,36 +23,33 @@
 #include "data/ff.h"
 #include "data/ffatomtype.h"
 
-ForcefieldTorsionTerm::ForcefieldTorsionTerm(const char *typeI, const char *typeJ, const char *typeK, const char *typeL,
-                                             SpeciesTorsion::TorsionFunction form, double data0, double data1, double data2,
-                                             double data3)
+ForcefieldTorsionTerm::ForcefieldTorsionTerm(std::string_view typeI, std::string_view typeJ, std::string_view typeK,
+                                             std::string_view typeL, SpeciesTorsion::TorsionFunction form,
+                                             const std::vector<double> parameters)
 {
     typeI_ = typeI;
     typeJ_ = typeJ;
     typeK_ = typeK;
     typeL_ = typeL;
     form_ = form;
-    parameters_[0] = data0;
-    parameters_[1] = data1;
-    parameters_[2] = data2;
-    parameters_[3] = data3;
+    parameters_ = parameters;
+    if (!SpeciesTorsion::torsionFunctions().validNArgs(form, parameters_.size()))
+        throw(std::runtime_error("Incorrect number of parameters in constructed ForcefieldTorsionTerm."));
 }
-
-ForcefieldTorsionTerm::~ForcefieldTorsionTerm() {}
 
 /*
  * Data
  */
 
 // Return if this term matches the atom types supplied
-bool ForcefieldTorsionTerm::isMatch(const ForcefieldAtomType *i, const ForcefieldAtomType *j, const ForcefieldAtomType *k,
-                                    const ForcefieldAtomType *l) const
+bool ForcefieldTorsionTerm::isMatch(const ForcefieldAtomType &i, const ForcefieldAtomType &j, const ForcefieldAtomType &k,
+                                    const ForcefieldAtomType &l) const
 {
-    if (DissolveSys::sameWildString(typeI_, i->equivalentName()) && DissolveSys::sameWildString(typeJ_, j->equivalentName()) &&
-        DissolveSys::sameWildString(typeK_, k->equivalentName()) && DissolveSys::sameWildString(typeL_, l->equivalentName()))
+    if (DissolveSys::sameWildString(typeI_, i.equivalentName()) && DissolveSys::sameWildString(typeJ_, j.equivalentName()) &&
+        DissolveSys::sameWildString(typeK_, k.equivalentName()) && DissolveSys::sameWildString(typeL_, l.equivalentName()))
         return true;
-    if (DissolveSys::sameWildString(typeL_, i->equivalentName()) && DissolveSys::sameWildString(typeK_, j->equivalentName()) &&
-        DissolveSys::sameWildString(typeJ_, k->equivalentName()) && DissolveSys::sameWildString(typeI_, l->equivalentName()))
+    if (DissolveSys::sameWildString(typeL_, i.equivalentName()) && DissolveSys::sameWildString(typeK_, j.equivalentName()) &&
+        DissolveSys::sameWildString(typeJ_, k.equivalentName()) && DissolveSys::sameWildString(typeI_, l.equivalentName()))
         return true;
 
     return false;
@@ -62,4 +59,4 @@ bool ForcefieldTorsionTerm::isMatch(const ForcefieldAtomType *i, const Forcefiel
 SpeciesTorsion::TorsionFunction ForcefieldTorsionTerm::form() const { return form_; }
 
 // Return array of parameters
-const double *ForcefieldTorsionTerm::parameters() const { return parameters_; }
+const std::vector<double> &ForcefieldTorsionTerm::parameters() const { return parameters_; }

@@ -30,7 +30,7 @@ Vec3<double> Species::centreOfGeometry(const Box *box) const
 
     // Calculate center relative to first atom in molecule
     auto cog = atoms_.first()->r();
-    for (auto *i = atoms_.first()->next(); i != NULL; i = i->next())
+    for (auto *i = atoms_.first()->next(); i != nullptr; i = i->next())
         cog += box->minimumImage(i->r(), cog);
 
     return (cog / atoms_.nItems());
@@ -45,20 +45,24 @@ void Species::setCentre(const Box *box, const Vec3<double> newCentre)
 
     // Apply transform
     for (int n = 0; n < atoms_.nItems(); ++n)
-        for (auto *i = atoms_.first(); i != NULL; i = i->next())
+        for (auto *i = atoms_.first(); i != nullptr; i = i->next())
         {
             newR = box->minimumVector(i->r(), cog) + newCentre;
             i->setCoordinates(newR);
         }
+
+    ++version_;
 }
 
 // Centre coordinates at origin
 void Species::centreAtOrigin()
 {
     Vec3<double> centre;
-    for (auto *i = atoms_.first(); i != NULL; i = i->next())
+    for (auto *i = atoms_.first(); i != nullptr; i = i->next())
         centre += i->r();
     centre /= atoms_.nItems();
-    for (auto *i = atoms_.first(); i != NULL; i = i->next())
+    for (auto *i = atoms_.first(); i != nullptr; i = i->next())
         i->translateCoordinates(-centre);
+
+    ++version_;
 }

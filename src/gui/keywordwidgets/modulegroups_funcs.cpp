@@ -27,6 +27,7 @@
 #include "module/group.h"
 #include "module/groups.h"
 #include "module/module.h"
+#include "templates/variantpointer.h"
 #include <QComboBox>
 #include <QHBoxLayout>
 #include <QString>
@@ -73,7 +74,7 @@ void ModuleGroupsKeywordWidget::updateSelectionRow(int row, Module *module, bool
     }
     else
         item = ui_.SelectionTable->item(row, 0);
-    item->setText(module->uniqueName());
+    item->setText(QString::fromStdString(std::string(module->uniqueName())));
     item->setCheckState(groups.contains(module) ? Qt::Checked : Qt::Unchecked);
 
     // Module group
@@ -85,7 +86,7 @@ void ModuleGroupsKeywordWidget::updateSelectionRow(int row, Module *module, bool
     }
     else
         item = ui_.SelectionTable->item(row, 1);
-    item->setText(groups.groupName(module));
+    item->setText(QString::fromStdString(std::string(groups.groupName(module))));
 }
 
 // Table item changed
@@ -172,14 +173,13 @@ void ModuleGroupsKeywordWidget::updateSummaryText()
         setSummaryText("<None>");
     else
     {
-        CharString summaryText;
+        QString summaryText;
         ListIterator<ModuleGroup> groupIterator(groups.groups());
         while (ModuleGroup *group = groupIterator.iterate())
         {
-            if (groupIterator.isFirst())
-                summaryText.sprintf("%i (%s)", group->nModules(), group->name());
-            else
-                summaryText.strcatf(", %i (%s)", group->nModules(), group->name());
+            if (!groupIterator.isFirst())
+                summaryText += ", ";
+            summaryText += QString("%1 (%2)").arg(group->nModules()).arg(QString::fromStdString(std::string(group->name())));
         }
         setSummaryText(summaryText);
     }

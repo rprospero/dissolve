@@ -34,7 +34,7 @@ void Configuration::empty()
     molecules_.clear();
     atoms_.clear();
     usedAtomTypes_.clear();
-    if (box_ != NULL)
+    if (box_ != nullptr)
         delete box_;
     box_ = new CubicBox(1.0);
     cells_.clear();
@@ -53,7 +53,7 @@ void Configuration::initialiseArrays(int nMolecules)
 }
 
 // Return specified used type
-AtomType &Configuration::usedAtomType(int index) { return usedAtomTypes_.atomType(index); }
+std::shared_ptr<AtomType> Configuration::usedAtomType(int index) { return usedAtomTypes_.atomType(index); }
 
 // Return specified used type data
 AtomTypeData &Configuration::usedAtomTypeData(int index) { return usedAtomTypes_[index]; }
@@ -87,11 +87,11 @@ SpeciesInfo *Configuration::addUsedSpecies(Species *sp, int population)
 // Return SpeciesInfo for specified Species
 SpeciesInfo *Configuration::usedSpeciesInfo(Species *sp)
 {
-    for (auto *spInfo = usedSpecies_.first(); spInfo != NULL; spInfo = spInfo->next())
+    for (auto *spInfo = usedSpecies_.first(); spInfo != nullptr; spInfo = spInfo->next())
         if (spInfo->species() == sp)
             return spInfo;
 
-    return NULL;
+    return nullptr;
 }
 
 // Return list of SpeciesInfo for the Configuration
@@ -100,7 +100,7 @@ List<SpeciesInfo> &Configuration::usedSpecies() { return usedSpecies_; }
 // Return if the specified Species is present in the usedSpecies list
 bool Configuration::hasUsedSpecies(Species *sp)
 {
-    for (auto *spInfo = usedSpecies_.first(); spInfo != NULL; spInfo = spInfo->next())
+    for (auto *spInfo = usedSpecies_.first(); spInfo != nullptr; spInfo = spInfo->next())
         if (spInfo->species() == sp)
             return true;
 
@@ -180,7 +180,7 @@ Atom *Configuration::addAtom(const SpeciesAtom *sourceAtom, std::shared_ptr<Mole
     newAtom->setCoordinates(r);
 
     // Update our typeIndex (non-isotopic) and set local and master type indices
-    AtomTypeData &atd = usedAtomTypes_.add(*sourceAtom->atomType(), 1);
+    AtomTypeData &atd = usedAtomTypes_.add(sourceAtom->atomType(), 1);
     newAtom->setLocalTypeIndex(atd.listIndex());
     newAtom->setMasterTypeIndex(sourceAtom->atomType()->index());
 
@@ -202,9 +202,9 @@ Atom *Configuration::atom(int n)
 #ifdef CHECKS
     if ((n < 0) || (n >= atoms_.nItems()))
     {
-        Messenger::print("OUT_OF_RANGE - Atom index %i passed to Configuration::atom() is out of range (nAtoms = %i).\n", n,
+        Messenger::print("OUT_OF_RANGE - Atom index {} passed to Configuration::atom() is out of range (nAtoms = {}).\n", n,
                          atoms_.nItems());
-        return NULL;
+        return nullptr;
     }
 #endif
     return atoms_[n];

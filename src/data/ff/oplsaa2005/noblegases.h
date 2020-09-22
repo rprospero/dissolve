@@ -36,24 +36,22 @@ class SpeciesTorsion;
 class Forcefield_OPLSAA2005_NobleGases : public OPLSAA2005BaseForcefield
 {
     public:
-    Forcefield_OPLSAA2005_NobleGases();
-    ~Forcefield_OPLSAA2005_NobleGases();
+    Forcefield_OPLSAA2005_NobleGases() = default;
+    ~Forcefield_OPLSAA2005_NobleGases() = default;
+
+    /*
+     * Set Up
+     */
+    protected:
+    // Set up / create all forcefield terms
+    bool setUp();
 
     /*
      * Definition
      */
     public:
     // Return name of Forcefield
-    const char *name() const;
+    std::string_view name() const;
     // Return description for Forcefield
-    const char *description() const;
-    // Return short-range interaction style for AtomTypes
-    Forcefield::ShortRangeType shortRangeType() const;
-
-    /*
-     * Atom Type Data
-     */
-    public:
-    // Determine and return atom type for specified SpeciesAtom
-    ForcefieldAtomType *determineAtomType(SpeciesAtom *i) const;
+    std::string_view description() const;
 };

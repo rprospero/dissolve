@@ -25,49 +25,98 @@
 #include "classes/speciesatom.h"
 #include "templates/enumhelpers.h"
 
-SpeciesAngle::SpeciesAngle() : SpeciesIntra(), DynamicArrayObject<SpeciesAngle>() { clear(); }
-
-SpeciesAngle::~SpeciesAngle() {}
-
-/*
- * DynamicArrayObject Virtuals
- */
-
-// Clear object, ready for re-use
-void SpeciesAngle::clear()
+SpeciesAngle::SpeciesAngle(SpeciesAtom *i, SpeciesAtom *j, SpeciesAtom *k) : SpeciesIntra()
 {
-    parent_ = NULL;
-    i_ = NULL;
-    j_ = NULL;
-    k_ = NULL;
+    i_ = i;
+    j_ = j;
+    k_ = k;
     form_ = SpeciesAngle::NoForm;
+
+    // Add ourself to the list of bonds on each atom
+    if (i_ && j_ && k_)
+    {
+        i_->addAngle(*this);
+        j_->addAngle(*this);
+        k_->addAngle(*this);
+    }
+}
+
+SpeciesAngle::SpeciesAngle(SpeciesAngle &source) : SpeciesIntra(source) { this->operator=(source); }
+
+SpeciesAngle::SpeciesAngle(SpeciesAngle &&source) : SpeciesIntra(source)
+{
+    // Detach source bond referred to by the species atoms
+    if (source.i_ && source.j_ && source.k_)
+    {
+        source.i_->removeAngle(source);
+        source.j_->removeAngle(source);
+        source.k_->removeAngle(source);
+    }
+
+    // Copy data
+    i_ = source.i_;
+    j_ = source.j_;
+    k_ = source.k_;
+    if (i_ && j_ && k_)
+    {
+        i_->addAngle(*this);
+        j_->addAngle(*this);
+        k_->addAngle(*this);
+    }
+    form_ = source.form_;
+
+    // Reset source data
+    source.i_ = nullptr;
+    source.j_ = nullptr;
+    source.k_ = nullptr;
+}
+
+SpeciesAngle &SpeciesAngle::operator=(SpeciesAngle &source)
+{
+    // Copy data
+    i_ = source.i_;
+    j_ = source.j_;
+    k_ = source.k_;
+    if (i_ && j_ && k_)
+    {
+        i_->addAngle(*this);
+        j_->addAngle(*this);
+        k_->addAngle(*this);
+    }
+    form_ = source.form_;
+    SpeciesIntra::operator=(source);
+
+    return *this;
+}
+
+SpeciesAngle &SpeciesAngle::operator=(SpeciesAngle &&source)
+{
+    // Detach any current atoms
+    if (i_ && j_ && k_)
+        detach();
+
+    // Copy data
+    i_ = source.i_;
+    j_ = source.j_;
+    k_ = source.k_;
+    if (i_ && j_ && k_)
+    {
+        i_->addAngle(*this);
+        j_->addAngle(*this);
+        k_->addAngle(*this);
+    }
+    form_ = source.form_;
+    SpeciesIntra::operator=(source);
+
+    // Clean source
+    source.detach();
+
+    return *this;
 }
 
 /*
  * Atom Information
  */
-
-// Set SpeciesAtoms involved in interaction
-void SpeciesAngle::setAtoms(SpeciesAtom *i, SpeciesAtom *j, SpeciesAtom *k)
-{
-    i_ = i;
-    j_ = j;
-    k_ = k;
-#ifdef CHECKS
-    if (i_ == NULL)
-        Messenger::error("NULL_POINTER - NULL pointer passed for SpeciesAtom* i in SpeciesAngle::set().\n");
-    if (j_ == NULL)
-        Messenger::error("NULL_POINTER - NULL pointer passed for SpeciesAtom* j in SpeciesAngle::set().\n");
-    if (k_ == NULL)
-        Messenger::error("NULL_POINTER - NULL pointer passed for SpeciesAtom* k in SpeciesAngle::set().\n");
-#endif
-    if (i_)
-        i_->addAngle(this);
-    if (j_)
-        j_->addAngle(this);
-    if (k_)
-        k_->addAngle(this);
-}
 
 // Return first SpeciesAtom
 SpeciesAtom *SpeciesAngle::i() const { return i_; }
@@ -82,7 +131,7 @@ SpeciesAtom *SpeciesAngle::k() const { return k_; }
 int SpeciesAngle::indexI() const
 {
 #ifdef CHECKS
-    if (i_ == NULL)
+    if (i_ == nullptr)
     {
         Messenger::error("NULL_POINTER - NULL SpeciesAtom pointer 'i' found in SpeciesAngle::indexI(). Returning 0...\n");
         return 0;
@@ -95,7 +144,7 @@ int SpeciesAngle::indexI() const
 int SpeciesAngle::indexJ() const
 {
 #ifdef CHECKS
-    if (j_ == NULL)
+    if (j_ == nullptr)
     {
         Messenger::error("NULL_POINTER - NULL SpeciesAtom pointer 'j' found in SpeciesAngle::indexJ(). Returning 0...\n");
         return 0;
@@ -108,7 +157,7 @@ int SpeciesAngle::indexJ() const
 int SpeciesAngle::indexK() const
 {
 #ifdef CHECKS
-    if (k_ == NULL)
+    if (k_ == nullptr)
     {
         Messenger::error("NULL_POINTER - NULL SpeciesAtom pointer 'k' found in SpeciesAngle::indexK(). Returning 0...\n");
         return 0;
@@ -127,7 +176,7 @@ int SpeciesAngle::index(int n) const
     else if (n == 2)
         return indexK();
 
-    Messenger::error("SpeciesAtom index %i is out of range in SpeciesAngle::index(int). Returning 0...\n");
+    Messenger::error("SpeciesAtom index {} is out of range in SpeciesAngle::index(int). Returning 0...\n");
     return 0;
 }
 
@@ -147,13 +196,27 @@ bool SpeciesAngle::matches(SpeciesAtom *i, SpeciesAtom *j, SpeciesAtom *k) const
 bool SpeciesAngle::isSelected() const
 {
 #ifdef CHECKS
-    if (i_ == NULL || j_ == NULL || k_ == NULL)
+    if (i_ == nullptr || j_ == nullptr || k_ == nullptr)
     {
         Messenger::error("NULL_POINTER - NULL SpeciesAtom pointer found in SpeciesAngle::isSelected(). Returning false...\n");
         return false;
     }
 #endif
     return (i_->isSelected() && j_->isSelected() && k_->isSelected());
+}
+
+// Detach from current atoms
+void SpeciesAngle::detach()
+{
+    if (i_ && j_ && k_)
+    {
+        i_->removeAngle(*this);
+        j_->removeAngle(*this);
+        k_->removeAngle(*this);
+    }
+    i_ = nullptr;
+    j_ = nullptr;
+    k_ = nullptr;
 }
 
 /*
@@ -180,7 +243,7 @@ void SpeciesAngle::setUp() {}
 double SpeciesAngle::fundamentalFrequency(double reducedMass) const
 {
     // Get pointer to relevant parameters array
-    const auto *params = parameters();
+    const auto &params = parameters();
 
     double k = 0.0;
     if (form() == SpeciesAngle::HarmonicForm)
@@ -194,15 +257,12 @@ double SpeciesAngle::fundamentalFrequency(double reducedMass) const
 
     // Convert force constant from (assumed) kJ mol-1 A-2 into J m-2 (kg s-2)
     k *= 1000.0 * 1.0e20 / AVOGADRO;
-    // 	printf("K = %f\n", k);
 
     // Convert reduced mass from amu to kg
     double mu = reducedMass / (AVOGADRO * 1000.0);
-    // 	printf("mu = %e\n", mu);
 
     // Calculate fundamental frequency
     double v = (1.0 / TWOPI) * sqrt(k / mu);
-    // 	printf("v = %e\n", v);
 
     return v;
 }
@@ -214,7 +274,7 @@ SpeciesIntra::InteractionType SpeciesAngle::type() const { return SpeciesIntra::
 double SpeciesAngle::energy(double angleInDegrees) const
 {
     // Get pointer to relevant parameters array
-    const auto *params = parameters();
+    const auto &params = parameters();
 
     if (form() == SpeciesAngle::NoForm)
         return 0.0;
@@ -266,7 +326,7 @@ double SpeciesAngle::energy(double angleInDegrees) const
 double SpeciesAngle::force(double angleInDegrees) const
 {
     // Get pointer to relevant parameters array
-    const auto *params = parameters();
+    const auto &params = parameters();
 
     // Convert angle to radians
     const auto angleInRadians = angleInDegrees / DEGRAD;
@@ -318,41 +378,4 @@ double SpeciesAngle::force(double angleInDegrees) const
 
     Messenger::error("Functional form of SpeciesAngle term not accounted for, so can't calculate force.\n");
     return 0.0;
-}
-
-/*
- * Parallel Comms
- */
-
-// Broadcast data from Master to all Slaves
-bool SpeciesAngle::broadcast(ProcessPool &procPool, const List<SpeciesAtom> &atoms)
-{
-#ifdef PARALLEL
-    int buffer[3];
-
-    // Put atom indices into buffer and send
-    if (procPool.isMaster())
-    {
-        buffer[0] = indexI();
-        buffer[1] = indexJ();
-        buffer[2] = indexK();
-    }
-    if (!procPool.broadcast(buffer, 3))
-        return false;
-
-    // Slaves now take Atom pointers from supplied List
-    if (procPool.isSlave())
-    {
-        i_ = atoms.item(buffer[0]);
-        j_ = atoms.item(buffer[1]);
-        k_ = atoms.item(buffer[2]);
-    }
-
-    // Send parameter info
-    if (!procPool.broadcast(parameters_, MAXINTRAPARAMS))
-        return false;
-    if (!procPool.broadcast(form_))
-        return false;
-#endif
-    return true;
 }

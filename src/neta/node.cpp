@@ -73,8 +73,9 @@ NETANode *NETANode::lastBranchNode() { return branch_.last(); }
 int NETANode::nBranchNodes() const { return branch_.nItems(); }
 
 // Create connectivity node from current targets
-NETAConnectionNode *NETANode::createConnectionNode(std::vector<Element *> targetElements,
-                                                   std::vector<ForcefieldAtomType *> targetAtomTypes)
+NETAConnectionNode *
+NETANode::createConnectionNode(std::vector<Element *> targetElements,
+                               std::vector<std::reference_wrapper<const ForcefieldAtomType>> targetAtomTypes)
 {
     // Create the new node and own it
     NETAConnectionNode *node = new NETAConnectionNode(parent_, targetElements, targetAtomTypes);
@@ -85,7 +86,7 @@ NETAConnectionNode *NETANode::createConnectionNode(std::vector<Element *> target
 
 // Create presence node in the branch
 NETAPresenceNode *NETANode::createPresenceNode(std::vector<Element *> targetElements,
-                                               std::vector<ForcefieldAtomType *> targetAtomTypes)
+                                               std::vector<std::reference_wrapper<const ForcefieldAtomType>> targetAtomTypes)
 {
     // Create the new node and own it
     NETAPresenceNode *node = new NETAPresenceNode(parent_, targetElements, targetAtomTypes);
@@ -109,20 +110,20 @@ NETARingNode *NETANode::createRingNode()
  */
 
 // Return whether the specified modifier is valid for this node
-bool NETANode::isValidModifier(const char *s) const { return false; }
+bool NETANode::isValidModifier(std::string_view s) const { return false; }
 
 // Set value and comparator for specified modifier
-bool NETANode::setModifier(const char *modifier, ComparisonOperator op, int value) { return false; }
+bool NETANode::setModifier(std::string_view modifier, ComparisonOperator op, int value) { return false; }
 
 /*
  * Flags
  */
 
 // Return whether the specified flag is valid for this node
-bool NETANode::isValidFlag(const char *s) const { return false; }
+bool NETANode::isValidFlag(std::string_view s) const { return false; }
 
 // Set specified flag
-bool NETANode::setFlag(const char *flag, bool state) { return false; }
+bool NETANode::setFlag(std::string_view flag, bool state) { return false; }
 
 /*
  * Value Comparison
@@ -154,7 +155,7 @@ bool NETANode::compareValues(int lhsValue, ComparisonOperator op, int rhsValue)
             result = (lhsValue <= rhsValue);
             break;
         default:
-            printf("Internal Error: Unrecognised operator (%i) in NETANode::valueComparison.\n", op);
+            Messenger::error("Unrecognised operator ({}) in NETANode::valueComparison.\n", op);
             break;
     }
 

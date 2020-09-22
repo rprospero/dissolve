@@ -30,15 +30,22 @@
 class Forcefield_OPLSAA2005_Aromatics : public OPLSAA2005BaseForcefield
 {
     public:
-    Forcefield_OPLSAA2005_Aromatics();
-    ~Forcefield_OPLSAA2005_Aromatics();
+    Forcefield_OPLSAA2005_Aromatics() = default;
+    ~Forcefield_OPLSAA2005_Aromatics() = default;
+
+    /*
+     * Set Up
+     */
+    protected:
+    // Set up / create all forcefield terms
+    bool setUp();
 
     /*
      * Definition
      */
     public:
     // Return name of Forcefield
-    const char *name() const;
+    std::string_view name() const;
     // Return description for Forcefield
-    const char *description() const;
+    std::string_view description() const;
 };

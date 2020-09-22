@@ -31,11 +31,15 @@ class Species;
 class ProcessPool;
 
 // SpeciesTorsion Definition
-class SpeciesTorsion : public SpeciesIntra, public DynamicArrayObject<SpeciesTorsion>
+class SpeciesTorsion : public SpeciesIntra
 {
     public:
-    SpeciesTorsion();
+    SpeciesTorsion(const SpeciesTorsion &source);
+    SpeciesTorsion(const SpeciesTorsion &&source);
+    SpeciesTorsion(SpeciesAtom *i = nullptr, SpeciesAtom *j = nullptr, SpeciesAtom *k = nullptr, SpeciesAtom *l = nullptr);
     ~SpeciesTorsion();
+    SpeciesTorsion &operator=(const SpeciesTorsion &source);
+    SpeciesTorsion &operator=(SpeciesTorsion &&source);
 
     /*
      * DynamicArrayObject Virtuals
@@ -56,10 +60,12 @@ class SpeciesTorsion : public SpeciesIntra, public DynamicArrayObject<SpeciesTor
     SpeciesAtom *k_;
     // Fourth SpeciesAtom in interaction
     SpeciesAtom *l_;
+    // Detach from current atoms
+    void detach();
 
     public:
     // Set Atoms involved in Torsion
-    void setAtoms(SpeciesAtom *i, SpeciesAtom *j, SpeciesAtom *k, SpeciesAtom *l);
+    void assign(SpeciesAtom *i, SpeciesAtom *j, SpeciesAtom *k, SpeciesAtom *l);
     // Return first SpeciesAtom
     SpeciesAtom *i() const;
     // Return second SpeciesAtom
@@ -93,8 +99,10 @@ class SpeciesTorsion : public SpeciesIntra, public DynamicArrayObject<SpeciesTor
         NoForm,
         CosineForm,
         Cos3Form,
-        Cos4Form,
         Cos3CForm,
+        Cos4Form,
+        CosNForm,
+        CosNCForm,
         UFFCosineForm
     };
     // Return enum options for TorsionFunction
@@ -111,11 +119,4 @@ class SpeciesTorsion : public SpeciesIntra, public DynamicArrayObject<SpeciesTor
     double energy(double angleInDegrees) const;
     // Return force multiplier for specified angle
     double force(double angleInDegrees) const;
-
-    /*
-     * Parallel Comms
-     */
-    public:
-    // Broadcast data from Master to all Slaves
-    bool broadcast(ProcessPool &procPool, const List<SpeciesAtom> &atoms);
 };

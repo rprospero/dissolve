@@ -26,44 +26,85 @@
 #include "data/atomicmass.h"
 #include "templates/enumhelpers.h"
 
-SpeciesBond::SpeciesBond() : SpeciesIntra(), DynamicArrayObject<SpeciesBond>() { clear(); }
-
-SpeciesBond::~SpeciesBond() {}
-
-/*
- * DynamicArrayObject Virtuals
- */
-
-// Clear object, ready for re-use
-void SpeciesBond::clear()
+SpeciesBond::SpeciesBond(SpeciesAtom *i, SpeciesAtom *j) : SpeciesIntra()
 {
-    parent_ = NULL;
-    i_ = NULL;
-    j_ = NULL;
+    assign(i, j);
     bondType_ = SpeciesBond::SingleBond;
     form_ = SpeciesBond::NoForm;
+}
+
+SpeciesBond::SpeciesBond(SpeciesBond &source) : SpeciesIntra(source) { this->operator=(source); }
+
+void SpeciesBond::assign(SpeciesAtom *i, SpeciesAtom *j)
+{
+    i_ = i;
+    j_ = j;
+
+    // Add ourself to the list of bonds on each atom
+    if (i_ && j_)
+    {
+        i_->addBond(*this);
+        j_->addBond(*this);
+    }
+}
+
+SpeciesBond::SpeciesBond(SpeciesBond &&source) : SpeciesIntra(source)
+{
+    // Detach source bond referred to by the species atoms
+    if (source.i_ && source.j_)
+    {
+        source.i_->removeBond(source);
+        source.j_->removeBond(source);
+    }
+
+    // Copy data
+    assign(source.i_, source.j_);
+    bondType_ = source.bondType_;
+    form_ = source.form_;
+
+    // Reset source data
+    source.i_ = nullptr;
+    source.j_ = nullptr;
+}
+
+SpeciesBond &SpeciesBond::operator=(const SpeciesBond &source)
+{
+    // Copy data
+    i_ = source.i_;
+    j_ = source.j_;
+    if (i_ && j_)
+    {
+        i_->addBond(*this);
+        j_->addBond(*this);
+    }
+    bondType_ = source.bondType_;
+    form_ = source.form_;
+    SpeciesIntra::operator=(source);
+
+    return *this;
+}
+
+SpeciesBond &SpeciesBond::operator=(SpeciesBond &&source)
+{
+    // Detach any current atoms
+    if (i_ && j_)
+        detach();
+
+    // Copy data
+    assign(source.i_, source.j_);
+    bondType_ = source.bondType_;
+    form_ = source.form_;
+    SpeciesIntra::operator=(source);
+
+    // Clean source
+    source.detach();
+
+    return *this;
 }
 
 /*
  * SpeciesAtom Information
  */
-
-// Set SpeciesAtoms involved in SpeciesBond
-void SpeciesBond::setAtoms(SpeciesAtom *i, SpeciesAtom *j)
-{
-    i_ = i;
-    j_ = j;
-#ifdef CHECKS
-    if (i_ == NULL)
-        Messenger::error("NULL_POINTER - NULL pointer passed for SpeciesAtom i in SpeciesBond::set().\n");
-    if (j_ == NULL)
-        Messenger::error("NULL_POINTER - NULL pointer passed for SpeciesAtom j in SpeciesBond::set().\n");
-#endif
-    if (i_)
-        i_->addBond(this);
-    if (j_)
-        j_->addBond(this);
-}
 
 // Return first SpeciesAtom involved in interaction
 SpeciesAtom *SpeciesBond::i() const { return i_; }
@@ -78,7 +119,7 @@ SpeciesAtom *SpeciesBond::partner(const SpeciesAtom *i) const { return (i == i_ 
 int SpeciesBond::indexI() const
 {
 #ifdef CHECKS
-    if (i_ == NULL)
+    if (i_ == nullptr)
     {
         Messenger::error("NULL_POINTER - NULL SpeciesAtom pointer 'i' found in SpeciesBond::indexI(). Returning 0...\n");
         return 0;
@@ -91,7 +132,7 @@ int SpeciesBond::indexI() const
 int SpeciesBond::indexJ() const
 {
 #ifdef CHECKS
-    if (j_ == NULL)
+    if (j_ == nullptr)
     {
         Messenger::error("NULL_POINTER - NULL SpeciesAtom pointer 'j' found in SpeciesBond::indexJ(). Returning 0...\n");
         return 0;
@@ -108,12 +149,12 @@ int SpeciesBond::index(int n) const
     else if (n == 1)
         return indexJ();
 
-    Messenger::error("SpeciesAtom index %i is out of range in SpeciesBond::index(int). Returning 0...\n");
+    Messenger::error("SpeciesAtom index {} is out of range in SpeciesBond::index(int). Returning 0...\n");
     return 0;
 }
 
 // Return whether SpeciesAtoms in Angle match those specified
-bool SpeciesBond::matches(SpeciesAtom *i, SpeciesAtom *j) const
+bool SpeciesBond::matches(const SpeciesAtom *i, const SpeciesAtom *j) const
 {
     if ((i_ == i) && (j_ == j))
         return true;
@@ -126,7 +167,7 @@ bool SpeciesBond::matches(SpeciesAtom *i, SpeciesAtom *j) const
 bool SpeciesBond::isSelected() const
 {
 #ifdef CHECKS
-    if (i_ == NULL || j_ == NULL)
+    if (i_ == nullptr || j_ == nullptr)
     {
         Messenger::error("NULL_POINTER - NULL SpeciesAtom pointer found in SpeciesBond::isSelected(). Returning false...\n");
         return false;
@@ -135,16 +176,28 @@ bool SpeciesBond::isSelected() const
     return (i_->isSelected() && j_->isSelected());
 }
 
+// Detach from current atoms
+void SpeciesBond::detach()
+{
+    if (i_ && j_)
+    {
+        i_->removeBond(*this);
+        j_->removeBond(*this);
+    }
+    i_ = nullptr;
+    j_ = nullptr;
+}
+
 /*
  * Bond Type
  */
 
 // Bond type keywords
-const char *BondTypeKeywords[] = {"Single", "Double", "Triple", "Quadruple", "Aromatic"};
+std::string_view BondTypeKeywords[] = {"Single", "Double", "Triple", "Quadruple", "Aromatic"};
 double BondTypeOrders[] = {1.0, 2.0, 3.0, 4.0, 1.5};
 
 // Convert bond type string to functional form
-SpeciesBond::BondType SpeciesBond::bondType(const char *s)
+SpeciesBond::BondType SpeciesBond::bondType(std::string_view s)
 {
     for (int n = 0; n < SpeciesBond::nBondTypes; ++n)
         if (DissolveSys::sameString(s, BondTypeKeywords[n]))
@@ -153,7 +206,7 @@ SpeciesBond::BondType SpeciesBond::bondType(const char *s)
 }
 
 // Return bond type functional form text
-const char *SpeciesBond::bondType(SpeciesBond::BondType bt) { return BondTypeKeywords[bt]; }
+std::string_view SpeciesBond::bondType(SpeciesBond::BondType bt) { return BondTypeKeywords[bt]; }
 
 // Return bond order for specified bond type
 double SpeciesBond::bondOrder(SpeciesBond::BondType bt) { return BondTypeOrders[bt]; }
@@ -187,7 +240,7 @@ EnumOptions<SpeciesBond::BondFunction> SpeciesBond::bondFunctions()
 void SpeciesBond::setUp()
 {
     // Get pointer to relevant parameters array
-    const auto *params = parameters();
+    const auto &params = parameters();
 
     /*
      * Depending on the form, we may have other dependent parameters to set up
@@ -208,7 +261,7 @@ void SpeciesBond::setUp()
 double SpeciesBond::fundamentalFrequency(double reducedMass) const
 {
     // Get pointer to relevant parameters array
-    const auto *params = parameters();
+    const auto &params = parameters();
 
     double k = 0.0;
     if (form() == SpeciesBond::HarmonicForm)
@@ -241,7 +294,7 @@ SpeciesIntra::InteractionType SpeciesBond::type() const { return SpeciesIntra::B
 double SpeciesBond::energy(double distance) const
 {
     // Get pointer to relevant parameters array
-    const auto *params = parameters();
+    const auto &params = parameters();
 
     if (form() == SpeciesBond::NoForm)
         return 0.0;
@@ -277,7 +330,7 @@ double SpeciesBond::energy(double distance) const
 double SpeciesBond::force(double distance) const
 {
     // Get pointer to relevant parameters array
-    const auto *params = parameters();
+    const auto &params = parameters();
 
     if (form() == SpeciesBond::NoForm)
         return 0.0;
@@ -305,42 +358,4 @@ double SpeciesBond::force(double distance) const
 
     Messenger::error("Functional form of SpeciesBond term not accounted for, so can't calculate force.\n");
     return 0.0;
-}
-
-/*
- * Parallel Comms
- */
-
-// Broadcast data from Master to all Slaves
-bool SpeciesBond::broadcast(ProcessPool &procPool, const List<SpeciesAtom> &atoms)
-{
-#ifdef PARALLEL
-    int buffer[2];
-
-    // Put atom indices into buffer and send
-    if (procPool.isMaster())
-    {
-        buffer[0] = indexI();
-        buffer[1] = indexJ();
-    }
-    if (!procPool.broadcast(buffer, 2))
-        return false;
-
-    // Slaves now take SpeciesAtom pointers from supplied List
-    if (procPool.isSlave())
-    {
-        setAtoms(atoms.item(buffer[0]), atoms.item(buffer[1]));
-        if (i_ != NULL)
-            i_->addBond(this);
-        if (j_ != NULL)
-            j_->addBond(this);
-    }
-
-    // Send parameter info
-    if (!procPool.broadcast(parameters_, MAXINTRAPARAMS))
-        return false;
-    if (!procPool.broadcast(form_))
-        return false;
-#endif
-    return true;
 }

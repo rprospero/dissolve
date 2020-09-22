@@ -31,6 +31,9 @@
 #include <QString>
 #include <algorithm>
 
+Q_DECLARE_SMART_POINTER_METATYPE(std::shared_ptr)
+Q_DECLARE_METATYPE(std::shared_ptr<AtomType>)
+
 AtomTypeSelectionKeywordWidget::AtomTypeSelectionKeywordWidget(QWidget *parent, KeywordBase *keyword, const CoreData &coreData)
     : KeywordDropDown(this), KeywordWidgetBase(coreData)
 {
@@ -43,7 +46,7 @@ AtomTypeSelectionKeywordWidget::AtomTypeSelectionKeywordWidget(QWidget *parent, 
     // Cast the pointer up into the parent class type
     keyword_ = dynamic_cast<AtomTypeSelectionKeyword *>(keyword);
     if (!keyword_)
-        Messenger::error("Couldn't cast base keyword '%s' into AtomTypeSelectionKeyword.\n", keyword->name());
+        Messenger::error("Couldn't cast base keyword '{}' into AtomTypeSelectionKeyword.\n", keyword->name());
     else
     {
         // Set current information
@@ -56,7 +59,7 @@ AtomTypeSelectionKeywordWidget::AtomTypeSelectionKeywordWidget(QWidget *parent, 
  */
 
 // Selection list update function
-void AtomTypeSelectionKeywordWidget::updateSelectionRow(int row, AtomType &atomType, bool createItem)
+void AtomTypeSelectionKeywordWidget::updateSelectionRow(int row, std::shared_ptr<AtomType> atomType, bool createItem)
 {
     // Grab the target AtomTypeSelection
     auto &selection = keyword_->data();
@@ -64,22 +67,22 @@ void AtomTypeSelectionKeywordWidget::updateSelectionRow(int row, AtomType &atomT
     QListWidgetItem *item;
     if (createItem)
     {
-        auto location =
-            std::find_if(atomTypes_.begin(), atomTypes_.end(), [&atomType](const AtomType &at) { return &at == &atomType; });
+        auto location = std::find_if(atomTypes_.begin(), atomTypes_.end(), [&atomType](auto at) { return at == atomType; });
         if (location == atomTypes_.end())
         {
             atomTypes_.push_back(atomType);
-            location = std::find_if(atomTypes_.begin(), atomTypes_.end(),
-                                    [&atomType](const AtomType &at) { return &at == &atomType; });
+            location = std::find_if(atomTypes_.begin(), atomTypes_.end(), [&atomType](auto at) { return at == atomType; });
         }
-        item = new QListWidgetItem(atomType.name());
+        item = new QListWidgetItem(QString::fromStdString(std::string(atomType->name())));
         item->setData(Qt::UserRole, QVariant::fromValue(location - atomTypes_.begin()));
         item->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
         ui.SelectionList->insertItem(row, item);
     }
     else
         item = ui.SelectionList->item(row);
-    item->setCheckState(selection.contains(atomType) ? Qt::Checked : Qt::Unchecked);
+    auto it = std::find_if(selection.begin(), selection.end(),
+                           [&atomType](const AtomTypeData &atd) { return atd.atomType() == atomType; });
+    item->setCheckState(it != selection.end() ? Qt::Checked : Qt::Unchecked);
 }
 
 // List item changed
@@ -139,11 +142,12 @@ void AtomTypeSelectionKeywordWidget::updateSummaryText()
         setSummaryText("<None>");
     else
     {
-        CharString summaryText = std::accumulate(std::next(selection.begin()), selection.end(),
-                                                 CharString(selection.first().atomTypeName()), [](auto &acc, const auto &atd) {
-                                                     acc.strcatf(", %s", atd.atomTypeName());
-                                                     return acc;
-                                                 });
+        QString summaryText = std::accumulate(
+            std::next(selection.begin()), selection.end(),
+            QString::fromStdString(std::string(selection.first().atomTypeName())), [](auto &acc, const auto &atd) {
+                acc += QString(", %1").arg(QString::fromStdString(std::string(atd.atomTypeName())));
+                return acc;
+            });
         setSummaryText(summaryText);
     }
 }

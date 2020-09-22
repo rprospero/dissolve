@@ -24,7 +24,7 @@
 
 CellNeighbour::CellNeighbour()
 {
-    cell_ = NULL;
+    cell_ = nullptr;
     useMim_ = false;
 }
 
@@ -38,7 +38,7 @@ void CellNeighbour::set(Cell *cell, bool useMim)
 }
 
 // Return referenced cell
-Cell *CellNeighbour::cell() { return cell_; }
+const Cell *CellNeighbour::cell() const { return cell_; }
 
 // Return whether mim should be applied
 bool CellNeighbour::useMim() { return useMim_; }

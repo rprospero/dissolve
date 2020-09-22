@@ -26,7 +26,7 @@
 bool CoordinateImportFileFormat::importDLPOLY(LineParser &parser, Array<Vec3<double>> &r)
 {
     /*
-     * Import DL_POLY force information through the specified line parser.
+     * Import DL_POLY coordinates information through the specified line parser.
      * We assume CONFIG or REVCON format:
      *
      * Line 1:    Title
@@ -44,14 +44,14 @@ bool CoordinateImportFileFormat::importDLPOLY(LineParser &parser, Array<Vec3<dou
     if (parser.skipLines(1) != LineParser::Success)
         return false;
 
-    // Import in keytrj, imcon, and number of atoms, and initiliase arrays
+    // Import in keytrj, imcon, and number of atoms, and initialise arrays
     if (parser.getArgsDelim(LineParser::Defaults) != LineParser::Success)
         return false;
 
     auto keytrj = parser.argi(0);
     auto imcon = parser.argi(1);
     auto nAtoms = parser.hasArg(2) ? parser.argi(2) : 0;
-    Messenger::print(" --> Expecting coordinates for %i atoms (DLPOLY keytrj=%i, imcon=%i).\n", nAtoms, keytrj, imcon);
+    Messenger::print(" --> Expecting coordinates for {} atoms (DLPOLY keytrj={}, imcon={}).\n", nAtoms, keytrj, imcon);
     r.clear();
 
     // Skip cell information if given

@@ -21,7 +21,6 @@
 
 #pragma once
 
-#include "base/charstring.h"
 #include "base/parameters.h"
 #include "classes/speciesangle.h"
 
@@ -33,27 +32,26 @@ class ForcefieldAtomType;
 class ForcefieldAngleTerm
 {
     public:
-    ForcefieldAngleTerm(const char *typeI = NULL, const char *typeJ = NULL, const char *typeK = NULL,
-                        SpeciesAngle::AngleFunction form = SpeciesAngle::NoForm, double data0 = 0.0, double data1 = 0.0,
-                        double data2 = 0.0, double data3 = 0.0);
-    ~ForcefieldAngleTerm();
+    ForcefieldAngleTerm(std::string_view typeI = "", std::string_view typeJ = "", std::string_view typeK = "",
+                        SpeciesAngle::AngleFunction form = SpeciesAngle::NoForm, const std::vector<double> parameters = {});
+    ~ForcefieldAngleTerm() = default;
 
     /*
      * Data
      */
     private:
     // Type names involved in interaction
-    CharString typeI_, typeJ_, typeK_;
+    std::string typeI_, typeJ_, typeK_;
     // Functional form of interaction
     SpeciesAngle::AngleFunction form_;
     // Parameters for interaction
-    double parameters_[MAXINTRAPARAMS];
+    std::vector<double> parameters_;
 
     public:
     // Return if this term matches the atom types supplied
-    bool isMatch(const ForcefieldAtomType *i, const ForcefieldAtomType *j, const ForcefieldAtomType *k) const;
+    bool isMatch(const ForcefieldAtomType &i, const ForcefieldAtomType &j, const ForcefieldAtomType &k) const;
     // Return functional form index of interaction
     SpeciesAngle::AngleFunction form() const;
     // Return array of parameters
-    const double *parameters() const;
+    const std::vector<double> &parameters() const;
 };

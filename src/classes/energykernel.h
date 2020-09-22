@@ -36,6 +36,7 @@ class PotentialMap;
 class Molecule;
 class SpeciesBond;
 class SpeciesAngle;
+class SpeciesImproper;
 class SpeciesTorsion;
 
 // Energy Kernel
@@ -85,7 +86,7 @@ class EnergyKernel
     // Return PairPotential energy between Cell and its neighbours
     double energy(Cell *cell, bool excludeIgeJ, bool interMolecular, ProcessPool::DivisionStrategy strategy, bool performSum);
     // Return PairPotential energy between Atom and Cell
-    double energy(const Atom *i, Cell *cell, int flags, ProcessPool::DivisionStrategy strategy, bool performSum);
+    double energy(const Atom *i, const Cell *cell, int flags, ProcessPool::DivisionStrategy strategy, bool performSum);
     // Return PairPotential energy of atom with world
     double energy(const Atom *i, ProcessPool::DivisionStrategy strategy, bool performSum);
     // Return PairPotential energy of Molecule with world
@@ -99,12 +100,20 @@ class EnergyKernel
      * Intramolecular Terms
      */
     public:
+    // Return SpeciesBond energy at Atoms specified
+    double energy(const SpeciesBond &b, const Atom *i, const Atom *j);
     // Return SpeciesBond energy
-    double energy(const SpeciesBond *b, const Atom *i, const Atom *j);
+    static double energy(const SpeciesBond &b);
+    // Return SpeciesAngle energy at Atoms specified
+    double energy(const SpeciesAngle &a, const Atom *i, const Atom *j, const Atom *k);
     // Return SpeciesAngle energy
-    double energy(const SpeciesAngle *a, const Atom *i, const Atom *j, const Atom *k);
+    static double energy(const SpeciesAngle &a);
+    // Return SpeciesTorsion energy at Atoms specified
+    double energy(const SpeciesTorsion &t, const Atom *i, const Atom *j, const Atom *k, const Atom *l);
     // Return SpeciesTorsion energy
-    double energy(const SpeciesTorsion *t, const Atom *i, const Atom *j, const Atom *k, const Atom *l);
+    static double energy(const SpeciesTorsion &t);
+    // Return SpeciesImproper energy
+    double energy(const SpeciesImproper &imp, const Atom *i, const Atom *j, const Atom *k, const Atom *l);
     // Return intramolecular energy for the supplied Atom
     double intramolecularEnergy(std::shared_ptr<const Molecule> mol, const Atom *i);
     // Return intramolecular energy for the supplied Molecule

@@ -23,6 +23,7 @@
 
 #include "classes/speciesbond.h"
 #include "neta/node.h"
+#include <memory>
 #include <vector>
 
 // Forward Declarations
@@ -35,14 +36,15 @@ class NETAConnectionNode : public NETANode
 {
     public:
     NETAConnectionNode(NETADefinition *parent, std::vector<Element *> targetElements,
-                       std::vector<ForcefieldAtomType *> targetAtomTypes, SpeciesBond::BondType bt = SpeciesBond::nBondTypes);
+                       std::vector<std::reference_wrapper<const ForcefieldAtomType>> targetAtomTypes,
+                       SpeciesBond::BondType bt = SpeciesBond::nBondTypes);
     ~NETAConnectionNode();
 
     private:
     // Array of elements that the current context atom may be
     std::vector<Element *> allowedElements_;
     // Array of ForcefieldAtomTypes that the current context atom may be
-    std::vector<ForcefieldAtomType *> allowedAtomTypes_;
+    std::vector<std::reference_wrapper<const ForcefieldAtomType>> allowedAtomTypes_;
     // Type of required connection
     SpeciesBond::BondType bondType_;
 
@@ -75,9 +77,9 @@ class NETAConnectionNode : public NETANode
     // Return enum options for NETAConnectionModifiers
     static EnumOptions<NETAConnectionNode::NETAConnectionModifier> modifiers();
     // Return whether the specified modifier is valid for this node
-    bool isValidModifier(const char *s) const;
+    bool isValidModifier(std::string_view s) const;
     // Set value and comparator for specified modifier
-    bool setModifier(const char *modifier, ComparisonOperator op, int value);
+    bool setModifier(std::string_view modifier, ComparisonOperator op, int value);
 
     /*
      * Flags
@@ -96,9 +98,9 @@ class NETAConnectionNode : public NETANode
     // Return enum options for NETAConnectionFlags
     static EnumOptions<NETAConnectionNode::NETAConnectionFlag> flags();
     // Return whether the specified flag is valid for this node
-    bool isValidFlag(const char *s) const;
+    bool isValidFlag(std::string_view s) const;
     // Set specified flag
-    bool setFlag(const char *flag, bool state);
+    bool setFlag(std::string_view flag, bool state);
 
     /*
      * Scoring

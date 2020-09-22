@@ -26,6 +26,7 @@
 #include "templates/refdatalist.h"
 #include "templates/reflist.h"
 #include <memory>
+#include <vector>
 
 // Forward Declarations
 class SelectProcedureNode;
@@ -60,7 +61,7 @@ class DynamicSiteProcedureNode : public ProcedureNode
     // Target Elements for selection as sites
     RefList<Element> elements_;
     // Target AtomTypes for selection as sites
-    RefList<AtomType> atomTypes_;
+    std::vector<std::shared_ptr<AtomType>> atomTypes_;
 
     public:
     // Return whether axes are specified for the dynamic site
@@ -86,6 +87,6 @@ class DynamicSiteProcedureNode : public ProcedureNode
      */
     public:
     // Execute node, targetting the supplied Configuration
-    ProcedureNode::NodeExecutionResult execute(ProcessPool &procPool, Configuration *cfg, const char *prefix,
+    ProcedureNode::NodeExecutionResult execute(ProcessPool &procPool, Configuration *cfg, std::string_view prefix,
                                                GenericList &targetList);
 };

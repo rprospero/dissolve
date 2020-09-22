@@ -21,7 +21,6 @@
 
 #pragma once
 
-#include "base/charstring.h"
 #include "math/histogram1d.h"
 #include "procedure/nodes/node.h"
 
@@ -35,7 +34,7 @@ class NodeScopeStack;
 class Collect1DProcedureNode : public ProcedureNode
 {
     public:
-    Collect1DProcedureNode(CalculateProcedureNodeBase *observable = NULL, double rMin = 0.0, double rMax = 10.0,
+    Collect1DProcedureNode(CalculateProcedureNodeBase *observable = nullptr, double rMin = 0.0, double rMax = 10.0,
                            double binWidth = 0.05);
     ~Collect1DProcedureNode();
 
@@ -87,10 +86,10 @@ class Collect1DProcedureNode : public ProcedureNode
      */
     public:
     // Prepare any necessary data, ready for execution
-    bool prepare(Configuration *cfg, const char *prefix, GenericList &targetList);
+    bool prepare(Configuration *cfg, std::string_view prefix, GenericList &targetList);
     // Execute node, targetting the supplied Configuration
-    ProcedureNode::NodeExecutionResult execute(ProcessPool &procPool, Configuration *cfg, const char *prefix,
+    ProcedureNode::NodeExecutionResult execute(ProcessPool &procPool, Configuration *cfg, std::string_view prefix,
                                                GenericList &targetList);
     // Finalise any necessary data after execution
-    bool finalise(ProcessPool &procPool, Configuration *cfg, const char *prefix, GenericList &targetList);
+    bool finalise(ProcessPool &procPool, Configuration *cfg, std::string_view prefix, GenericList &targetList);
 };

@@ -1,13 +1,15 @@
-trigger:
-  branches:
-    exclude:
-      - '*'
+trigger: none
 
 pr:
   autoCancel: true
   branches:
     include:
       - '*'
+  paths:
+    exclude:
+    - examples/*
+    - web/*
+    - README.md
 
 stages:
   - template: templates/code-quality-checks.yml
@@ -21,13 +23,16 @@ stages:
         pool:
           vmImage: 'ubuntu-18.04' 
         steps:
+          - checkout: self
+            fetchDepth: 1
+          - template: templates/set-short-hash.yml
           - template: templates/build-linux-serial-gui.yml
             parameters:
               extraflags: '-DCHECKS:bool=true'
               ppa: 'beineri/opt-qt-5.13.2-bionic'
               qtver: 513
           - bash: |
-              cp build/dissolve tests/
+              cp build/bin/dissolve tests/
             displayName: 'Copy Executable'
           - task: PublishBuildArtifacts@1
             inputs:
@@ -39,9 +44,12 @@ stages:
         pool:
           vmImage: 'ubuntu-18.04' 
         steps:
+          - checkout: self
+            fetchDepth: 1
+          - template: templates/set-short-hash.yml
           - template: templates/build-linux-parallel.yml
           - bash: |
-              cp build-parallel/dissolve-mpi tests/
+              cp build-parallel/bin/dissolve-mpi tests/
             displayName: 'Copy Executable'
           - task: PublishBuildArtifacts@1
             inputs:
@@ -53,13 +61,31 @@ stages:
         pool:
           vmImage: 'macos-latest' 
         steps:
+          - checkout: self
+            fetchDepth: 1
+          - template: templates/set-short-hash.yml
           - template: templates/build-osx-serial-gui.yml
+          - template: templates/package-osx-serial-gui.yml
+          - task: PublishBuildArtifacts@1
+            inputs:
+              PathtoPublish: "packages/"
+              ArtifactName: 'osx-artifacts'
+            displayName: 'Publish OSX Artifacts'
       - job: 'windows_serialgui'
         displayName: 'Build Windows (Serial/GUI, windows-latest)'
         pool:
           vmImage: 'windows-latest' 
         steps:
+          - checkout: self
+            fetchDepth: 1
+          - template: templates/set-short-hash.yml
           - template: templates/build-windows-serial-gui.yml
+          - template: templates/package-windows-serial-gui.yml
+          - task: PublishBuildArtifacts@1
+            inputs:
+              PathtoPublish: "packages/"
+              ArtifactName: 'windows-artifacts'
+            displayName: 'Publish Windows Artifacts'
 
   # Run System Tests
   - stage: 'system_tests_serial'

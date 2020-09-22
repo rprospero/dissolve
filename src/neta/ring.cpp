@@ -29,7 +29,7 @@
 NETARingNode::NETARingNode(NETADefinition *parent) : NETANode(parent, NETANode::RingNode)
 {
     repeatCount_ = 1;
-    repeatCountOperator_ = NETANode::EqualTo;
+    repeatCountOperator_ = NETANode::GreaterThanEqualTo;
     sizeValue_ = -1;
     sizeValueOperator_ = NETANode::EqualTo;
 }
@@ -52,14 +52,14 @@ EnumOptions<NETARingNode::NETARingModifier> NETARingNode::modifiers()
 }
 
 // Return whether the specified modifier is valid for this node
-bool NETARingNode::isValidModifier(const char *s) const { return (modifiers().isValid(s)); }
+bool NETARingNode::isValidModifier(std::string_view s) const { return (modifiers().isValid(s)); }
 
 // Set value and comparator for specified modifier
-bool NETARingNode::setModifier(const char *modifier, ComparisonOperator op, int value)
+bool NETARingNode::setModifier(std::string_view modifier, ComparisonOperator op, int value)
 {
     // Check that the supplied index is valid
     if (!modifiers().isValid(modifier))
-        return Messenger::error("Invalid modifier '%s' passed to NETARingNode.\n", modifier);
+        return Messenger::error("Invalid modifier '{}' passed to NETARingNode.\n", modifier);
 
     switch (modifiers().enumeration(modifier))
     {
@@ -72,7 +72,7 @@ bool NETARingNode::setModifier(const char *modifier, ComparisonOperator op, int 
             repeatCountOperator_ = op;
             break;
         default:
-            return Messenger::error("Don't know how to handle modifier '%s' in ring node.\n", modifier);
+            return Messenger::error("Don't know how to handle modifier '{}' in ring node.\n", modifier);
     }
 
     return true;
@@ -96,14 +96,14 @@ void NETARingNode::findRings(const SpeciesAtom *currentAtom, List<SpeciesRing> &
     // Loop over bonds to the atom
     const SpeciesAtom *j;
     SpeciesRing *ring;
-    for (const auto *bond : currentAtom->bonds())
+    for (const SpeciesBond &bond : currentAtom->bonds())
     {
         /*
          * Get the partner atom and compare to first atom in the current path.
          * If it is the currentAtom then we have found a cyclic route back to the originating atom.
          * If not, check whether the atom is already elsewhere in the path - if so, continue with the next bond.
          */
-        j = bond->partner(currentAtom);
+        j = bond.partner(currentAtom);
         if ((path.size() >= minSize) && (j == path.at(0)))
         {
             // Special case - if NotEqualTo was specified as the comparison operator, check that against the maximum
@@ -132,10 +132,6 @@ void NETARingNode::findRings(const SpeciesAtom *currentAtom, List<SpeciesRing> &
 // Evaluate the node and return its score
 int NETARingNode::score(const SpeciesAtom *i, RefList<const SpeciesAtom> &matchPath) const
 {
-    // 	printf("I AM THE RING - matchPath size = %i:\n", matchPath.nItems());
-    // 	for (const SpeciesAtom* iii : matchPath) printf("   -- %p %i %s\n", iii, iii->userIndex(),
-    // iii->element()->symbol()); 	printf("SITTING ON SPECIESATOM %i (%s)\n", i->userIndex(), i->element()->symbol());
-
     // Generate array of rings of specified size that the atom 'i' is present in
     List<SpeciesRing> rings;
     std::vector<const SpeciesAtom *> ringPath;
@@ -160,7 +156,7 @@ int NETARingNode::score(const SpeciesAtom *i, RefList<const SpeciesAtom> &matchP
     {
         // Check this ring against others in the list - if we find a duplicate, we can remove it and then move on with
         // the next ring.
-        for (auto *other = ring->next(); other != NULL; other = other->next())
+        for (auto *other = ring->next(); other != nullptr; other = other->next())
         {
             if ((*ring) == (*other))
             {
@@ -198,7 +194,7 @@ int NETARingNode::score(const SpeciesAtom *i, RefList<const SpeciesAtom> &matchP
             ListIterator<NETANode> branchIterator(branch_);
             while (NETANode *node = branchIterator.iterate())
             {
-                nodeScore = node->score(NULL, ringAtoms);
+                nodeScore = node->score(nullptr, ringAtoms);
                 if (nodeScore == NETANode::NoMatch)
                     break;
 

@@ -26,10 +26,10 @@
 #include "main/dissolve.h"
 
 // Parallel Strategy Keywords
-const char *ParallelStrategyKeywords[] = {"Sequential", "Even"};
+std::string_view ParallelStrategyKeywords[] = {"Sequential", "Even"};
 
 // Convert string to ParallelStrategy
-Dissolve::ParallelStrategy Dissolve::parallelStrategy(const char *s)
+Dissolve::ParallelStrategy Dissolve::parallelStrategy(std::string_view s)
 {
     for (int n = 0; n < Dissolve::nParallelStrategies; ++n)
         if (DissolveSys::sameString(ParallelStrategyKeywords[n], s))
@@ -84,7 +84,7 @@ bool Dissolve::setUpMPIPools()
 
     // Get relative atom counts between each configuration
     Array<int> configSizes;
-    for (auto *cfg = coreData_.configurations().first(); cfg != NULL; cfg = cfg->next())
+    for (auto *cfg = coreData_.configurations().first(); cfg != nullptr; cfg = cfg->next())
         configSizes.add(cfg->nAtoms());
     // 	configSizes /= configSizes.min();
 
@@ -95,9 +95,9 @@ bool Dissolve::setUpMPIPools()
 
     // Set up pool based on selected strategy
     auto cfgIndex = 0;
-    for (auto *cfg = coreData_.configurations().first(); cfg != NULL; cfg = cfg->next())
+    for (auto *cfg = coreData_.configurations().first(); cfg != nullptr; cfg = cfg->next())
     {
-        Messenger::print("Configuration '%s':\n", cfg->name());
+        Messenger::print("Configuration '{}':\n", cfg->name());
 
         if (parallelStrategy_ == Dissolve::SequentialConfigStrategy)
         {
@@ -110,15 +110,15 @@ bool Dissolve::setUpMPIPools()
             // All processes divided equally amongst Configurations - do we have enough?
             if (ProcessPool::nWorldProcesses() < nConfigurations())
             {
-                Messenger::error("Number of processes (%i) is less than the number of Configurations (%i) so "
+                Messenger::error("Number of processes ({}) is less than the number of Configurations ({}) so "
                                  "Even strategy can't be employed.\n",
                                  ProcessPool::nWorldProcesses(), nConfigurations());
                 return false;
             }
             else if (ProcessPool::nWorldProcesses() % nConfigurations() != 0)
             {
-                Messenger::error("Number of processes (%i) does not divide equally amongst the number of "
-                                 "Configurations (%i) so Even strategy can't be employed.\n",
+                Messenger::error("Number of processes ({}) does not divide equally amongst the number of "
+                                 "Configurations ({}) so Even strategy can't be employed.\n",
                                  ProcessPool::nWorldProcesses(), coreData_.nConfigurations());
                 return false;
             }

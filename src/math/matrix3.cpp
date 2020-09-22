@@ -144,9 +144,9 @@ void Matrix3::setIdentity()
 void Matrix3::print() const
 {
     Messenger::print("CMaj   [012]     [345]     [678]\n");
-    Messenger::print("        %8.4f %8.4f %8.4f\n", matrix_[0], matrix_[3], matrix_[6]);
-    Messenger::print("        %8.4f %8.4f %8.4f\n", matrix_[1], matrix_[4], matrix_[7]);
-    Messenger::print("        %8.4f %8.4f %8.4f\n", matrix_[2], matrix_[5], matrix_[8]);
+    Messenger::print("        {:8.4f} {:8.4f} {:8.4f}\n", matrix_[0], matrix_[3], matrix_[6]);
+    Messenger::print("        {:8.4f} {:8.4f} {:8.4f}\n", matrix_[1], matrix_[4], matrix_[7]);
+    Messenger::print("        {:8.4f} {:8.4f} {:8.4f}\n", matrix_[2], matrix_[5], matrix_[8]);
 }
 
 // Set zero matrix
@@ -279,17 +279,7 @@ void Matrix3::invert()
 }
 
 // Return nth value of matrix
-double Matrix3::value(int n) const
-{
-#ifdef CHECKS
-    if ((n < 0) || (n > 8))
-    {
-        printf("Value %i is out of range for a Matrix3.\n", n);
-        return 0.0;
-    }
-#endif
-    return matrix_[n];
-}
+double Matrix3::value(int n) const { return matrix_[n]; }
 
 // Return maximal element
 double Matrix3::max() const
@@ -670,13 +660,9 @@ Vec3<double> Matrix3::transform(Vec3<double> vec) const
  */
 
 // Construct 'cross-product' matrix of the supplied vector using cyclic permutations
-void Matrix3::makeCrossProductMatrix(Vec3<double> &v)
+void Matrix3::makeCrossProductMatrix(const Vec3<double> &v)
 {
-    Vec3<double> temp;
-    for (int n = 0; n < 3; ++n)
-    {
-        temp = Vec3<double>::unit(DissolveMath::cp3(n + 1)) * v.get(DissolveMath::cp3(n + 2)) -
-               Vec3<double>::unit(DissolveMath::cp3(n + 2)) * v.get(DissolveMath::cp3(n + 1));
-        setColumn(n, temp);
-    }
+    for (auto n = 0; n < 3; ++n)
+        setColumn(n, Vec3<double>::unit(DissolveMath::cp3(n + 1)) * v.get(DissolveMath::cp3(n + 2)) -
+                         Vec3<double>::unit(DissolveMath::cp3(n + 2)) * v.get(DissolveMath::cp3(n + 1)));
 }

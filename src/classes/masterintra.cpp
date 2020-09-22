@@ -25,10 +25,8 @@
 
 MasterIntra::MasterIntra() : SpeciesIntra(), ListItem<MasterIntra>()
 {
-    parent_ = NULL;
-    masterParameters_ = NULL;
-    for (int n = 0; n < MAXINTRAPARAMS; ++n)
-        parameters_[n] = 0.0;
+    parent_ = nullptr;
+    masterParameters_ = nullptr;
 }
 
 MasterIntra::~MasterIntra() {}
@@ -38,10 +36,10 @@ MasterIntra::~MasterIntra() {}
  */
 
 // Set name for interaction (if relevant)
-void MasterIntra::setName(const char *name) { name_ = name; }
+void MasterIntra::setName(std::string_view name) { name_ = name; }
 
 // Return name for interaction
-const char *MasterIntra::name() const { return name_.get(); }
+std::string_view MasterIntra::name() const { return name_; }
 
 // Set type of interaction
 void MasterIntra::setType(SpeciesIntra::InteractionType type) { type_ = type; }

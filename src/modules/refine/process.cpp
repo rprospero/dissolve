@@ -74,17 +74,17 @@ bool RefineModule::process(Dissolve &dissolve, ProcessPool &procPool)
     if (augmentationStyle == RefineModule::NoAugmentation)
         Messenger::print("Refine: No augmentation of scattering matrix will be performed.\n");
     else
-        Messenger::print("Refine: Augmentation of scattering matrix will be performed (style = '%s', parameter = %e).\n",
+        Messenger::print("Refine: Augmentation of scattering matrix will be performed (style = '{}', parameter = {:e}).\n",
                          matrixAugmentationStyles().keyword(augmentationStyle), augmentationParam);
     if (autoMinimumRadii)
         Messenger::print("Refine: Minimum radii of generated potentials will be determined automatically (min/max = "
-                         "%f/%f Angstroms).\n",
+                         "{}/{} Angstroms).\n",
                          globalMinimumRadius, globalMaximumRadius);
     else
-        Messenger::print("Refine: Minimum radius of %f Angstroms will be applied to all generated potentials.\n",
+        Messenger::print("Refine: Minimum radius of {} Angstroms will be applied to all generated potentials.\n",
                          globalMinimumRadius);
     if (smoothPhiR)
-        Messenger::print("Refine: Generated phi(r) will be smoothed using KZ filter (k = %i, m = %i).\n", phiRSmoothK,
+        Messenger::print("Refine: Generated phi(r) will be smoothed using KZ filter (k = {}, m = {}).\n", phiRSmoothK,
                          phiRSmoothM);
     // 	if (modifyBonds) Messenger::print("Refine: Equilibrium master bond distances will be modified.\n");
     if (modifyPotential)
@@ -99,17 +99,17 @@ bool RefineModule::process(Dissolve &dissolve, ProcessPool &procPool)
         Messenger::print("Refine: Potential refinement will only be performed if all percentage errors with reference "
                          "data are stable.\n");
     if (phiMax >= 0)
-        Messenger::print("Refine: Limit of additional potential for any one pair potential is %f kJ/mol/Angstrom.\n", phiMax);
+        Messenger::print("Refine: Limit of additional potential for any one pair potential is {} kJ/mol/Angstrom.\n", phiMax);
     else
         Messenger::warn("Refine: No limits will be applied to the magnitudes of additional potentials.\n");
-    Messenger::print("Refine: Potential inversion method to employ is '%s'.\n",
+    Messenger::print("Refine: Potential inversion method to employ is '{}'.\n",
                      potentialInversionMethods().keyword(inversionMethod));
-    Messenger::print("Refine: Range for potential generation is %f < Q < %f Angstroms**-1.\n", qMin, qMax);
+    Messenger::print("Refine: Range for potential generation is {} < Q < {} Angstroms**-1.\n", qMin, qMax);
     if (windowFunction.function() == WindowFunction::NoWindow)
         Messenger::print("Refine: No window function will be applied in Fourier transforms of S(Q) to g(r).\n");
     else
-        Messenger::print("Refine: Window function to be applied in Fourier transforms of S(Q) to g(r) is %s (%s).",
-                         WindowFunction::functionType(windowFunction.function()), windowFunction.parameterSummary().get());
+        Messenger::print("Refine: Window function to be applied in Fourier transforms of S(Q) to g(r) is {} ({}).",
+                         WindowFunction::functionType(windowFunction.function()), windowFunction.parameterSummary());
     Messenger::print("\n");
 
     /*
@@ -128,7 +128,7 @@ bool RefineModule::process(Dissolve &dissolve, ProcessPool &procPool)
         for (Configuration *cfg : module->targetConfigurations())
             configs.addUnique(cfg);
     }
-    Messenger::print("%i Configuration(s) are involved over all target data.\n", configs.nItems());
+    Messenger::print("{} Configuration(s) are involved over all target data.\n", configs.nItems());
 
     /*
      * Calculate current percentage errors in calculated vs reference target data
@@ -142,9 +142,9 @@ bool RefineModule::process(Dissolve &dissolve, ProcessPool &procPool)
         {
             // Realise the error array and make sure its object name is set
             auto &errors = GenericListHelper<Data1D>::realise(dissolve.processingModuleData(),
-                                                              CharString("Error_%s", module->uniqueName()), uniqueName_,
+                                                              fmt::format("Error_{}", module->uniqueName()), uniqueName_,
                                                               GenericItem::InRestartFileFlag);
-            errors.setObjectTag(CharString("%s//Error//%s", uniqueName_.get(), module->uniqueName()));
+            errors.setObjectTag(fmt::format("{}//Error//{}", uniqueName_, module->uniqueName()));
 
             // Calculate our error based on the type of Module
             double error = 100.0;
@@ -155,7 +155,7 @@ bool RefineModule::process(Dissolve &dissolve, ProcessPool &procPool)
                                                                              module->uniqueName(), Data1D(), &found);
                 if (!found)
                 {
-                    Messenger::warn("Could not locate ReferenceData for target '%s'.\n", module->uniqueName());
+                    Messenger::warn("Could not locate ReferenceData for target '{}'.\n", module->uniqueName());
                     return false;
                 }
 
@@ -164,7 +164,7 @@ bool RefineModule::process(Dissolve &dissolve, ProcessPool &procPool)
                                                                           module->uniqueName(), PartialSet(), &found);
                 if (!found)
                 {
-                    Messenger::warn("Could not locate associated weighted neutron PartialSet for target '%s'.\n",
+                    Messenger::warn("Could not locate associated weighted neutron PartialSet for target '{}'.\n",
                                     module->uniqueName());
                     return false;
                 }
@@ -174,17 +174,17 @@ bool RefineModule::process(Dissolve &dissolve, ProcessPool &procPool)
 
                 // Calculate difference
                 auto &differenceData = GenericListHelper<Data1D>::realise(
-                    dissolve.processingModuleData(), CharString("DifferenceData_%s", module->uniqueName()), uniqueName());
-                differenceData.setObjectTag(CharString("%s//Difference//%s", uniqueName_.get(), module->uniqueName()));
+                    dissolve.processingModuleData(), fmt::format("DifferenceData_{}", module->uniqueName()), uniqueName());
+                differenceData.setObjectTag(fmt::format("{}//Difference//{}", uniqueName_, module->uniqueName()));
                 differenceData = referenceData;
                 Interpolator::addInterpolated(differenceData, calcSQTotal, -1.0);
             }
             else
-                return Messenger::error("Unrecognised Module type '%s', so can't calculate error.", module->type());
+                return Messenger::error("Unrecognised Module type '{}', so can't calculate error.", module->type());
 
             // Store the percentage error
             errors.addPoint(dissolve.iteration(), error);
-            Messenger::print("Current error for reference data '%s' is %f%%.\n", module->uniqueName(), error);
+            Messenger::print("Current error for reference data '{}' is {}%.\n", module->uniqueName(), error);
 
             // Assess the stability of the current error
             if (errorStabilityWindow > errors.nValues())
@@ -197,8 +197,8 @@ bool RefineModule::process(Dissolve &dissolve, ProcessPool &procPool)
                 if (fabs(grad) > thresholdValue)
                     ++nUnstableData;
 
-                Messenger::print("Error gradient of last %i points for reference data '%s' is %e %%/step "
-                                 "(absolute threshold value is %e, stable = %s).\n",
+                Messenger::print("Error gradient of last {} points for reference data '{}' is {:e} %/step "
+                                 "(absolute threshold value is {:e}, stable = {}).\n",
                                  errorStabilityWindow, module->uniqueName(), grad, thresholdValue,
                                  DissolveSys::btoa(fabs(grad) <= thresholdValue));
             }
@@ -208,7 +208,7 @@ bool RefineModule::process(Dissolve &dissolve, ProcessPool &procPool)
     // Check error stability if requested
     if (onlyWhenErrorStable && (nUnstableData > 0))
     {
-        Messenger::print("Errors for %i reference datasets are unstable, so no potential refinement will be performed "
+        Messenger::print("Errors for {} reference datasets are unstable, so no potential refinement will be performed "
                          "this iteration.\n",
                          nUnstableData);
         return true;
@@ -220,10 +220,10 @@ bool RefineModule::process(Dissolve &dissolve, ProcessPool &procPool)
      */
     if (onlyWhenEnergyStable)
     {
-        auto stabilityResult = EnergyModule::checkStability(configs);
-        if (stabilityResult == -1)
+        auto stabilityResult = EnergyModule::nUnstable(configs);
+        if (stabilityResult == EnergyModule::NotAssessable)
             return false;
-        else if (stabilityResult != 0)
+        else if (stabilityResult > 0)
         {
             Messenger::print("At least one Configuration energy is not yet stable. No potential refinement will be "
                              "performed this iteration.\n");
@@ -243,7 +243,7 @@ bool RefineModule::process(Dissolve &dissolve, ProcessPool &procPool)
     groupIterator.restart();
     while (ModuleGroup *group = groupIterator.iterate())
     {
-        Messenger::print("Generating dPhiR from target group '%s'...\n", group->name());
+        Messenger::print("Generating dPhiR from target group '{}'...\n", group->name());
 
         // Grab Module list for this group
         const RefList<Module> &targetModules = group->modules();
@@ -265,14 +265,10 @@ bool RefineModule::process(Dissolve &dissolve, ProcessPool &procPool)
         combinedCWeights = 0.0;
 
         // Set object names in combinedUnweightedSQ
-        i = 0;
-        for (AtomType *at1 = dissolve.atomTypes().first(); at1 != NULL; at1 = at1->next(), ++i)
-        {
-            j = i;
-            for (AtomType *at2 = at1; at2 != NULL; at2 = at2->next(), ++j)
-                combinedUnweightedSQ.at(i, j).setObjectTag(
-                    CharString("%s//UnweightedSQ//%s//%s-%s", uniqueName(), group->name(), at1->name(), at2->name()));
-        }
+        for_each_pair(dissolve.atomTypes().begin(), dissolve.atomTypes().end(), [&](int i, auto at1, int j, auto at2) {
+            combinedUnweightedSQ.at(i, j).setObjectTag(
+                fmt::format("{}//UnweightedSQ//{}//{}-{}", uniqueName(), group->name(), at1->name(), at2->name()));
+        });
 
         // Realise storage for generated S(Q), and reinitialise the scattering matrix
         auto &estimatedSQ = GenericListHelper<Array2D<Data1D>>::realise(dissolve.processingModuleData(), "EstimatedSQ",
@@ -291,30 +287,30 @@ bool RefineModule::process(Dissolve &dissolve, ProcessPool &procPool)
             const auto &referenceData = GenericListHelper<Data1D>::value(dissolve.processingModuleData(), "ReferenceData",
                                                                          module->uniqueName(), Data1D(), &found);
             if (!found)
-                return Messenger::error("Could not locate ReferenceData for target '%s'.\n", module->uniqueName());
+                return Messenger::error("Could not locate ReferenceData for target '{}'.\n", module->uniqueName());
             auto &weights = GenericListHelper<NeutronWeights>::retrieve(dissolve.processingModuleData(), "FullWeights",
                                                                         module->uniqueName(), NeutronWeights(), &found);
             if (!found)
-                return Messenger::error("Could not locate NeutronWeights for target '%s'.\n", module->uniqueName());
+                return Messenger::error("Could not locate NeutronWeights for target '{}'.\n", module->uniqueName());
             const auto &unweightedSQ = GenericListHelper<PartialSet>::value(dissolve.processingModuleData(), "UnweightedSQ",
                                                                             module->uniqueName(), PartialSet(), &found);
             if (!found)
-                return Messenger::error("Could not locate UnweightedSQ for target '%s'.\n", module->uniqueName());
+                return Messenger::error("Could not locate UnweightedSQ for target '{}'.\n", module->uniqueName());
             auto rho = GenericListHelper<double>::value(dissolve.processingModuleData(), "EffectiveRho", module->uniqueName(),
                                                         0.0, &found);
             if (!found)
-                return Messenger::error("Could not locate EffectiveRho for target '%s'.\n", module->uniqueName());
+                return Messenger::error("Could not locate EffectiveRho for target '{}'.\n", module->uniqueName());
 
             // Add a row to our scattering matrix
             if (!scatteringMatrix_.addReferenceData(referenceData, weights, dataFactor))
-                return Messenger::error("Failed to add target data '%s' to weights matrix.\n", module->uniqueName());
+                return Messenger::error("Failed to add target data '{}' to weights matrix.\n", module->uniqueName());
 
             // Sum up the unweighted partials and density from this target
             double factor = 1.0;
             auto &types = unweightedSQ.atomTypes();
             for_each_pair(types.begin(), types.end(), [&](int i, const AtomTypeData &atd1, int j, const AtomTypeData &atd2) {
-                auto globalI = atd1.atomType().index();
-                auto globalJ = atd2.atomType().index();
+                auto globalI = atd1.atomType()->index();
+                auto globalJ = atd2.atomType()->index();
 
                 Data1D partialIJ = unweightedSQ.constPartial(i, j);
                 Interpolator::addInterpolated(combinedUnweightedSQ.at(globalI, globalJ), partialIJ, factor);
@@ -346,12 +342,9 @@ bool RefineModule::process(Dissolve &dissolve, ProcessPool &procPool)
         {
             // Create the array
             simulatedReferenceData_.createEmpty(combinedUnweightedSQ.linearArraySize());
-            i = 0;
-            for (AtomType *at1 = dissolve.atomTypes().first(); at1 != NULL; at1 = at1->next(), ++i)
-            {
-                j = i;
-                for (AtomType *at2 = at1; at2 != NULL; at2 = at2->next(), ++j)
-                {
+            for_each_pair_early(
+                dissolve.atomTypes().begin(), dissolve.atomTypes().end(),
+                [&](int i, auto at1, int j, auto at2) -> std::optional<bool> {
                     // Weight in the matrix will be based on the natural isotope and the summed
                     // concentration weight
                     double factor = Isotopes::naturalIsotope(at1->element())->boundCoherent() *
@@ -362,14 +355,14 @@ bool RefineModule::process(Dissolve &dissolve, ProcessPool &procPool)
                     // concentration factor calculated above
                     auto data = combinedUnweightedSQ.at(i, j);
                     data.values() *= factor;
-                    data.setName(CharString("Simulated %s-%s", at1->name(), at2->name()));
+                    data.setName(fmt::format("Simulated {}-{}", at1->name(), at2->name()));
 
                     // Add this partial data to the scattering matrix
                     if (!scatteringMatrix_.addPartialReferenceData(data, at1, at2, factor, (1.0 - augmentationParam)))
-                        return Messenger::error("Refine: Failed to augment scattering matrix with partial %s-%s.\n",
+                        return Messenger::error("Refine: Failed to augment scattering matrix with partial {}-{}.\n",
                                                 at1->name(), at2->name());
-                }
-            }
+                    return std::nullopt;
+                });
         }
         else if (augmentationStyle != RefineModule::NoAugmentation)
         {
@@ -399,24 +392,17 @@ bool RefineModule::process(Dissolve &dissolve, ProcessPool &procPool)
         auto &estimatedGR = GenericListHelper<Array2D<Data1D>>::realise(dissolve.processingModuleData(), "EstimatedGR",
                                                                         uniqueName_, GenericItem::InRestartFileFlag);
         estimatedGR.initialise(dissolve.nAtomTypes(), dissolve.nAtomTypes(), true);
-        i = 0;
-        for (AtomType *at1 = dissolve.atomTypes().first(); at1 != NULL; at1 = at1->next(), ++i)
-        {
-            j = i;
-            for (AtomType *at2 = at1; at2 != NULL; at2 = at2->next(), ++j)
-            {
-                // Grab experimental g(r) contained and make sure its object name is set
-                auto &expGR = estimatedGR.at(i, j);
-                expGR.setObjectTag(
-                    CharString("%s//EstimatedGR//%s//%s-%s", uniqueName_.get(), group->name(), at1->name(), at2->name()));
+        for_each_pair(dissolve.atomTypes().begin(), dissolve.atomTypes().end(), [&](int i, auto at1, int j, auto at2) {
+            // Grab experimental g(r) contained and make sure its object name is set
+            auto &expGR = estimatedGR.at(i, j);
+            expGR.setObjectTag(fmt::format("{}//EstimatedGR//{}//{}-{}", uniqueName_, group->name(), at1->name(), at2->name()));
 
-                // Copy experimental S(Q) and FT it
-                expGR = estimatedSQ.at(i, j);
-                Fourier::sineFT(expGR, 1.0 / (2 * PI * PI * combinedRho.at(i, j)), 0.0, 0.05, 30.0,
-                                WindowFunction(WindowFunction::Lorch0Window));
-                expGR.values() += 1.0;
-            }
-        }
+            // Copy experimental S(Q) and FT it
+            expGR = estimatedSQ.at(i, j);
+            Fourier::sineFT(expGR, 1.0 / (2 * PI * PI * combinedRho.at(i, j)), 0.0, 0.05, 30.0,
+                            WindowFunction(WindowFunction::Lorch0Window));
+            expGR.values() += 1.0;
+        });
 
         /*
          * Generate summed unweighted g(r) from all source Module data
@@ -435,65 +421,58 @@ bool RefineModule::process(Dissolve &dissolve, ProcessPool &procPool)
         if (created)
             deltaSQ.initialise(nTypes, nTypes, true);
 
-        i = 0;
-        for (AtomType *at1 = dissolve.atomTypes().first(); at1 != NULL; at1 = at1->next(), ++i)
-        {
-            j = i;
-            for (AtomType *at2 = at1; at2 != NULL; at2 = at2->next(), ++j)
+        for_each_pair(dissolve.atomTypes().begin(), dissolve.atomTypes().end(), [&](int i, auto at1, int j, auto at2) {
+            // Grab difference partial and make sure its object name is set
+            auto &dSQ = deltaSQ.at(i, j);
+            dSQ.setObjectTag(fmt::format("{}//DeltaSQ//{}//{}-{}", uniqueName_, group->name(), at1->name(), at2->name()));
+
+            // Reset the difference partial
+            dSQ.clear();
+
+            // Create the difference partial
+            const Array<double> x1 = estimatedSQ.at(i, j).constXAxis();
+            const Array<double> y1 = estimatedSQ.at(i, j).constValues();
+            auto &simulatedSQ = combinedUnweightedSQ.at(i, j);
+            Interpolator interpolatedSimSQ(simulatedSQ);
+
+            // Determine allowable range for fit, based on requested values and limits of generated /
+            // simulated datasets
+            double deltaSQMin = qMin, deltaSQMax = (qMax < 0.0 ? x1.lastValue() : qMax);
+            if ((deltaSQMin < x1.firstValue()) || (deltaSQMin < simulatedSQ.xAxis().firstValue()))
+                deltaSQMin = std::max(x1.firstValue(), simulatedSQ.xAxis().firstValue());
+            if ((deltaSQMax > x1.lastValue()) || (deltaSQMax > simulatedSQ.xAxis().lastValue()))
+                deltaSQMax = std::min(x1.lastValue(), simulatedSQ.xAxis().lastValue());
+
+            Data1D refSQTrimmed;
+            double x;
+            for (int n = 0; n < x1.nItems(); ++n)
             {
-                // Grab difference partial and make sure its object name is set
-                auto &dSQ = deltaSQ.at(i, j);
-                dSQ.setObjectTag(
-                    CharString("%s//DeltaSQ//%s//%s-%s", uniqueName_.get(), group->name(), at1->name(), at2->name()));
+                x = x1.constAt(n);
+                if (x < deltaSQMin)
+                    continue;
+                if (x > deltaSQMax)
+                    break;
+                refSQTrimmed.addPoint(x, y1.constAt(n));
 
-                // Reset the difference partial
-                dSQ.clear();
-
-                // Create the difference partial
-                const Array<double> x1 = estimatedSQ.at(i, j).constXAxis();
-                const Array<double> y1 = estimatedSQ.at(i, j).constValues();
-                auto &simulatedSQ = combinedUnweightedSQ.at(i, j);
-                Interpolator interpolatedSimSQ(simulatedSQ);
-
-                // Determine allowable range for fit, based on requested values and limits of generated /
-                // simulated datasets
-                double deltaSQMin = qMin, deltaSQMax = (qMax < 0.0 ? x1.lastValue() : qMax);
-                if ((deltaSQMin < x1.firstValue()) || (deltaSQMin < simulatedSQ.xAxis().firstValue()))
-                    deltaSQMin = std::max(x1.firstValue(), simulatedSQ.xAxis().firstValue());
-                if ((deltaSQMax > x1.lastValue()) || (deltaSQMax > simulatedSQ.xAxis().lastValue()))
-                    deltaSQMax = std::min(x1.lastValue(), simulatedSQ.xAxis().lastValue());
-
-                Data1D refSQTrimmed;
-                double x;
-                for (int n = 0; n < x1.nItems(); ++n)
-                {
-                    x = x1.constAt(n);
-                    if (x < deltaSQMin)
-                        continue;
-                    if (x > deltaSQMax)
-                        break;
-                    refSQTrimmed.addPoint(x, y1.constAt(n));
-
-                    dSQ.addPoint(x, y1.constAt(n) - interpolatedSimSQ.y(x));
-                }
-
-                // Calculate current error between experimental and simulation partials and sum it into our
-                // array
-                globalCombinedErrors.at(i, j) += Error::percent(refSQTrimmed, simulatedSQ);
+                dSQ.addPoint(x, y1.constAt(n) - interpolatedSimSQ.y(x));
             }
-        }
+
+            // Calculate current error between experimental and simulation partials and sum it into our
+            // array
+            globalCombinedErrors.at(i, j) += Error::percent(refSQTrimmed, simulatedSQ);
+        });
 
         /*
          * Create perturbations to interatomic potentials
          */
         const auto weighting = keywords_.asDouble("Weighting");
         auto &groupDeltaPhiR = GenericListHelper<Array2D<Data1D>>::realise(
-            dissolve.processingModuleData(), CharString("DeltaPhiR_%s", group->name()), uniqueName_,
+            dissolve.processingModuleData(), fmt::format("DeltaPhiR_{}", group->name()), uniqueName_,
             GenericItem::InRestartFileFlag, &created);
         if (created)
             groupDeltaPhiR.initialise(nTypes, nTypes, true);
         auto &groupDeltaGR = GenericListHelper<Array2D<Data1D>>::realise(dissolve.processingModuleData(),
-                                                                         CharString("DeltaGR_%s", group->name()), uniqueName_,
+                                                                         fmt::format("DeltaGR_{}", group->name()), uniqueName_,
                                                                          GenericItem::InRestartFileFlag, &created);
         if (created)
             groupDeltaGR.initialise(nTypes, nTypes, true);
@@ -514,38 +493,33 @@ bool RefineModule::process(Dissolve &dissolve, ProcessPool &procPool)
             // Define a fraction of the determined g(r) non-zero point that will become our radius limit
             const auto rFraction = 0.95;
             const auto thresholdValue = 0.1;
-            i = 0;
-            for (AtomType *at1 = dissolve.atomTypes().first(); at1 != NULL; at1 = at1->next(), ++i)
-            {
-                j = i;
-                for (AtomType *at2 = at1; at2 != NULL; at2 = at2->next(), ++j)
-                {
-                    // Grab unbound g(r)
-                    auto &gr = summedUnweightedGR.unboundPartial(i, j);
 
-                    // Find first non-zero (above the threshold value) point in g(r)
-                    int n;
-                    for (n = 0; n < gr.nValues(); ++n)
-                        if (gr.value(n) > thresholdValue)
-                            break;
-                    if (n < gr.nValues())
-                    {
-                        double x = gr.xAxis(n) * rFraction;
-                        if (x < globalMinimumRadius)
-                            minimumRadii.at(i, j) = globalMinimumRadius;
-                        else if (x < globalMaximumRadius)
-                            minimumRadii.at(i, j) = x;
-                        else
-                            minimumRadii.at(i, j) = globalMaximumRadius;
-                    }
+            for_each_pair(dissolve.atomTypes().begin(), dissolve.atomTypes().end(), [&](int i, auto at1, int j, auto at2) {
+                // Grab unbound g(r)
+                auto &gr = summedUnweightedGR.unboundPartial(i, j);
+
+                // Find first non-zero (above the threshold value) point in g(r)
+                int n;
+                for (n = 0; n < gr.nValues(); ++n)
+                    if (gr.value(n) > thresholdValue)
+                        break;
+                if (n < gr.nValues())
+                {
+                    double x = gr.xAxis(n) * rFraction;
+                    if (x < globalMinimumRadius)
+                        minimumRadii.at(i, j) = globalMinimumRadius;
+                    else if (x < globalMaximumRadius)
+                        minimumRadii.at(i, j) = x;
                     else
                         minimumRadii.at(i, j) = globalMaximumRadius;
-
-                    Messenger::print("Minimum radius for %s-%s interatomic potential determined to be %f "
-                                     "Angstroms.\n",
-                                     at1->name(), at2->name(), minimumRadii.constAt(i, j));
                 }
-            }
+                else
+                    minimumRadii.at(i, j) = globalMaximumRadius;
+
+                Messenger::print("Minimum radius for {}-{} interatomic potential determined to be {} "
+                                 "Angstroms.\n",
+                                 at1->name(), at2->name(), minimumRadii.constAt(i, j));
+            });
         }
         else
             minimumRadii = globalMinimumRadius;
@@ -556,21 +530,21 @@ bool RefineModule::process(Dissolve &dissolve, ProcessPool &procPool)
         Data1D cr;
         Array<double> crgr;
         i = 0;
-        for (AtomType *at1 = dissolve.atomTypes().first(); at1 != NULL; at1 = at1->next(), ++i)
+        for (auto at1 = dissolve.atomTypes().begin(); at1 != dissolve.atomTypes().end(); ++at1, ++i)
         {
             j = i;
-            for (AtomType *at2 = at1; at2 != NULL; at2 = at2->next(), ++j)
+            for (auto at2 = at1; at2 != dissolve.atomTypes().end(); ++at2, ++j)
             {
                 // Grab potential perturbation container, clear it, and make sure its object name is set
                 auto &dPhiR = groupDeltaPhiR.at(i, j);
                 dPhiR.clear();
                 dPhiR.setObjectTag(
-                    CharString("%s//DeltaPhiR//%s//%s-%s", uniqueName_.get(), group->name(), at1->name(), at2->name()));
+                    fmt::format("{}//DeltaPhiR//{}//{}-{}", uniqueName_, group->name(), (*at1)->name(), (*at2)->name()));
 
                 // Grab delta g(r) container and make sure its object name is set
                 auto &inversion = groupDeltaGR.at(i, j);
                 inversion.setObjectTag(
-                    CharString("%s//Inversion//%s//%s-%s", uniqueName_.get(), group->name(), at1->name(), at2->name()));
+                    fmt::format("{}//Inversion//{}//{}-{}", uniqueName_, group->name(), (*at1)->name(), (*at2)->name()));
 
                 // Set the default weighting factor for the pair potential addition
                 weight = weighting;
@@ -585,7 +559,7 @@ bool RefineModule::process(Dissolve &dissolve, ProcessPool &procPool)
                 // Array2D<Data1D>
                 // >::retrieve(dissolve.processingModuleData(), "DeltaGRBond",
                 // uniqueName_); 				Data1D& deltaGRBond = deltaGRBonds.ref(i,j);
-                // deltaGRBond.setObjectTag(CharString("%s//DeltaGRBond//%s-%s", uniqueName_.get(), at1->name(),
+                // deltaGRBond.setObjectTag(fmt::format("{}//DeltaGRBond//{}-{}", uniqueName_, at1->name(),
                 // at2->name()));
                 //
                 // 				if (!modifyBondTerms(dissolve, dGR, at1, at2, deltaGRBond))
@@ -608,33 +582,20 @@ bool RefineModule::process(Dissolve &dissolve, ProcessPool &procPool)
                     // Perform a Gaussian fit and do the inverse FT to get the delta [g(r) - 1]
                     GaussFit gaussFit(deltaSQ.at(i, j));
                     double error = 999.999; // gaussFit.constructReciprocal();
-                    Messenger::print("Fitted function has error of %f%% with original delta S(Q) "
-                                     "(nGaussians = %i).\n",
+                    Messenger::print("Fitted function has error of {}% with original delta S(Q) "
+                                     "(nGaussians = {}).\n",
                                      error, gaussFit.nGaussians());
 
                     // Store fitted parameters
                     GenericListHelper<Array<double>>::realise(dissolve.processingModuleData(),
-                                                              CharString("%s-%s-GaussianX", at1->name(), at2->name()),
+                                                              fmt::format("{}-{}-GaussianX", (*at1)->name(), (*at2)->name()),
                                                               uniqueName_, GenericItem::InRestartFileFlag) = gaussFit.x();
                     GenericListHelper<Array<double>>::realise(dissolve.processingModuleData(),
-                                                              CharString("%s-%s-GaussianA", at1->name(), at2->name()),
+                                                              fmt::format("{}-{}-GaussianA", (*at1)->name(), (*at2)->name()),
                                                               uniqueName_, GenericItem::InRestartFileFlag) = gaussFit.A();
                     GenericListHelper<Array<double>>::realise(dissolve.processingModuleData(),
-                                                              CharString("%s-%s-GaussianFWHM", at1->name(), at2->name()),
+                                                              fmt::format("{}-{}-GaussianFWHM", (*at1)->name(), (*at2)->name()),
                                                               uniqueName_, GenericItem::InRestartFileFlag) = gaussFit.fwhm();
-
-                    // DEBUG
-                    // 					if (false)
-                    // 					{
-                    // 						deltaSQ.at(i,
-                    // j).save(CharString("%s-%s.orig", at1->name(), at2->name()));
-                    // gaussFit.approximation().save(CharString("%s-%s.approx", at1->name(), at2->name()));
-                    // gaussFit.saveCoefficients(CharString("%s-%s.coeff", at1->name(), at2->name()));
-                    // // gaussFit.saveFTGaussians(CharString("%s-%s", at1->name(), at2->name()), 0.01);
-                    // 						gaussFit.approximation(FunctionSpace::RealSpace, 1.0
-                    // / (2 * PI * PI * combinedRho.at(i,j)), ppDelta, ppDelta,
-                    // ppRange).save(CharString("%s-%s.ft", at1->name(), at2->name()));
-                    // 					}
 
                     // Fourier transform the approximation, and store this as our inversion
                     inversion = gaussFit.approximation(FunctionSpace::RealSpace, 1.0 / (2 * PI * PI * combinedRho.at(i, j)),
@@ -720,7 +681,7 @@ bool RefineModule::process(Dissolve &dissolve, ProcessPool &procPool)
                     */
                 }
                 else
-                    return Messenger::error("Potential inversion method %i not accounted for.\n", inversionMethod);
+                    return Messenger::error("Potential inversion method {} not accounted for.\n", inversionMethod);
 
                 // Apply smooth zeroing of potential up to the minimum distance, and truncate at the end
                 double minimumRadius = minimumRadii.constAt(i, j);
@@ -755,20 +716,14 @@ bool RefineModule::process(Dissolve &dissolve, ProcessPool &procPool)
     /*
      * Normalise and store our combined partial errors
      */
-    i = 0;
-    for (AtomType *at1 = dissolve.atomTypes().first(); at1 != NULL; at1 = at1->next(), ++i)
-    {
-        j = i;
-        for (AtomType *at2 = at1; at2 != NULL; at2 = at2->next(), ++j)
-        {
-            auto &partialErrors = GenericListHelper<Data1D>::realise(dissolve.processingModuleData(),
-                                                                     CharString("PartialError_%s-%s", at1->name(), at2->name()),
-                                                                     uniqueName_, GenericItem::InRestartFileFlag);
-            // TODO This will be a straight sum of errors over groups, and may not be entirely representative? Needs
-            // to be weighted?
-            partialErrors.addPoint(dissolve.iteration(), globalCombinedErrors.constAt(i, j));
-        }
-    }
+    for_each_pair(dissolve.atomTypes().begin(), dissolve.atomTypes().end(), [&](int i, auto at1, int j, auto at2) {
+        auto &partialErrors = GenericListHelper<Data1D>::realise(dissolve.processingModuleData(),
+                                                                 fmt::format("PartialError_{}-{}", at1->name(), at2->name()),
+                                                                 uniqueName_, GenericItem::InRestartFileFlag);
+        // TODO This will be a straight sum of errors over groups, and may not be entirely representative? Needs
+        // to be weighted?
+        partialErrors.addPoint(dissolve.iteration(), globalCombinedErrors.constAt(i, j));
+    });
 
     // Perform actual modification to potential, adding in deltaPhiR calculated over all groups
     if (modifyPotential)
@@ -777,23 +732,24 @@ bool RefineModule::process(Dissolve &dissolve, ProcessPool &procPool)
         while (ModuleGroup *group = groupIterator.iterate())
         {
             // Get the delta phi(r) data for this group
-            if (!dissolve.processingModuleData().contains(CharString("DeltaPhiR_%s", group->name()), uniqueName()))
-                return Messenger::error("Could not locate delta phi(r) data for group '%s'.\n", group->name());
+            if (!dissolve.processingModuleData().contains(fmt::format("DeltaPhiR_{}", group->name()), uniqueName()))
+                return Messenger::error("Could not locate delta phi(r) data for group '{}'.\n", group->name());
             const auto &groupDeltaPhiR = GenericListHelper<Array2D<Data1D>>::value(
-                dissolve.processingModuleData(), CharString("DeltaPhiR_%s", group->name()), uniqueName_, Array2D<Data1D>());
+                dissolve.processingModuleData(), fmt::format("DeltaPhiR_{}", group->name()), uniqueName_, Array2D<Data1D>());
 
             i = 0;
-            for (AtomType *at1 = dissolve.atomTypes().first(); at1 != NULL; at1 = at1->next(), ++i)
+            for (auto at1 = dissolve.atomTypes().begin(); at1 != dissolve.atomTypes().end(); ++at1, ++i)
             {
                 j = i;
-                for (AtomType *at2 = at1; at2 != NULL; at2 = at2->next(), ++j)
+                for (auto at2 = at1; at2 != dissolve.atomTypes().end(); ++at2, ++j)
                 {
                     // Assess error of partial if requested, and decide whether to adjust potential
                     if (onlyWhenErrorStable)
                     {
                         const auto &partialErrors = GenericListHelper<Data1D>::value(
-                            dissolve.processingModuleData(), CharString("PartialError_%s-%s", at1->name(), at2->name()),
+                            dissolve.processingModuleData(), fmt::format("PartialError_{}-{}", (*at1)->name(), (*at2)->name()),
                             uniqueName_);
+
                         if (partialErrors.nValues() >= errorStabilityWindow)
                         {
                             double yMean;
@@ -801,11 +757,11 @@ bool RefineModule::process(Dissolve &dissolve, ProcessPool &procPool)
                             double thresholdValue = fabs(0.001 * yMean);
                             if (fabs(grad) < thresholdValue)
                             {
-                                Messenger::print("Error gradient of last %i points for partial %s-%s is "
-                                                 "%e %%/step (absolute threshold value is %e, stable = "
-                                                 "%s) so no "
+                                Messenger::print("Error gradient of last {} points for partial {}-{} is "
+                                                 "{:e} %/step (absolute threshold value is {:e}, stable = "
+                                                 "{}) so no "
                                                  "potential adjustment will be made.\n",
-                                                 errorStabilityWindow, at1->name(), at2->name(), grad, thresholdValue,
+                                                 errorStabilityWindow, (*at1)->name(), (*at2)->name(), grad, thresholdValue,
                                                  DissolveSys::btoa(fabs(grad) <= thresholdValue));
                                 continue;
                             }
@@ -813,11 +769,12 @@ bool RefineModule::process(Dissolve &dissolve, ProcessPool &procPool)
                     }
 
                     // Grab pointer to the relevant pair potential
-                    PairPotential *pp = dissolve.pairPotential(at1, at2);
+                    PairPotential *pp = dissolve.pairPotential(*at1, *at2);
                     if (!pp)
                     {
-                        Messenger::error("Failed to find PairPotential for AtomTypes '%s' and '%s'.\n", at1->name(),
-                                         at2->name());
+                        Messenger::error("Failed to find PairPotential for AtomTypes '{}' and '{}'.\n", (*at1)->name(),
+                                         (*at2)->name());
+
                         return false;
                     }
 
@@ -832,13 +789,13 @@ bool RefineModule::process(Dissolve &dissolve, ProcessPool &procPool)
      */
     double phiMagTot = 0.0;
     i = 0;
-    for (AtomType *at1 = dissolve.atomTypes().first(); at1 != NULL; at1 = at1->next(), ++i)
+    for (auto at1 = dissolve.atomTypes().begin(); at1 != dissolve.atomTypes().end(); ++at1, ++i)
     {
         j = i;
-        for (AtomType *at2 = at1; at2 != NULL; at2 = at2->next(), ++j)
+        for (auto at2 = at1; at2 != dissolve.atomTypes().end(); ++at2, ++j)
         {
             // Grab pointer to the relevant pair potential
-            PairPotential *pp = dissolve.pairPotential(at1, at2);
+            PairPotential *pp = dissolve.pairPotential(*at1, *at2);
             if (!pp)
                 continue;
 
@@ -858,12 +815,13 @@ bool RefineModule::process(Dissolve &dissolve, ProcessPool &procPool)
         }
     }
 
-    Messenger::print("Current magnitude of additional phi(r) over all pair potentials is %12.4e kJ/mol/Angstrom.\n", phiMagTot);
+    Messenger::print("Current magnitude of additional phi(r) over all pair potentials is {:12.4e} kJ/mol/Angstrom.\n",
+                     phiMagTot);
 
     // Realise the phiMag array and make sure its object name is set
     auto &phiArray = GenericListHelper<Data1D>::realise(dissolve.processingModuleData(), "PhiMag", uniqueName_,
                                                         GenericItem::InRestartFileFlag);
-    phiArray.setObjectTag(CharString("%s//PhiMag", uniqueName_.get()));
+    phiArray.setObjectTag(fmt::format("{}//PhiMag", uniqueName_));
     phiArray.addPoint(dissolve.iteration(), phiMagTot);
 
     return true;

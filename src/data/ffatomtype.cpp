@@ -24,61 +24,76 @@
 #include "data/ffparameters.h"
 #include "neta/generator.h"
 
-ForcefieldAtomType::ForcefieldAtomType(Forcefield *parent, int Z, int index, const char *name, const char *netaDefinition,
-                                       const char *description, double q, double data0, double data1, double data2,
-                                       double data3)
+ForcefieldAtomType::ForcefieldAtomType(const Forcefield *parent, int Z, int index, std::string_view name,
+                                       std::string_view netaDefinition, std::string_view description, double q, double data0,
+                                       double data1, double data2, double data3)
     : ElementReference(Z)
 {
     index_ = index;
     name_ = name;
+    neta_.setDefinitionString(netaDefinition);
     description_ = description;
     parameters_.setCharge(q);
-    parameterReference_ = NULL;
     parameters_.setParameter(0, data0);
     parameters_.setParameter(1, data1);
     parameters_.setParameter(2, data2);
     parameters_.setParameter(3, data3);
-
-    // Generate NETA
-    if (!neta_.set(netaDefinition, parent))
-        Messenger::error("Failed to generate NETA for atom type '%s' in forcefield '%s' from string '%s'.\n", name_.get(),
-                         parent ? parent->name() : "???", netaDefinition);
 }
-ForcefieldAtomType::ForcefieldAtomType(Forcefield *parent, int Z, int index, const char *name, const char *netaDefinition,
-                                       const char *description, double q, const char *parameterReference)
+ForcefieldAtomType::ForcefieldAtomType(const Forcefield *parent, int Z, int index, std::string_view name,
+                                       std::string_view netaDefinition, std::string_view description, double q,
+                                       std::string_view parameterReference)
     : ElementReference(Z)
 {
     index_ = index;
     name_ = name;
+    neta_.setDefinitionString(netaDefinition);
     description_ = description;
     parameters_.setCharge(q);
     parameterReference_ = parent->shortRangeParameters(parameterReference);
     if (!parameterReference_)
-        Messenger::error("Parameters named '%s' are not defined in the forcefield '%s'.\n", parameterReference, parent->name());
-
-    // Generate NETA
-    if (!neta_.set(netaDefinition, parent))
-        Messenger::error("Failed to generate NETA for atom type '%s' in forcefield '%s' from string '%s'.\n", name_.get(),
-                         parent ? parent->name() : "???", netaDefinition);
+        Messenger::error("Reference parameters named '{}' are not defined in the forcefield '{}'.\n", parameterReference,
+                         parent->name());
 }
-ForcefieldAtomType::ForcefieldAtomType(Forcefield *parent, const ForcefieldAtomType &sourceType, const char *newTypeName,
-                                       const char *netaDefinition, const char *equivalentName)
+ForcefieldAtomType::ForcefieldAtomType(const Forcefield *parent, const ForcefieldAtomType &sourceType,
+                                       std::string_view newTypeName, std::string_view netaDefinition,
+                                       std::string_view equivalentName)
     : ElementReference(sourceType.Z())
 {
     // Copy data from the supplied source
     index_ = sourceType.index_;
     name_ = newTypeName;
+    neta_.setDefinitionString(netaDefinition);
     description_ = sourceType.description_;
     parameters_ = sourceType.parameters_;
-    neta_.set(netaDefinition ? netaDefinition : sourceType.neta().definitionString(), parent);
-    parameterReference_ = NULL;
 
     // Equivalent name provided?
-    if (equivalentName)
+    if (!equivalentName.empty())
         equivalentName_ = equivalentName;
 }
 
 ForcefieldAtomType::~ForcefieldAtomType() {}
+
+ForcefieldAtomType::ForcefieldAtomType(const ForcefieldAtomType &source) : ElementReference(source.Z())
+{
+    index_ = source.index_;
+    name_ = source.name_;
+    neta_.setDefinitionString(source.neta_.definitionString());
+    description_ = source.description_;
+    equivalentName_ = source.equivalentName_;
+    parameters_ = source.parameters_;
+    parameterReference_ = source.parameterReference_;
+}
+
+ForcefieldAtomType::ForcefieldAtomType(const ForcefieldAtomType &&source) : ElementReference(source.Z())
+{
+    index_ = source.index_;
+    name_ = source.name_;
+    neta_.setDefinitionString(source.neta_.definitionString());
+    description_ = source.description_;
+    equivalentName_ = source.equivalentName_;
+    parameters_ = source.parameters_;
+    parameterReference_ = source.parameterReference_;
+}
 
 /*
  * Identity
@@ -88,21 +103,34 @@ ForcefieldAtomType::~ForcefieldAtomType() {}
 int ForcefieldAtomType::index() const { return index_; }
 
 // Return name of type
-const char *ForcefieldAtomType::name() const { return name_.get(); }
+std::string_view ForcefieldAtomType::name() const { return name_; }
 
 // Return equivalent name of type
-const char *ForcefieldAtomType::equivalentName() const
+std::string_view ForcefieldAtomType::equivalentName() const
 {
     // Return defined equivalent name first, if defined
-    if (!equivalentName_.isEmpty())
-        return equivalentName_.get();
+    if (!equivalentName_.empty())
+        return equivalentName_;
 
-    // If parameters are referenced, return their name. Otherwise, return ours.
-    return (parameterReference_ ? parameterReference_->name() : name_.get());
+    // If parameters are referenced, return their name. Otherwise, return ours
+    if (parameterReference_)
+    {
+        const ForcefieldParameters &ffparams = *parameterReference_;
+        return ffparams.name();
+    }
+
+    return name_;
 }
 
 // Return description for type
-const char *ForcefieldAtomType::description() const { return description_.get(); }
+std::string_view ForcefieldAtomType::description() const { return description_; }
+
+/*
+ * Recognition
+ */
+
+// Create NETA definition for the atom type
+bool ForcefieldAtomType::createNETA(const Forcefield *parentFF) { return neta_.create(parentFF); }
 
 // Return NETA definition for the atom type
 const NETADefinition &ForcefieldAtomType::neta() const { return neta_; }
@@ -116,7 +144,10 @@ const InteractionParameters &ForcefieldAtomType::parameters() const
 {
     // If reference parameters are defined, return those
     if (parameterReference_)
-        return parameterReference_->parameters();
+    {
+        const ForcefieldParameters &ffparams = *parameterReference_;
+        return ffparams.parameters();
+    }
 
     return parameters_;
 }

@@ -32,10 +32,10 @@ CalculateProcedureNodeBase::CalculateProcedureNodeBase(ProcedureNode::NodeType n
     sites_[1] = site1;
     sites_[2] = site2;
     sites_[3] = site3;
-    siteKeywords_[0] = NULL;
-    siteKeywords_[1] = NULL;
-    siteKeywords_[2] = NULL;
-    siteKeywords_[3] = NULL;
+    siteKeywords_[0] = nullptr;
+    siteKeywords_[1] = nullptr;
+    siteKeywords_[2] = nullptr;
+    siteKeywords_[3] = nullptr;
     value_ = 0.0;
 }
 
@@ -61,7 +61,7 @@ double CalculateProcedureNodeBase::value(int id) const
 #ifdef CHECKS
     if ((id < 0) || (id >= dimensionality()))
     {
-        Messenger::error("Observable value index %i is out of range for this observable which has a dimensionality of %i.\n",
+        Messenger::error("Observable value index {} is out of range for this observable which has a dimensionality of {}.\n",
                          id, dimensionality());
         return 0.0;
     }
@@ -77,14 +77,14 @@ Vec3<double> CalculateProcedureNodeBase::values() const { return value_; }
  */
 
 // Prepare any necessary data, ready for execution
-bool CalculateProcedureNodeBase::prepare(Configuration *cfg, const char *prefix, GenericList &targetList)
+bool CalculateProcedureNodeBase::prepare(Configuration *cfg, std::string_view prefix, GenericList &targetList)
 {
     // Check that the sites have been properly defined
     for (int n = 0; n < nSitesRequired(); ++n)
     {
-        sites_[n] = siteKeywords_[n] ? siteKeywords_[n]->node() : NULL;
+        sites_[n] = siteKeywords_[n] ? siteKeywords_[n]->node() : nullptr;
         if (!sites_[n])
-            return Messenger::error("Observable site %i is not set.\n", n);
+            return Messenger::error("Observable site {} is not set.\n", n);
     }
 
     return true;

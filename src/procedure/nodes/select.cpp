@@ -61,13 +61,13 @@ SelectProcedureNode::SelectProcedureNode(SpeciesSite *site, bool axesRequired) :
     keywords_.add("HIDDEN", new NodeBranchKeyword(this, &forEachBranch_, ProcedureNode::AnalysisContext), "ForEach",
                   "Branch to run on each site selected");
 
-    forEachBranch_ = NULL;
+    forEachBranch_ = nullptr;
 
     currentSiteIndex_ = -1;
     nCumulativeSites_ = 0;
     nSelections_ = 0;
-    sameMolecule_ = NULL;
-    distanceReferenceSite_ = NULL;
+    sameMolecule_ = nullptr;
+    distanceReferenceSite_ = nullptr;
 }
 
 SelectProcedureNode::~SelectProcedureNode()
@@ -108,13 +108,13 @@ const RefList<const Site> &SelectProcedureNode::excludedSites() const { return e
 std::shared_ptr<const Molecule> SelectProcedureNode::sameMoleculeMolecule()
 {
     if (!sameMolecule_)
-        return NULL;
+        return nullptr;
 
     const Site *site = sameMolecule_->currentSite();
     if (!site)
     {
         Messenger::warn("Requested Molecule from SelectProcedureNode::sameMolecule_, but there is no current site.\n");
-        return NULL;
+        return nullptr;
     }
 
     return site->molecule();
@@ -136,7 +136,7 @@ int SelectProcedureNode::nCumulativeSites() const { return nCumulativeSites_; }
 // Return current site
 const Site *SelectProcedureNode::currentSite() const
 {
-    return (currentSiteIndex_ == -1 ? NULL : sites_.constAt(currentSiteIndex_));
+    return (currentSiteIndex_ == -1 ? nullptr : sites_.constAt(currentSiteIndex_));
 }
 
 /*
@@ -144,7 +144,7 @@ const Site *SelectProcedureNode::currentSite() const
  */
 
 // Return whether this node has a branch
-bool SelectProcedureNode::hasBranch() const { return (forEachBranch_ != NULL); }
+bool SelectProcedureNode::hasBranch() const { return (forEachBranch_ != nullptr); }
 // Return SequenceNode for the branch (if it exists)
 SequenceProcedureNode *SelectProcedureNode::branch() { return forEachBranch_; }
 
@@ -162,11 +162,11 @@ SequenceProcedureNode *SelectProcedureNode::addForEachBranch(ProcedureNode::Node
  */
 
 // Prepare any necessary data, ready for execution
-bool SelectProcedureNode::prepare(Configuration *cfg, const char *prefix, GenericList &targetList)
+bool SelectProcedureNode::prepare(Configuration *cfg, std::string_view prefix, GenericList &targetList)
 {
     // Check for at least one site being defined
     if ((speciesSites_.nItems() == 0) && (dynamicSites_.nItems() == 0))
-        return Messenger::error("No sites are defined in the Select node '%s'.\n", name());
+        return Messenger::error("No sites are defined in the Select node '{}'.\n", name());
 
     // Prep some variables
     nSelections_ = 0;
@@ -190,8 +190,8 @@ bool SelectProcedureNode::prepare(Configuration *cfg, const char *prefix, Generi
 }
 
 // Execute node, targetting the supplied Configuration
-ProcedureNode::NodeExecutionResult SelectProcedureNode::execute(ProcessPool &procPool, Configuration *cfg, const char *prefix,
-                                                                GenericList &targetList)
+ProcedureNode::NodeExecutionResult SelectProcedureNode::execute(ProcessPool &procPool, Configuration *cfg,
+                                                                std::string_view prefix, GenericList &targetList)
 {
     // Create our arrays of sites
     sites_.clear();
@@ -208,10 +208,10 @@ ProcedureNode::NodeExecutionResult SelectProcedureNode::execute(ProcessPool &pro
             excludedSites_.addUnique(node->currentSite());
 
     // Get required Molecule parent, if requested
-    std::shared_ptr<const Molecule> moleculeParent = sameMolecule_ ? sameMoleculeMolecule() : NULL;
+    std::shared_ptr<const Molecule> moleculeParent = sameMolecule_ ? sameMoleculeMolecule() : nullptr;
 
     // Site to use as distance reference point (if any)
-    const Site *distanceRef = distanceReferenceSite_ ? distanceReferenceSite_->currentSite() : NULL;
+    const Site *distanceRef = distanceReferenceSite_ ? distanceReferenceSite_->currentSite() : nullptr;
 
     /*
      * Add sites from specified Species/Sites
@@ -220,7 +220,7 @@ ProcedureNode::NodeExecutionResult SelectProcedureNode::execute(ProcessPool &pro
     for (SpeciesSite *site : speciesSites_)
     {
         const SiteStack *siteStack = cfg->siteStack(site);
-        if (siteStack == NULL)
+        if (siteStack == nullptr)
             return ProcedureNode::Failure;
 
         for (int n = 0; n < siteStack->nSites(); ++n)
@@ -289,7 +289,7 @@ ProcedureNode::NodeExecutionResult SelectProcedureNode::execute(ProcessPool &pro
 }
 
 // Finalise any necessary data after execution
-bool SelectProcedureNode::finalise(ProcessPool &procPool, Configuration *cfg, const char *prefix, GenericList &targetList)
+bool SelectProcedureNode::finalise(ProcessPool &procPool, Configuration *cfg, std::string_view prefix, GenericList &targetList)
 {
     // If one exists, finalise the ForEach branch nodes
     if (forEachBranch_ && (!forEachBranch_->finalise(procPool, cfg, prefix, targetList)))
@@ -301,11 +301,11 @@ bool SelectProcedureNode::finalise(ProcessPool &procPool, Configuration *cfg, co
             return false;
 
     // Print out summary information
-    Messenger::print("Select - Site '%s': Number of selections made = %i (last contained %i sites).\n", name(), nSelections_,
+    Messenger::print("Select - Site '{}': Number of selections made = {} (last contained {} sites).\n", name(), nSelections_,
                      sites_.nItems());
-    Messenger::print("Select - Site '%s': Average number of sites selected per selection = %.2f.\n", name(),
+    Messenger::print("Select - Site '{}': Average number of sites selected per selection = {:.2f}.\n", name(),
                      nSelections_ == 0 ? 0 : double(nCumulativeSites_) / nSelections_);
-    Messenger::print("Select - Site '%s': Cumulative number of sites selected = %i.\n", name(), nCumulativeSites_);
+    Messenger::print("Select - Site '{}': Cumulative number of sites selected = {}.\n", name(), nCumulativeSites_);
 
     return true;
 }

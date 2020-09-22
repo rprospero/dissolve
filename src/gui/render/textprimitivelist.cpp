@@ -44,7 +44,7 @@ Cuboid TextPrimitiveList::boundingCuboid(FontInstance &fontInstance, const Matri
     Cuboid result = startingCuboid;
     Matrix4 textMatrix;
     Vec3<double> corners[4], local;
-    for (auto *primitive = textPrimitives_.first(); primitive != NULL; primitive = primitive->next())
+    for (auto *primitive = textPrimitives_.first(); primitive != nullptr; primitive = primitive->next())
     {
         // Get transformation matrix and bounding box for text
         textMatrix = primitive->transformationMatrix(fontInstance, viewMatrixInverse, baseFontSize);
@@ -69,10 +69,8 @@ void TextPrimitiveList::renderAll(FontInstance &fontInstance, const Matrix4 &vie
                                   double baseFontSize)
 {
     if (!fontInstance.fontOK())
-    {
-        printf("Can't send TextPrimtiveList for rendering - FontInstance is not valid.\n");
         return;
-    }
-    for (auto *primitive = textPrimitives_.first(); primitive != NULL; primitive = primitive->next())
+
+    for (auto *primitive = textPrimitives_.first(); primitive != nullptr; primitive = primitive->next())
         primitive->render(fontInstance, viewMatrix, viewMatrixInverse, baseFontSize);
 }

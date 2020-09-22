@@ -55,11 +55,11 @@ class RefineModule : public Module
      */
     public:
     // Return type of module
-    const char *type() const;
+    std::string_view type() const;
     // Return category for module
-    const char *category() const;
+    std::string_view category() const;
     // Return brief description of module
-    const char *brief() const;
+    std::string_view brief() const;
     // Return the number of Configuration targets this Module requires
     int nRequiredTargets() const;
 
@@ -124,7 +124,8 @@ class RefineModule : public Module
                        WindowFunction windowFunction = WindowFunction(), BroadeningFunction broadening = BroadeningFunction(),
                        bool unbroaden = false);
     // Determine modification to bonds based on supplied delta g(r)
-    bool modifyBondTerms(CoreData &coreData, const Data1D &deltaGR, AtomType *typeI, AtomType *typeJ, Data1D &deltaBond);
+    bool modifyBondTerms(CoreData &coreData, const Data1D &deltaGR, std::shared_ptr<AtomType> typeI,
+                         std::shared_ptr<AtomType> typeJ, Data1D &deltaBond);
     // Return value of fit equation given specified parameters
     inline double fitEquation(double x, double xCentre, double delta, double widthSquared, double AL, double AC, double AR);
     // Two-exponential, 5-parameter cost function for modifyBondTerms() fitting

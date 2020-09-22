@@ -32,7 +32,7 @@
 SpeciesAtom *SiteViewer::atomAt(int x, int y)
 {
     if (!species_)
-        return NULL;
+        return nullptr;
 
     double lengthScale;
     Vec3<double> rScreen;
@@ -54,7 +54,7 @@ SpeciesAtom *SiteViewer::atomAt(int x, int y)
             return i;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /*
@@ -151,7 +151,7 @@ void SiteViewer::endInteraction()
             setInteractionMode(SiteViewer::DefaultInteraction);
             break;
         default:
-            printf("Internal Error: Don't know how to complete interaction mode %i\n", interactionMode());
+            Messenger::error("Don't know how to complete interaction mode {}\n", interactionMode());
             break;
     }
 }
@@ -167,7 +167,7 @@ void SiteViewer::cancelInteraction()
     }
 
     // Reset other data
-    clickedAtom_ = NULL;
+    clickedAtom_ = nullptr;
 }
 
 /*
@@ -175,7 +175,7 @@ void SiteViewer::cancelInteraction()
  */
 
 // Return text describing current interaction mode
-const char *SiteViewer::interactionModeText() const
+const QString SiteViewer::interactionModeText() const
 {
     switch (interactionMode())
     {

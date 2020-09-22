@@ -34,7 +34,7 @@ SelectForcefieldWidget::SelectForcefieldWidget(QWidget *parent, const std::vecto
     // Populate the list with available forcefields
     for (std::shared_ptr<Forcefield> ff : forcefields_)
     {
-        QListWidgetItem *item = new QListWidgetItem(ff->name(), ui_.ForcefieldsList);
+        QListWidgetItem *item = new QListWidgetItem(QString::fromStdString(std::string(ff->name())), ui_.ForcefieldsList);
         item->setData(Qt::UserRole, QVariant::fromValue(ff));
     }
 
@@ -65,11 +65,11 @@ void SelectForcefieldWidget::updateForcefieldsList(std::shared_ptr<Forcefield> c
         else
         {
             // Check name
-            QString name = ff->name();
+            QString name = QString::fromStdString(std::string(ff->name()));
             auto inName = name.contains(QRegExp(filter, Qt::CaseInsensitive, QRegExp::Wildcard));
 
             // Check description
-            QString description = ff->description();
+            QString description = QString::fromStdString(std::string(ff->description()));
             auto inDescription = description.contains(QRegExp(filter, Qt::CaseInsensitive, QRegExp::Wildcard));
 
             // Hide the item?
@@ -86,7 +86,7 @@ void SelectForcefieldWidget::updateForcefieldsList(std::shared_ptr<Forcefield> c
     }
 }
 
-void SelectForcefieldWidget::on_FilterEdit_textChanged(const QString &text) { updateForcefieldsList(NULL, text); }
+void SelectForcefieldWidget::on_FilterEdit_textChanged(const QString &text) { updateForcefieldsList(nullptr, text); }
 
 void SelectForcefieldWidget::on_ForcefieldsList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous)
 {
@@ -101,7 +101,7 @@ void SelectForcefieldWidget::on_ForcefieldsList_currentItemChanged(QListWidgetIt
     std::shared_ptr<Forcefield> ff = current->data(Qt::UserRole).value<std::shared_ptr<Forcefield>>();
 
     // Update the informational text
-    ui_.ForcefieldDetailsTextEdit->setText(ff->description());
+    ui_.ForcefieldDetailsTextEdit->setText(QString::fromStdString(std::string(ff->description())));
 
     emit(forcefieldSelectionChanged(true));
 }
@@ -124,8 +124,8 @@ void SelectForcefieldWidget::setCurrentForcefield(std::shared_ptr<Forcefield> cu
 std::shared_ptr<Forcefield> SelectForcefieldWidget::currentForcefield() const
 {
     QListWidgetItem *item = ui_.ForcefieldsList->currentItem();
-    if (item == NULL)
-        return NULL;
+    if (item == nullptr)
+        return nullptr;
 
     return item->data(Qt::UserRole).value<std::shared_ptr<Forcefield>>();
 }

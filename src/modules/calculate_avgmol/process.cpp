@@ -33,14 +33,14 @@ bool CalculateAvgMolModule::setUp(Dissolve &dissolve, ProcessPool &procPool)
     // Clear species
     averageSpecies_.clear();
 
-    // If the targetSpecies_ is different from the current target site, or the site is NULL, clear the arrays
+    // If the targetSpecies_ is different from the current target site, or the site is nullptr, clear the arrays
     if (!site)
-        targetSpecies_ = NULL;
+        targetSpecies_ = nullptr;
     else
     {
-        if (site->parent() == NULL)
+        if (site->parent() == nullptr)
         {
-            targetSpecies_ = NULL;
+            targetSpecies_ = nullptr;
 
             return Messenger::error("Target site has no parent species.\n");
         }
@@ -52,15 +52,14 @@ bool CalculateAvgMolModule::setUp(Dissolve &dissolve, ProcessPool &procPool)
             ListIterator<SpeciesAtom> atomIterator(targetSpecies_->atoms());
             while (SpeciesAtom *i = atomIterator.iterate())
                 averageSpecies_.addAtom(i->element(), i->r());
-            DynamicArrayIterator<SpeciesBond> bondIterator(targetSpecies_->bonds());
-            while (SpeciesBond *b = bondIterator.iterate())
-                averageSpecies_.addBond(b->indexI(), b->indexJ());
+            for (const auto &bond : targetSpecies_->bonds())
+                averageSpecies_.addBond(bond.indexI(), bond.indexJ());
         }
     }
 
     // Set name and object tag for average species
-    averageSpecies_.setName(CharString("%s@%s", site ? site->name() : "???", targetSpecies_ ? targetSpecies_->name() : "???"));
-    averageSpecies_.setObjectTag(CharString("CalculateAvgMol_%s", averageSpecies_.name()));
+    averageSpecies_.setName(fmt::format("{}@{}", site ? site->name() : "???", targetSpecies_ ? targetSpecies_->name() : "???"));
+    averageSpecies_.setObjectTag(fmt::format("CalculateAvgMol_{}", averageSpecies_.name()));
 
     // Realise arrays
     updateArrays(dissolve);
@@ -84,7 +83,7 @@ bool CalculateAvgMolModule::process(Dissolve &dissolve, ProcessPool &procPool)
 {
     // Check for zero Configuration targets
     if (targetConfigurations_.nItems() == 0)
-        return Messenger::error("No configuration targets set for module '%s'.\n", uniqueName());
+        return Messenger::error("No configuration targets set for module '{}'.\n", uniqueName());
 
     // Grab Configuration and Box pointers
     auto *cfg = targetConfigurations_.firstItem();

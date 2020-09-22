@@ -21,13 +21,15 @@
 
 #pragma once
 
+#include "classes/atomtype.h"
+#include "classes/masterintra.h"
+#include "classes/pairpotential.h"
 #include "gui/maintab.h"
 #include "gui/ui_forcefieldtab.h"
 
-// Forward Declarations
-class MasterIntra;
-class AtomType;
-class PairPotential;
+Q_DECLARE_METATYPE(MasterIntra *)
+Q_DECLARE_METATYPE(AtomType *)
+Q_DECLARE_METATYPE(PairPotential *)
 
 // Forcefield Tab
 class ForcefieldTab : public QWidget, public MainTab
@@ -36,7 +38,7 @@ class ForcefieldTab : public QWidget, public MainTab
     Q_OBJECT
 
     public:
-    ForcefieldTab(DissolveWindow *dissolveWindow, Dissolve &dissolve, MainTabsWidget *parent, const char *title);
+    ForcefieldTab(DissolveWindow *dissolveWindow, Dissolve &dissolve, MainTabsWidget *parent, const QString title);
     ~ForcefieldTab();
 
     /*
@@ -68,7 +70,7 @@ class ForcefieldTab : public QWidget, public MainTab
     // Row update function for ImpropersTable
     void updateImpropersTableRow(int row, MasterIntra *masterImproper, bool createItems);
     // Row update function for AtomTypesTable
-    void updateAtomTypesTableRow(int row, AtomType *atomType, bool createItems);
+    void updateAtomTypesTableRow(int row, std::shared_ptr<AtomType> atomType, bool createItems);
     // Row update function for PairPotentialsTable
     void updatePairPotentialsTableRow(int row, PairPotential *pairPotential, bool createItems);
 

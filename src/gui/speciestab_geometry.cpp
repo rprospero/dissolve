@@ -46,7 +46,7 @@ void SpeciesTab::updateAtomTableRow(int row, SpeciesAtom *speciesAtom, bool crea
     }
     else
         item = ui_.AtomTable->item(row, 0);
-    item->setText(speciesAtom->element()->name());
+    item->setText(QString::fromStdString(std::string(speciesAtom->element()->name())));
     item->setSelected(speciesAtom->isSelected());
 
     // AtomType
@@ -58,11 +58,11 @@ void SpeciesTab::updateAtomTableRow(int row, SpeciesAtom *speciesAtom, bool crea
     }
     else
         item = ui_.AtomTable->item(row, 1);
-    item->setText(speciesAtom->atomType() ? speciesAtom->atomType()->name() : "");
+    item->setText(speciesAtom->atomType() ? QString::fromStdString(std::string(speciesAtom->atomType()->name())) : "");
     item->setSelected(speciesAtom->isSelected());
 
     // Coordinates
-    for (int n = 0; n < 3; ++n)
+    for (auto n = 0; n < 3; ++n)
     {
         if (createItems)
         {
@@ -97,19 +97,19 @@ void SpeciesTab::updateBondTableRow(int row, SpeciesBond *speciesBond, bool crea
     QTableWidgetItem *item;
 
     // Atom Indices
-    for (int n = 0; n < 2; ++n)
+    for (auto n = 0; n < 2; ++n)
     {
         if (createItems)
         {
             item = new QTableWidgetItem;
             item->setData(Qt::UserRole, VariantPointer<SpeciesBond>(speciesBond));
+            item->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
             ui_.BondTable->setItem(row, n, item);
         }
         else
             item = ui_.BondTable->item(row, n);
+
         item->setText(QString::number(speciesBond->index(n) + 1));
-        item->setFlags(speciesBond->masterParameters() ? Qt::ItemIsEnabled | Qt::ItemIsSelectable
-                                                       : Qt::ItemIsEnabled | Qt::ItemIsEditable);
     }
 
     // Interaction Form
@@ -121,11 +121,12 @@ void SpeciesTab::updateBondTableRow(int row, SpeciesBond *speciesBond, bool crea
     }
     else
         item = ui_.BondTable->item(row, 2);
-    item->setText(speciesBond->masterParameters() ? QString("@%1").arg(speciesBond->masterParameters()->name())
-                                                  : SpeciesBond::bondFunctions().keywordFromInt(speciesBond->form()));
+    item->setText(speciesBond->masterParameters()
+                      ? QString("@%1").arg(QString::fromStdString(std::string(speciesBond->masterParameters()->name())))
+                      : QString::fromStdString(std::string(SpeciesBond::bondFunctions().keywordFromInt(speciesBond->form()))));
 
     // Interaction Parameters
-    for (int n = 0; n < 4; ++n)
+    for (auto n = 0; n < speciesBond->nParameters(); ++n)
     {
         if (createItems)
         {
@@ -135,6 +136,7 @@ void SpeciesTab::updateBondTableRow(int row, SpeciesBond *speciesBond, bool crea
         }
         else
             item = ui_.BondTable->item(row, n + 3);
+
         item->setText(QString::number(speciesBond->parameter(n)));
         item->setFlags(speciesBond->masterParameters() ? Qt::ItemIsEnabled | Qt::ItemIsSelectable
                                                        : Qt::ItemIsEnabled | Qt::ItemIsEditable);
@@ -147,19 +149,19 @@ void SpeciesTab::updateAngleTableRow(int row, SpeciesAngle *speciesAngle, bool c
     QTableWidgetItem *item;
 
     // Atom Indices
-    for (int n = 0; n < 3; ++n)
+    for (auto n = 0; n < 3; ++n)
     {
         if (createItems)
         {
             item = new QTableWidgetItem;
             item->setData(Qt::UserRole, VariantPointer<SpeciesAngle>(speciesAngle));
+            item->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
             ui_.AngleTable->setItem(row, n, item);
         }
         else
             item = ui_.AngleTable->item(row, n);
+
         item->setText(QString::number(speciesAngle->index(n) + 1));
-        item->setFlags(speciesAngle->masterParameters() ? Qt::ItemIsEnabled | Qt::ItemIsSelectable
-                                                        : Qt::ItemIsEnabled | Qt::ItemIsEditable);
     }
 
     // Interaction Form
@@ -171,11 +173,14 @@ void SpeciesTab::updateAngleTableRow(int row, SpeciesAngle *speciesAngle, bool c
     }
     else
         item = ui_.AngleTable->item(row, 3);
-    item->setText(speciesAngle->masterParameters() ? QString("@%1").arg(speciesAngle->masterParameters()->name())
-                                                   : SpeciesAngle::angleFunctions().keywordFromInt(speciesAngle->form()));
+
+    item->setText(
+        speciesAngle->masterParameters()
+            ? QString("@%1").arg(QString::fromStdString(std::string(speciesAngle->masterParameters()->name())))
+            : QString::fromStdString(std::string(SpeciesAngle::angleFunctions().keywordFromInt(speciesAngle->form()))));
 
     // Interaction Parameters
-    for (int n = 0; n < 4; ++n)
+    for (auto n = 0; n < speciesAngle->nParameters(); ++n)
     {
         if (createItems)
         {
@@ -185,6 +190,7 @@ void SpeciesTab::updateAngleTableRow(int row, SpeciesAngle *speciesAngle, bool c
         }
         else
             item = ui_.AngleTable->item(row, n + 4);
+
         item->setText(QString::number(speciesAngle->parameter(n)));
         item->setFlags(speciesAngle->masterParameters() ? Qt::ItemIsEnabled | Qt::ItemIsSelectable
                                                         : Qt::ItemIsEnabled | Qt::ItemIsEditable);
@@ -197,19 +203,19 @@ void SpeciesTab::updateTorsionTableRow(int row, SpeciesTorsion *speciesTorsion, 
     QTableWidgetItem *item;
 
     // Atom Indices
-    for (int n = 0; n < 4; ++n)
+    for (auto n = 0; n < 4; ++n)
     {
         if (createItems)
         {
             item = new QTableWidgetItem;
             item->setData(Qt::UserRole, VariantPointer<SpeciesTorsion>(speciesTorsion));
+            item->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
             ui_.TorsionTable->setItem(row, n, item);
         }
         else
             item = ui_.TorsionTable->item(row, n);
+
         item->setText(QString::number(speciesTorsion->index(n) + 1));
-        item->setFlags(speciesTorsion->masterParameters() ? Qt::ItemIsEnabled | Qt::ItemIsSelectable
-                                                          : Qt::ItemIsEnabled | Qt::ItemIsEditable);
     }
 
     // Interaction Form
@@ -221,24 +227,25 @@ void SpeciesTab::updateTorsionTableRow(int row, SpeciesTorsion *speciesTorsion, 
     }
     else
         item = ui_.TorsionTable->item(row, 4);
-    item->setText(speciesTorsion->masterParameters()
-                      ? QString("@%1").arg(speciesTorsion->masterParameters()->name())
-                      : SpeciesTorsion::torsionFunctions().keywordFromInt(speciesTorsion->form()));
+    item->setText(
+        speciesTorsion->masterParameters()
+            ? QString("@%1").arg(QString::fromStdString(std::string(speciesTorsion->masterParameters()->name())))
+            : QString::fromStdString(std::string(SpeciesTorsion::torsionFunctions().keywordFromInt(speciesTorsion->form()))));
 
     // Interaction Parameters
-    for (int n = 0; n < 4; ++n)
+    for (auto n = 0; n < speciesTorsion->nParameters(); ++n)
     {
         if (createItems)
         {
             item = new QTableWidgetItem;
             item->setData(Qt::UserRole, VariantPointer<SpeciesTorsion>(speciesTorsion));
+            item->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
             ui_.TorsionTable->setItem(row, n + 5, item);
         }
         else
             item = ui_.TorsionTable->item(row, n + 5);
+
         item->setText(QString::number(speciesTorsion->parameter(n)));
-        item->setFlags(speciesTorsion->masterParameters() ? Qt::ItemIsEnabled | Qt::ItemIsSelectable
-                                                          : Qt::ItemIsEnabled | Qt::ItemIsEditable);
     }
 }
 
@@ -248,19 +255,18 @@ void SpeciesTab::updateImproperTableRow(int row, SpeciesImproper *speciesImprope
     QTableWidgetItem *item;
 
     // Atom Indices
-    for (int n = 0; n < 4; ++n)
+    for (auto n = 0; n < 4; ++n)
     {
         if (createItems)
         {
             item = new QTableWidgetItem;
             item->setData(Qt::UserRole, VariantPointer<SpeciesImproper>(speciesImproper));
+            item->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
             ui_.ImproperTable->setItem(row, n, item);
         }
         else
             item = ui_.ImproperTable->item(row, n);
         item->setText(QString::number(speciesImproper->index(n) + 1));
-        item->setFlags(speciesImproper->masterParameters() ? Qt::ItemIsEnabled | Qt::ItemIsSelectable
-                                                           : Qt::ItemIsEnabled | Qt::ItemIsEditable);
     }
 
     // Interaction Form
@@ -272,12 +278,14 @@ void SpeciesTab::updateImproperTableRow(int row, SpeciesImproper *speciesImprope
     }
     else
         item = ui_.ImproperTable->item(row, 4);
+
     item->setText(speciesImproper->masterParameters()
-                      ? QString("@%1").arg(speciesImproper->masterParameters()->name())
-                      : SpeciesImproper::improperFunctions().keywordFromInt(speciesImproper->form()));
+                      ? QString("@%1").arg(QString::fromStdString(std::string(speciesImproper->masterParameters()->name())))
+                      : QString::fromStdString(
+                            std::string(SpeciesImproper::improperFunctions().keywordFromInt(speciesImproper->form()))));
 
     // Interaction Parameters
-    for (int n = 0; n < 4; ++n)
+    for (auto n = 0; n < speciesImproper->nParameters(); ++n)
     {
         if (createItems)
         {
@@ -287,6 +295,7 @@ void SpeciesTab::updateImproperTableRow(int row, SpeciesImproper *speciesImprope
         }
         else
             item = ui_.ImproperTable->item(row, n + 5);
+
         item->setText(QString::number(speciesImproper->parameter(n)));
         item->setFlags(speciesImproper->masterParameters() ? Qt::ItemIsEnabled | Qt::ItemIsSelectable
                                                            : Qt::ItemIsEnabled | Qt::ItemIsEditable);
@@ -306,7 +315,7 @@ void SpeciesTab::updateAtomTableSelection()
     SpeciesAtom *i;
 
     // Set atom selection in table to reflect the atom data
-    for (int n = 0; n < ui_.AtomTable->rowCount(); ++n)
+    for (auto n = 0; n < ui_.AtomTable->rowCount(); ++n)
     {
         item = ui_.AtomTable->item(n, 0);
         i = VariantPointer<SpeciesAtom>(item->data(Qt::UserRole));
@@ -322,16 +331,17 @@ void SpeciesTab::updateAtomTableSelection()
 
 void SpeciesTab::on_AtomTable_itemChanged(QTableWidgetItem *w)
 {
+    std::optional<std::shared_ptr<AtomType>> opt_atomType;
     if (refreshLock_.isLocked())
         return;
 
     // Get target SpeciesAtom from the passed widget
-    SpeciesAtom *speciesAtom = w ? VariantPointer<SpeciesAtom>(w->data(Qt::UserRole)) : NULL;
+    SpeciesAtom *speciesAtom = w ? VariantPointer<SpeciesAtom>(w->data(Qt::UserRole)) : nullptr;
     if (!speciesAtom)
         return;
     Vec3<double> r = speciesAtom->r();
     // Column of passed item tells us the type of data we need to change
-    AtomType *atomType;
+    std::shared_ptr<AtomType> atomType;
     switch (w->column())
     {
         // Element
@@ -340,12 +350,14 @@ void SpeciesTab::on_AtomTable_itemChanged(QTableWidgetItem *w)
         // AtomType
         case (1):
             // Check the text to see if it is an existing AtomType - if not, we should create it
-            atomType = dissolve_.findAtomType(qPrintable(w->text()));
-            if (!atomType)
+            opt_atomType = dissolve_.findAtomType(qPrintable(w->text()));
+            if (!opt_atomType)
             {
                 atomType = dissolve_.addAtomType(speciesAtom->element());
                 atomType->setName(qPrintable(w->text()));
             }
+            else
+                atomType = *opt_atomType;
             speciesAtom->setAtomType(atomType);
             dissolveWindow_->setModified();
             break;
@@ -375,7 +387,7 @@ void SpeciesTab::on_AtomTable_itemChanged(QTableWidgetItem *w)
             dissolveWindow_->setModified();
             break;
         default:
-            Messenger::error("Don't know what to do with data from column %i of SpeciesAtom table.\n", w->column());
+            Messenger::error("Don't know what to do with data from column {} of SpeciesAtom table.\n", w->column());
             break;
     }
 }
@@ -389,7 +401,7 @@ void SpeciesTab::on_AtomTable_itemSelectionChanged()
     SpeciesAtom *i;
 
     // Set atom selection in viewer to be same as the table
-    for (int n = 0; n < ui_.AtomTable->rowCount(); ++n)
+    for (auto n = 0; n < ui_.AtomTable->rowCount(); ++n)
     {
         item = ui_.AtomTable->item(n, 0);
         i = VariantPointer<SpeciesAtom>(item->data(Qt::UserRole));
@@ -411,26 +423,18 @@ void SpeciesTab::on_BondTable_itemChanged(QTableWidgetItem *w)
         return;
 
     // Get target SpeciesBond from the passed widget
-    SpeciesBond *speciesBond = w ? VariantPointer<SpeciesBond>(w->data(Qt::UserRole)) : NULL;
+    SpeciesBond *speciesBond = w ? VariantPointer<SpeciesBond>(w->data(Qt::UserRole)) : nullptr;
     if (!speciesBond)
         return;
 
     // Column of passed item tells us the type of data we need to change
-    int i, j;
     auto updateRow = false;
     switch (w->column())
     {
         // Atom Indices
         case (0):
         case (1):
-            // Get both atom indices and set the atoms in the interaction
-            i = ui_.BondTable->item(w->row(), 0)->text().toInt() - 1;
-            j = ui_.BondTable->item(w->row(), 1)->text().toInt() - 1;
-            if (species_->reconnectBond(speciesBond, i, j))
-            {
-                updateRow = true;
-                dissolveWindow_->setModified();
-            }
+            Messenger::error("Atom indices in intramolecular interactions are not editable.\n");
             break;
         // Functional Form
         case (2):
@@ -443,7 +447,7 @@ void SpeciesTab::on_BondTable_itemChanged(QTableWidgetItem *w)
             else
             {
                 SpeciesBond::BondFunction bf = SpeciesBond::bondFunctions().enumeration(qPrintable(w->text()));
-                speciesBond->setMasterParameters(NULL);
+                speciesBond->setMasterParameters(nullptr);
                 speciesBond->setForm(bf);
             }
             updateRow = true;
@@ -460,7 +464,7 @@ void SpeciesTab::on_BondTable_itemChanged(QTableWidgetItem *w)
                 speciesBond->setParameter(w->column() - 3, w->text().toDouble());
             break;
         default:
-            Messenger::error("Don't know what to do with data from column %i of Bond table.\n", w->column());
+            Messenger::error("Don't know what to do with data from column {} of Bond table.\n", w->column());
             break;
     }
 
@@ -478,12 +482,11 @@ void SpeciesTab::on_AngleTable_itemChanged(QTableWidgetItem *w)
         return;
 
     // Get target SpeciesAngle from the passed widget
-    SpeciesAngle *speciesAngle = w ? VariantPointer<SpeciesAngle>(w->data(Qt::UserRole)) : NULL;
+    SpeciesAngle *speciesAngle = w ? VariantPointer<SpeciesAngle>(w->data(Qt::UserRole)) : nullptr;
     if (!speciesAngle)
         return;
 
     // Column of passed item tells us the type of data we need to change
-    int i, j, k;
     auto updateRow = false;
     switch (w->column())
     {
@@ -491,15 +494,7 @@ void SpeciesTab::on_AngleTable_itemChanged(QTableWidgetItem *w)
         case (0):
         case (1):
         case (2):
-            // Get all atom indices and set the atoms in the interaction
-            i = ui_.BondTable->item(w->row(), 0)->text().toInt() - 1;
-            j = ui_.BondTable->item(w->row(), 1)->text().toInt() - 1;
-            k = ui_.BondTable->item(w->row(), 2)->text().toInt() - 1;
-            if (species_->reconnectAngle(speciesAngle, i, j, k))
-            {
-                updateRow = true;
-                dissolveWindow_->setModified();
-            }
+            Messenger::error("Atom indices in intramolecular interactions are not editable.\n");
             break;
         // Functional Form
         case (3):
@@ -512,7 +507,7 @@ void SpeciesTab::on_AngleTable_itemChanged(QTableWidgetItem *w)
             else
             {
                 SpeciesAngle::AngleFunction af = SpeciesAngle::angleFunctions().enumeration(qPrintable(w->text()));
-                speciesAngle->setMasterParameters(NULL);
+                speciesAngle->setMasterParameters(nullptr);
                 speciesAngle->setForm(af);
             }
             updateRow = true;
@@ -529,7 +524,7 @@ void SpeciesTab::on_AngleTable_itemChanged(QTableWidgetItem *w)
                 speciesAngle->setParameter(w->column() - 4, w->text().toDouble());
             break;
         default:
-            Messenger::error("Don't know what to do with data from column %i of Angle table.\n", w->column());
+            Messenger::error("Don't know what to do with data from column {} of Angle table.\n", w->column());
             break;
     }
 
@@ -547,12 +542,11 @@ void SpeciesTab::on_TorsionTable_itemChanged(QTableWidgetItem *w)
         return;
 
     // Get target SpeciesTorsion from the passed widget
-    SpeciesTorsion *speciesTorsion = w ? VariantPointer<SpeciesTorsion>(w->data(Qt::UserRole)) : NULL;
+    SpeciesTorsion *speciesTorsion = w ? VariantPointer<SpeciesTorsion>(w->data(Qt::UserRole)) : nullptr;
     if (!speciesTorsion)
         return;
 
     // Column of passed item tells us the type of data we need to change
-    int i, j, k, l;
     auto updateRow = false;
     switch (w->column())
     {
@@ -561,16 +555,7 @@ void SpeciesTab::on_TorsionTable_itemChanged(QTableWidgetItem *w)
         case (1):
         case (2):
         case (3):
-            // Get all atom indices and set the atoms in the interaction
-            i = ui_.BondTable->item(w->row(), 0)->text().toInt() - 1;
-            j = ui_.BondTable->item(w->row(), 1)->text().toInt() - 1;
-            k = ui_.BondTable->item(w->row(), 2)->text().toInt() - 1;
-            l = ui_.BondTable->item(w->row(), 3)->text().toInt() - 1;
-            if (species_->reconnectTorsion(speciesTorsion, i, j, k, l))
-            {
-                updateRow = true;
-                dissolveWindow_->setModified();
-            }
+            Messenger::error("Atom indices in intramolecular interactions are not editable.\n");
             break;
         // Functional Form
         case (4):
@@ -583,7 +568,7 @@ void SpeciesTab::on_TorsionTable_itemChanged(QTableWidgetItem *w)
             else
             {
                 SpeciesTorsion::TorsionFunction tf = SpeciesTorsion::torsionFunctions().enumeration(qPrintable(w->text()));
-                speciesTorsion->setMasterParameters(NULL);
+                speciesTorsion->setMasterParameters(nullptr);
                 speciesTorsion->setForm(tf);
             }
             updateRow = true;
@@ -600,7 +585,7 @@ void SpeciesTab::on_TorsionTable_itemChanged(QTableWidgetItem *w)
                 speciesTorsion->setParameter(w->column() - 5, w->text().toDouble());
             break;
         default:
-            Messenger::error("Don't know what to do with data from column %i of Torsion table.\n", w->column());
+            Messenger::error("Don't know what to do with data from column {} of Torsion table.\n", w->column());
             break;
     }
 
@@ -618,12 +603,11 @@ void SpeciesTab::on_ImproperTable_itemChanged(QTableWidgetItem *w)
         return;
 
     // Get target SpeciesImproper from the passed widget
-    SpeciesImproper *speciesImproper = w ? VariantPointer<SpeciesImproper>(w->data(Qt::UserRole)) : NULL;
+    SpeciesImproper *speciesImproper = w ? VariantPointer<SpeciesImproper>(w->data(Qt::UserRole)) : nullptr;
     if (!speciesImproper)
         return;
 
     // Column of passed item tells us the type of data we need to change
-    int i, j, k, l;
     auto updateRow = false;
     switch (w->column())
     {
@@ -632,16 +616,7 @@ void SpeciesTab::on_ImproperTable_itemChanged(QTableWidgetItem *w)
         case (1):
         case (2):
         case (3):
-            // Get all atom indices and set the atoms in the interaction
-            i = ui_.BondTable->item(w->row(), 0)->text().toInt() - 1;
-            j = ui_.BondTable->item(w->row(), 1)->text().toInt() - 1;
-            k = ui_.BondTable->item(w->row(), 2)->text().toInt() - 1;
-            l = ui_.BondTable->item(w->row(), 3)->text().toInt() - 1;
-            if (species_->reconnectImproper(speciesImproper, i, j, k, l))
-            {
-                updateRow = true;
-                dissolveWindow_->setModified();
-            }
+            Messenger::error("Atom indices in intramolecular interactions are not editable.\n");
             break;
         // Functional Form
         case (4):
@@ -654,7 +629,7 @@ void SpeciesTab::on_ImproperTable_itemChanged(QTableWidgetItem *w)
             else
             {
                 SpeciesImproper::ImproperFunction tf = SpeciesImproper::improperFunctions().enumeration(qPrintable(w->text()));
-                speciesImproper->setMasterParameters(NULL);
+                speciesImproper->setMasterParameters(nullptr);
                 speciesImproper->setForm(tf);
             }
             updateRow = true;
@@ -671,7 +646,7 @@ void SpeciesTab::on_ImproperTable_itemChanged(QTableWidgetItem *w)
                 speciesImproper->setParameter(w->column() - 5, w->text().toDouble());
             break;
         default:
-            Messenger::error("Don't know what to do with data from column %i of Improper table.\n", w->column());
+            Messenger::error("Don't know what to do with data from column {} of Improper table.\n", w->column());
             break;
     }
 

@@ -29,7 +29,7 @@
 #include "gui/render/renderablegroupmanager.h"
 #include "gui/render/view.h"
 
-RenderableConfiguration::RenderableConfiguration(const Configuration *source, const char *objectTag)
+RenderableConfiguration::RenderableConfiguration(const Configuration *source, std::string_view objectTag)
     : Renderable(Renderable::ConfigurationRenderable, objectTag), source_(source)
 {
     // Set defaults
@@ -71,7 +71,7 @@ bool RenderableConfiguration::validateDataSource()
 }
 
 // Invalidate the current data source
-void RenderableConfiguration::invalidateDataSource() { source_ = NULL; }
+void RenderableConfiguration::invalidateDataSource() { source_ = nullptr; }
 
 // Return version of data
 int RenderableConfiguration::dataVersion() { return (validateDataSource() ? source_->contentsVersion() : -99); }
@@ -201,11 +201,11 @@ void RenderableConfiguration::recreatePrimitives(const View &view, const ColourD
             else
             {
                 // Draw all bonds from this atom
-                for (const auto *bond : i->speciesAtom()->bonds())
+                for (const SpeciesBond &bond : i->speciesAtom()->bonds())
                 {
                     // Blindly get partner Atom 'j' - don't check if it is the true partner, only if it is
                     // the same as 'i' (in which case we skip it, ensuring we draw every bond only once)
-                    partner = i->molecule()->atom(bond->indexJ());
+                    partner = i->molecule()->atom(bond.indexJ());
                     if (i == partner)
                         continue;
 
@@ -217,9 +217,9 @@ void RenderableConfiguration::recreatePrimitives(const View &view, const ColourD
 
                     // Draw bond halves
                     lineConfigurationPrimitive_->line(ri.x, ri.y, ri.z, ri.x + dij.x, ri.y + dij.y, ri.z + dij.z,
-                                                      ElementColours::colour(bond->i()->element()));
+                                                      ElementColours::colour(bond.i()->element()));
                     lineConfigurationPrimitive_->line(rj.x, rj.y, rj.z, rj.x - dij.x, rj.y - dij.y, rj.z - dij.z,
-                                                      ElementColours::colour(bond->j()->element()));
+                                                      ElementColours::colour(bond.j()->element()));
                 }
             }
         }
@@ -244,11 +244,11 @@ void RenderableConfiguration::recreatePrimitives(const View &view, const ColourD
             configurationAssembly_.add(atomPrimitive_, A, colour[0], colour[1], colour[2], colour[3]);
 
             // Bonds from this atom
-            for (const auto *bond : i->speciesAtom()->bonds())
+            for (const SpeciesBond &bond : i->speciesAtom()->bonds())
             {
                 // Blindly get partner Atom 'j' - don't check if it is the true partner, only if it is the same
                 // as 'i' (in which case we skip it, ensuring we draw every bond only once)
-                partner = i->molecule()->atom(bond->indexJ());
+                partner = i->molecule()->atom(bond.indexJ());
                 if (i == partner)
                     continue;
 
@@ -336,7 +336,7 @@ bool RenderableConfiguration::writeStyleBlock(LineParser &parser, int indentLeve
         indent[n] = ' ';
     indent[indentLevel * 2] = '\0';
 
-    if (!parser.writeLineF("%s%s  %s\n", indent, configurationStyleKeywords().keyword(RenderableConfiguration::DisplayKeyword),
+    if (!parser.writeLineF("{}{}  {}\n", indent, configurationStyleKeywords().keyword(RenderableConfiguration::DisplayKeyword),
                            configurationDisplayStyles().keyword(displayStyle_)))
         return false;
 
@@ -352,10 +352,10 @@ bool RenderableConfiguration::readStyleBlock(LineParser &parser)
         if (parser.getArgsDelim(LineParser::SemiColonLineBreaks) != LineParser::Success)
             return false;
 
-        // Do we recognise this keyword and, if so, do we have the appropriate number of arguments?
-        if (!configurationStyleKeywords().isValid(parser.argc(0)))
-            return configurationStyleKeywords().errorAndPrintValid(parser.argc(0));
-        auto kwd = configurationStyleKeywords().enumeration(parser.argc(0));
+        // Do we recognise this keyword and, if so, do we have an appropriate number of arguments?
+        if (!configurationStyleKeywords().isValid(parser.argsv(0)))
+            return configurationStyleKeywords().errorAndPrintValid(parser.argsv(0));
+        auto kwd = configurationStyleKeywords().enumeration(parser.argsv(0));
         if (!configurationStyleKeywords().validNArgs(kwd, parser.nArgs() - 1))
             return false;
 
@@ -364,16 +364,16 @@ bool RenderableConfiguration::readStyleBlock(LineParser &parser)
         {
             // Display style
             case (RenderableConfiguration::DisplayKeyword):
-                if (!configurationDisplayStyles().isValid(parser.argc(1)))
-                    return configurationDisplayStyles().errorAndPrintValid(parser.argc(1));
-                displayStyle_ = configurationDisplayStyles().enumeration(parser.argc(1));
+                if (!configurationDisplayStyles().isValid(parser.argsv(1)))
+                    return configurationDisplayStyles().errorAndPrintValid(parser.argsv(1));
+                displayStyle_ = configurationDisplayStyles().enumeration(parser.argsv(1));
                 break;
             // End of block
             case (RenderableConfiguration::EndStyleKeyword):
                 return true;
             // Unrecognised Keyword
             default:
-                Messenger::warn("Unrecognised display style keyword for RenderableConfiguration: %s\n", parser.argc(0));
+                Messenger::warn("Unrecognised display style keyword for RenderableConfiguration: {}\n", parser.argsv(0));
                 return false;
                 break;
         }

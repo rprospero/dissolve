@@ -77,7 +77,8 @@ void DynamicSiteProcedureNode::generateSites(std::shared_ptr<const Molecule> mol
         }
 
         // If the Atom's AtomType is listed in our target AtomType list, add this atom as a site
-        if (atomTypes_.contains(molecule->atom(n)->speciesAtom()->atomType()))
+        auto it = std::find(atomTypes_.begin(), atomTypes_.end(), molecule->atom(n)->speciesAtom()->atomType());
+        if (atomTypes_.end() != it)
         {
             generatedSites_.add(Site(molecule, molecule->atom(n)->r()));
             continue;
@@ -94,7 +95,7 @@ const Array<Site> &DynamicSiteProcedureNode::generatedSites() const { return gen
 
 // Execute node, targetting the supplied Configuration
 ProcedureNode::NodeExecutionResult DynamicSiteProcedureNode::execute(ProcessPool &procPool, Configuration *cfg,
-                                                                     const char *prefix, GenericList &targetList)
+                                                                     std::string_view prefix, GenericList &targetList)
 {
     // Clear our current list of sites
     generatedSites_.clear();

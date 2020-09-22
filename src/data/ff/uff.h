@@ -23,6 +23,7 @@
 
 #include "data/ff.h"
 #include "data/ff/uffatomtype.h"
+#include "templates/optionalref.h"
 
 // Forward Declarations
 class CoreData;
@@ -37,38 +38,52 @@ class SpeciesTorsion;
 class Forcefield_UFF : public Forcefield
 {
     public:
-    Forcefield_UFF();
-    ~Forcefield_UFF();
+    Forcefield_UFF() = default;
+    ~Forcefield_UFF() = default;
+
+    /*
+     * Set Up
+     */
+    protected:
+    // Set up / create all forcefield terms
+    bool setUp();
 
     /*
      * Definition
      */
     public:
     // Return name of Forcefield
-    const char *name() const;
+    std::string_view name() const;
     // Return description for Forcefield
-    const char *description() const;
+    std::string_view description() const;
     // Return short-range interaction style for AtomTypes
     Forcefield::ShortRangeType shortRangeType() const;
 
     /*
      * Atom Type Data
      */
-    public:
+    private:
+    // Return UFF atom types
+    const std::vector<UFFAtomType> &uffAtomTypes() const;
+    // Return UFF atom type with name specified
+    OptionalReferenceWrapper<const UFFAtomType> uffAtomTypeByName(std::string_view name) const;
+    // Return first UFF atom type for specified element
+    OptionalReferenceWrapper<const UFFAtomType> uffAtomTypeForElement(int el) const;
     // Determine and return atom type for specified SpeciesAtom
-    ForcefieldAtomType *determineAtomType(SpeciesAtom *i) const;
+    OptionalReferenceWrapper<const UFFAtomType> determineUFFAtomType(SpeciesAtom *i) const;
 
     /*
      * Term Assignment
      */
     private:
     // Generate bond parameters for the supplied UFF atom types
-    bool generateBondTerm(const Species *sp, SpeciesBond *bondTerm, UFFAtomType *i, UFFAtomType *j) const;
+    bool generateBondTerm(const Species *sp, SpeciesBond &bond, const UFFAtomType &i, const UFFAtomType &j) const;
     // Generate angle parameters for the supplied UFF atom types
-    bool generateAngleTerm(const Species *sp, SpeciesAngle *angleTerm, UFFAtomType *i, UFFAtomType *j, UFFAtomType *k) const;
+    bool generateAngleTerm(const Species *sp, SpeciesAngle &angle, const UFFAtomType &i, const UFFAtomType &j,
+                           const UFFAtomType &k) const;
     // Generate torsion parameters for the supplied UFF atom types
-    bool generateTorsionTerm(const Species *sp, SpeciesTorsion *torsionTerm, UFFAtomType *i, UFFAtomType *j, UFFAtomType *k,
-                             UFFAtomType *l) const;
+    bool generateTorsionTerm(const Species *sp, SpeciesTorsion &torsionTerm, const UFFAtomType &i, const UFFAtomType &j,
+                             const UFFAtomType &k, const UFFAtomType &l) const;
 
     public:
     // Assign suitable AtomTypes to the supplied Species

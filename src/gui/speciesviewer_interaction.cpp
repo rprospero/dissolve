@@ -32,7 +32,7 @@
 SpeciesAtom *SpeciesViewer::atomAt(int x, int y)
 {
     if (!species_)
-        return NULL;
+        return nullptr;
 
     double lengthScale;
     Vec3<double> rScreen;
@@ -54,7 +54,7 @@ SpeciesAtom *SpeciesViewer::atomAt(int x, int y)
             return i;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /*
@@ -251,7 +251,7 @@ void SpeciesViewer::endInteraction()
             // don't try to remove a bonv
             j = atomAt(rMouseLast_.x, rMouseLast_.y);
             if (j == clickedAtom_)
-                j = NULL;
+                j = nullptr;
 
             // If there is an atom 'j', search for the bond to delete. Otherwise, delete clickedAtom_
             if (!j)
@@ -269,7 +269,7 @@ void SpeciesViewer::endInteraction()
             postRedisplay();
             break;
         default:
-            printf("Internal Error: Don't know how to complete interaction mode %i\n", interactionMode());
+            Messenger::error("Don't know how to complete interaction mode {}\n", interactionMode());
             break;
     }
 }
@@ -285,7 +285,7 @@ void SpeciesViewer::cancelInteraction()
     }
 
     // Reset other data
-    clickedAtom_ = NULL;
+    clickedAtom_ = nullptr;
 }
 
 /*
@@ -293,7 +293,7 @@ void SpeciesViewer::cancelInteraction()
  */
 
 // Return text describing current interaction mode
-const char *SpeciesViewer::interactionModeText() const
+const QString SpeciesViewer::interactionModeText() const
 {
     switch (interactionMode())
     {

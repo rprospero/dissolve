@@ -26,7 +26,7 @@
 // Update current Isotopologues
 void Species::updateIsotopologues()
 {
-    for (auto *iso = isotopologues_.first(); iso != NULL; iso = iso->next())
+    for (auto *iso = isotopologues_.first(); iso != nullptr; iso = iso->next())
         iso->update();
 }
 
@@ -44,7 +44,7 @@ Isotopologue *Species::naturalIsotopologue()
 }
 
 // Add a new Isotopologue to this species
-Isotopologue *Species::addIsotopologue(const char *baseName)
+Isotopologue *Species::addIsotopologue(std::string_view baseName)
 {
     Isotopologue *iso = isotopologues_.add();
     iso->setParent(this);
@@ -57,23 +57,12 @@ Isotopologue *Species::addIsotopologue(const char *baseName)
 // Remove specified Isotopologue from this Species
 void Species::removeIsotopologue(Isotopologue *iso)
 {
-    if (iso == NULL)
+    if (iso == nullptr)
         Messenger::error("NULL_POINTER - NULL Isotopologue passed to Species::removeIsotopologue().\n");
     else if (isotopologues_.contains(iso))
     {
-        CharString tempName = iso->name();
+        Messenger::print("Removing Isotopologue '{}' from Species '{}'.\n", iso->name(), name_);
         isotopologues_.remove(iso);
-        Messenger::print("Removed Isotopologue '%s' from Species '%s'.\n", tempName.get(), name_.get());
-    }
-    else
-    {
-        Messenger::print("BAD_REMOVE - Can't remove specified Isotopologue '%s' from Species '%s' since it doesn't exist.\n",
-                         iso->name(), name_.get());
-        if (iso->parent() == NULL)
-            Messenger::print("BAD_CLASS - No parent pointer set in Isotopologue '%s'.\n", iso->name());
-        else
-            Messenger::print("BAD_REMOVE - Parent Species (%s) of Isotopologue '%s' is different from this one (%s).\n",
-                             iso->parent()->name(), iso->name(), name());
     }
 }
 
@@ -90,48 +79,32 @@ const List<Isotopologue> &Species::isotopologues() const { return isotopologues_
 bool Species::hasIsotopologue(const Isotopologue *iso) const { return isotopologues_.contains(iso); }
 
 // Generate unique Isotopologue name with base name provided
-const char *Species::uniqueIsotopologueName(const char *base, const Isotopologue *exclude) const
+std::string Species::uniqueIsotopologueName(std::string_view base, const Isotopologue *exclude)
 {
-    static CharString uniqueName;
-    CharString baseName = base;
-    Isotopologue *iso;
-    auto highest = -1;
+    std::string_view baseName = base.empty() ? "Unnamed" : base;
+    std::string uniqueName{baseName};
 
-    if (baseName.isEmpty())
-        baseName = "Unnamed";
-
-    // Find all existing names which are the same as 'baseName' up to the first '_', and get the highest appended number
-    if (DissolveSys::sameString(baseName, "Natural"))
-        highest = 0;
-    for (iso = isotopologues_.first(); iso != NULL; iso = iso->next())
-    {
-        if (iso == exclude)
-            continue;
-        if (strcmp(baseName, iso->name()) == 0)
-            highest = 0;
-        else if (strcmp(baseName, DissolveSys::beforeLastChar(iso->name(), '_')) == 0)
-            highest = atoi(DissolveSys::afterLastChar(iso->name(), '_'));
-    }
-    if (highest > -1)
-        uniqueName.sprintf("%s_%i", baseName.get(), ++highest);
-    else
-        uniqueName = baseName;
+    auto suffix = 0;
+    while (findIsotopologue(uniqueName, exclude))
+        uniqueName = fmt::format("{}{}", baseName, ++suffix);
 
     return uniqueName;
 }
 
 // Search for Isotopologue by name
-Isotopologue *Species::findIsotopologue(const char *name)
+Isotopologue *Species::findIsotopologue(std::string_view name, const Isotopologue *exclude)
 {
     // Check for the natural Isotopologue
     if (DissolveSys::sameString("Natural", name))
         return naturalIsotopologue();
 
-    for (auto *iso = isotopologues_.first(); iso != NULL; iso = iso->next())
-        if (DissolveSys::sameString(name, iso->name()))
+    for (auto *iso = isotopologues_.first(); iso != nullptr; iso = iso->next())
+        if (iso == exclude)
+            continue;
+        else if (DissolveSys::sameString(name, iso->name()))
             return iso;
 
-    return NULL;
+    return nullptr;
 }
 
 // Return index of specified Isotopologue

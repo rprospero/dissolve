@@ -32,7 +32,7 @@ class Species;
 class AddSpeciesProcedureNode : public ProcedureNode
 {
     public:
-    AddSpeciesProcedureNode(Species *sp = NULL, NodeValue population = 0, NodeValue density = 0.1,
+    AddSpeciesProcedureNode(Species *sp = nullptr, NodeValue population = 0, NodeValue density = 0.1,
                             Units::DensityUnits densityUnits = Units::AtomsPerAngstromUnits);
     ~AddSpeciesProcedureNode();
 
@@ -75,8 +75,8 @@ class AddSpeciesProcedureNode : public ProcedureNode
      */
     public:
     // Prepare any necessary data, ready for execution
-    bool prepare(Configuration *cfg, const char *prefix, GenericList &targetList);
+    bool prepare(Configuration *cfg, std::string_view prefix, GenericList &targetList);
     // Execute node, targetting the supplied Configuration
-    ProcedureNode::NodeExecutionResult execute(ProcessPool &procPool, Configuration *cfg, const char *prefix,
+    ProcedureNode::NodeExecutionResult execute(ProcessPool &procPool, Configuration *cfg, std::string_view prefix,
                                                GenericList &targetList);
 };

@@ -22,6 +22,8 @@
 #pragma once
 #include <execution>
 
+#include <optional>
+
 // Perform an operation on every pair of elements in a container
 template <class Iter, class Lam> void for_each_pair(Iter begin, Iter end, Lam lambda)
 {
@@ -36,7 +38,6 @@ template <class Iter, class Lam> void for_each_pair(Iter begin, Iter end, Lam la
     }
 }
 
-// Perform an operation on every pair of elements in a container
 template <class Iter, class Lam> void for_each_pair_parallel(Iter begin, Iter end, Lam lambda)
 {
     for (auto elem1 = begin; elem1 != end; ++elem1)
@@ -44,4 +45,21 @@ template <class Iter, class Lam> void for_each_pair_parallel(Iter begin, Iter en
       std::for_each(std::execution::par, elem1, end,
 		    [&elem1, &lambda](auto &elem2){ lambda(*elem1, elem2); });
     }
+}
+
+template <class Iter, class Lam>
+auto for_each_pair_early(Iter begin, Iter end, Lam lambda) -> std::optional<decltype(lambda(0, *begin, 0, *end))>
+{
+    int i = 0;
+    for (auto elem1 = begin; elem1 != end; ++elem1, ++i)
+    {
+        int j = i;
+        for (auto elem2 = elem1; elem2 != end; ++elem2, ++j)
+        {
+            auto result = lambda(i, *elem1, j, *elem2);
+            if (result)
+                return result;
+        }
+    }
+    return std::nullopt;
 }

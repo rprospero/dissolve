@@ -23,7 +23,7 @@
 #include "classes/atom.h"
 #include "classes/box.h"
 
-Molecule::Molecule() { species_ = NULL; }
+Molecule::Molecule() { species_ = nullptr; }
 
 Molecule::~Molecule() {}
 
@@ -34,7 +34,7 @@ Molecule::~Molecule() {}
 // Clear object, ready for re-use
 void Molecule::clear()
 {
-    species_ = NULL;
+    species_ = nullptr;
 
     atoms_.clear();
 }
@@ -54,8 +54,8 @@ void Molecule::addAtom(Atom *i)
 {
     atoms_.push_back(i);
 
-    if (i->molecule() != NULL)
-        Messenger::warn("Molecule parent is already set in Atom id %i, and we are about to overwrite it...\n", i->arrayIndex());
+    if (i->molecule() != nullptr)
+        Messenger::warn("Molecule parent is already set in Atom id {}, and we are about to overwrite it...\n", i->arrayIndex());
     std::shared_ptr<Molecule> parent = shared_from_this();
     i->setMolecule(parent);
 }
@@ -65,6 +65,7 @@ int Molecule::nAtoms() const { return atoms_.size(); }
 
 // Return atoms array
 std::vector<Atom *> &Molecule::atoms() { return atoms_; }
+const std::vector<Atom *> &Molecule::atoms() const { return atoms_; }
 
 // Return nth Atom pointer
 Atom *Molecule::atom(int n) const
@@ -72,8 +73,8 @@ Atom *Molecule::atom(int n) const
 #ifdef CHECKS
     if ((n < 0) || (n >= nAtoms()))
     {
-        Messenger::print("OUT_OF_RANGE - Atom index %i is out of range in Molecule::atom().\n", n);
-        return NULL;
+        Messenger::print("OUT_OF_RANGE - Atom index {} is out of range in Molecule::atom().\n", n);
+        return nullptr;
     }
 #endif
     return atoms_[n];
@@ -128,15 +129,15 @@ void Molecule::transform(const Box *box, const Matrix3 &transformationMatrix)
 }
 
 // Transform selected atoms with supplied matrix, around specified origin
-void Molecule::transform(const Box *box, const Matrix3 &transformationMatrix, const Vec3<double> &origin, int nTargetAtoms,
-                         int *targetAtoms)
+void Molecule::transform(const Box *box, const Matrix3 &transformationMatrix, const Vec3<double> &origin,
+                         const std::vector<int> &targetAtoms)
 {
     // Loop over supplied Atoms
     Vec3<double> newR;
     Atom *i;
-    for (int n = 0; n < nTargetAtoms; ++n)
+    for (const auto index : targetAtoms)
     {
-        i = atom(targetAtoms[n]);
+        i = atom(index);
         newR = transformationMatrix * box->minimumVector(origin, i->r()) + origin;
         i->setCoordinates(newR);
     }
@@ -150,8 +151,8 @@ void Molecule::translate(const Vec3<double> delta)
 }
 
 // Translate specified atoms by the delta specified
-void Molecule::translate(const Vec3<double> &delta, int nTargetAtoms, int *targetAtoms)
+void Molecule::translate(const Vec3<double> &delta, const std::vector<int> &targetAtoms)
 {
-    for (int n = 0; n < nTargetAtoms; ++n)
-        atom(targetAtoms[n])->translateCoordinates(delta);
+    for (const auto i : targetAtoms)
+        atom(i)->translateCoordinates(delta);
 }

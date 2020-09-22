@@ -34,6 +34,25 @@
 #include "data/fftorsionterm.h"
 
 /*
+ * Set Up
+ */
+
+// Prepare forcefield for use
+bool Forcefield::prepare()
+{
+    if (!setUp())
+        return false;
+
+    // Create reference vectors of atom types by element
+    atomTypesByElementPrivate_.resize(Elements::nElements());
+
+    for (auto &atomType : atomTypes_)
+        atomTypesByElementPrivate_[atomType.Z()].push_back(atomType);
+
+    return true;
+}
+
+/*
  * Definition
  */
 
@@ -55,38 +74,41 @@ EnumOptions<Forcefield::ShortRangeType> Forcefield::shortRangeTypes()
  */
 
 // Add new atom type with its own parameters
-void Forcefield::addAtomType(int Z, int index, const char *name, const char *netaDefinition, const char *description, double q,
-                             double data0, double data1, double data2, double data3)
+void Forcefield::addAtomType(int Z, int index, std::string_view name, std::string_view netaDefinition,
+                             std::string_view description, double q, double data0, double data1, double data2, double data3)
 {
     atomTypes_.emplace_back(this, Z, index, name, netaDefinition, description, q, data0, data1, data2, data3);
-
-    atomTypesByElementPrivate_[Z].push_back(atomTypes_.back());
 }
 
 // Add new atom type referencing existing parameters by name
-void Forcefield::addAtomType(int Z, int index, const char *name, const char *netaDefinition, const char *description, double q,
-                             const char *parameterReference)
+void Forcefield::addAtomType(int Z, int index, std::string_view name, std::string_view netaDefinition,
+                             std::string_view description, double q, std::string_view parameterReference)
 {
-    atomTypesByElementPrivate_[Z].push_back(atomTypes_.back());
+    atomTypes_.emplace_back(this, Z, index, name, netaDefinition, description, q, parameterReference);
 }
 
 // Copy existing atom type
-void Forcefield::copyAtomType(const ForcefieldAtomType &sourceType, const char *newTypeName, const char *netaDefinition,
-                              const char *equivalentName)
+bool Forcefield::copyAtomType(OptionalReferenceWrapper<const ForcefieldAtomType> sourceTypeRef, std::string_view newTypeName,
+                              std::string_view netaDefinition, std::string_view equivalentName)
 {
-    atomTypes_.emplace_back(this, sourceType, newTypeName, netaDefinition, equivalentName);
+    // Check for valid reference
+    if (!sourceTypeRef)
+        return Messenger::error("Can't copy atom type with new name '{}' into forcefield '{}' as no sourceType was provided.\n",
+                                newTypeName, name());
 
-    atomTypesByElementPrivate_[atomTypes_.back().Z()].push_back(atomTypes_.back());
+    atomTypes_.emplace_back(this, *sourceTypeRef, newTypeName, netaDefinition, equivalentName);
+
+    return true;
 }
 
 // Determine and return atom type for specified SpeciesAtom from supplied Array of types
-ForcefieldAtomType *
+OptionalReferenceWrapper<const ForcefieldAtomType>
 Forcefield::determineAtomType(SpeciesAtom *i,
-                              const std::vector<std::vector<std::reference_wrapper<ForcefieldAtomType>>> &atomTypes)
+                              const std::vector<std::vector<std::reference_wrapper<const ForcefieldAtomType>>> &atomTypes)
 {
     // Go through AtomTypes defined for the target's element, and check NETA scores
     auto bestScore = -1;
-    ForcefieldAtomType *bestType = NULL;
+    OptionalReferenceWrapper<const ForcefieldAtomType> bestType;
     for (const auto &typeRef : atomTypes[i->element()->Z()])
     {
         // Get the scoring for this type
@@ -95,7 +117,7 @@ Forcefield::determineAtomType(SpeciesAtom *i,
         if (score > bestScore)
         {
             bestScore = score;
-            bestType = &type;
+            bestType = type;
         }
     }
 
@@ -103,62 +125,73 @@ Forcefield::determineAtomType(SpeciesAtom *i,
 }
 
 // Determine and return atom type for specified SpeciesAtom
-ForcefieldAtomType *Forcefield::determineAtomType(SpeciesAtom *i) const
+OptionalReferenceWrapper<const ForcefieldAtomType> Forcefield::determineAtomType(SpeciesAtom *i) const
 {
     return determineAtomType(i, atomTypesByElementPrivate_);
 }
 
 // Ass short-range parameters
-void Forcefield::addParameters(const char *name, double data0, double data1, double data2, double data3)
+void Forcefield::addParameters(std::string_view name, double data0, double data1, double data2, double data3)
 {
     shortRangeParameters_.emplace_back(name, data0, data1, data2, data3);
 }
 
+// Create NETA definitions for all atom types from stored defs
+bool Forcefield::createNETADefinitions()
+{
+    auto nFailed =
+        std::count_if(atomTypes_.begin(), atomTypes_.end(), [this](auto &atomType) { return !atomType.createNETA(this); });
+
+    if (nFailed > 0)
+        Messenger::error("Failed to create {} NETA {} for the forcefield '{}'.\n", nFailed,
+                         nFailed == 1 ? "definition" : "definitions", name());
+
+    return (nFailed == 0);
+}
+
 // Return named short-range parameters (if they exist)
-const ForcefieldParameters *Forcefield::shortRangeParameters(const char *name) const
+const OptionalReferenceWrapper<const ForcefieldParameters> Forcefield::shortRangeParameters(std::string_view name) const
 {
     auto it = std::find_if(shortRangeParameters_.begin(), shortRangeParameters_.end(),
                            [&name](const auto &params) { return DissolveSys::sameString(name, params.name()); });
     if (it != shortRangeParameters_.end())
-        return &*it;
+        return *it;
 
-    return nullptr;
+    return {};
 }
 
 // Return the named ForcefieldAtomType (if it exists)
-ForcefieldAtomType *Forcefield::atomTypeByName(const char *name, Element *element) const
+OptionalReferenceWrapper<const ForcefieldAtomType> Forcefield::atomTypeByName(std::string_view name, Element *element) const
 {
     auto startZ = (element ? element->Z() : 0);
     auto endZ = (element ? element->Z() : nElements() - 1);
     for (int Z = startZ; Z <= endZ; ++Z)
     {
         // Go through types associated to the Element
-        auto it = std::find_if(atomTypesByElementPrivate_[Z].begin(), atomTypesByElementPrivate_[Z].end(),
-                               [&name](ForcefieldAtomType &type) { return DissolveSys::sameString(type.name(), name); });
+        auto it = std::find_if(atomTypesByElementPrivate_[Z].cbegin(), atomTypesByElementPrivate_[Z].cend(),
+                               [&name](const auto &type) { return DissolveSys::sameString(type.get().name(), name); });
         if (it != atomTypesByElementPrivate_[Z].end())
-        {
-            return &it->get();
-        }
+            return OptionalReferenceWrapper<const ForcefieldAtomType>(*it);
     }
 
-    return NULL;
+    return {};
 }
 
 // Return the ForcefieldAtomType with specified id (if it exists)
-ForcefieldAtomType *Forcefield::atomTypeById(int id, Element *element) const
+OptionalReferenceWrapper<const ForcefieldAtomType> Forcefield::atomTypeById(int id, Element *element) const
 {
     auto startZ = (element ? element->Z() : 0);
     auto endZ = (element ? element->Z() : nElements() - 1);
     for (int Z = startZ; Z <= endZ; ++Z)
     {
         // Go through types associated to the Element
-        auto it = std::find_if(atomTypesByElementPrivate_[Z].begin(), atomTypesByElementPrivate_[Z].end(),
-                               [&id](ForcefieldAtomType &type) { return type.index() == id; });
+        auto it = std::find_if(atomTypesByElementPrivate_[Z].cbegin(), atomTypesByElementPrivate_[Z].cend(),
+                               [&id](const auto &type) { return type.get().index() == id; });
         if (it != atomTypesByElementPrivate_[Z].end())
-            return &it->get();
+            return OptionalReferenceWrapper<const ForcefieldAtomType>(*it);
     }
 
-    return NULL;
+    return {};
 }
 
 /*
@@ -166,60 +199,61 @@ ForcefieldAtomType *Forcefield::atomTypeById(int id, Element *element) const
  */
 
 // Add bond term
-void Forcefield::addBondTerm(const char *typeI, const char *typeJ, SpeciesBond::BondFunction form, double data0, double data1,
-                             double data2, double data3)
+void Forcefield::addBondTerm(std::string_view typeI, std::string_view typeJ, SpeciesBond::BondFunction form,
+                             const std::vector<double> parameters)
 {
-    bondTerms_.emplace_back(typeI, typeJ, form, data0, data1, data2, data3);
+    bondTerms_.emplace_back(typeI, typeJ, form, parameters);
 }
 
 // Add angle term
-void Forcefield::addAngleTerm(const char *typeI, const char *typeJ, const char *typeK, SpeciesAngle::AngleFunction form,
-                              double data0, double data1, double data2, double data3)
+void Forcefield::addAngleTerm(std::string_view typeI, std::string_view typeJ, std::string_view typeK,
+                              SpeciesAngle::AngleFunction form, const std::vector<double> parameters)
 {
-    angleTerms_.emplace_back(typeI, typeJ, typeK, form, data0, data1, data2, data3);
+    angleTerms_.emplace_back(typeI, typeJ, typeK, form, parameters);
 }
 
 // Add torsion term
-void Forcefield::addTorsionTerm(const char *typeI, const char *typeJ, const char *typeK, const char *typeL,
-                                SpeciesTorsion::TorsionFunction form, double data0, double data1, double data2, double data3)
+void Forcefield::addTorsionTerm(std::string_view typeI, std::string_view typeJ, std::string_view typeK, std::string_view typeL,
+                                SpeciesTorsion::TorsionFunction form, const std::vector<double> parameters)
 {
-    torsionTerms_.emplace_back(typeI, typeJ, typeK, typeL, form, data0, data1, data2, data3);
+    torsionTerms_.emplace_back(typeI, typeJ, typeK, typeL, form, parameters);
 }
 
 // Add improper term
-void Forcefield::addImproperTerm(const char *typeI, const char *typeJ, const char *typeK, const char *typeL,
-                                 SpeciesImproper::ImproperFunction form, double data0, double data1, double data2, double data3)
+void Forcefield::addImproperTerm(std::string_view typeI, std::string_view typeJ, std::string_view typeK, std::string_view typeL,
+                                 SpeciesImproper::ImproperFunction form, const std::vector<double> parameters)
 {
-    improperTerms_.emplace_back(typeI, typeJ, typeK, typeL, form, data0, data1, data2, data3);
+    improperTerms_.emplace_back(typeI, typeJ, typeK, typeL, form, parameters);
 }
 
 // Return bond term for the supplied atom type pair (if it exists)
-std::optional<std::reference_wrapper<const ForcefieldBondTerm>> Forcefield::getBondTerm(const ForcefieldAtomType *i,
-                                                                                        const ForcefieldAtomType *j) const
+OptionalReferenceWrapper<const ForcefieldBondTerm> Forcefield::getBondTerm(const ForcefieldAtomType &i,
+                                                                           const ForcefieldAtomType &j) const
 {
     return termMatch_(bondTerms_, i, j);
 }
 
 // Return angle term for the supplied atom type trio (if it exists)
-std::optional<std::reference_wrapper<const ForcefieldAngleTerm>>
-Forcefield::getAngleTerm(const ForcefieldAtomType *i, const ForcefieldAtomType *j, const ForcefieldAtomType *k) const
+OptionalReferenceWrapper<const ForcefieldAngleTerm>
+Forcefield::getAngleTerm(const ForcefieldAtomType &i, const ForcefieldAtomType &j, const ForcefieldAtomType &k) const
 {
     return termMatch_(angleTerms_, i, j, k);
 }
 
 // Return torsion term for the supplied atom type quartet (if it exists)
-std::optional<std::reference_wrapper<const ForcefieldTorsionTerm>> Forcefield::getTorsionTerm(const ForcefieldAtomType *i,
-                                                                                              const ForcefieldAtomType *j,
-                                                                                              const ForcefieldAtomType *k,
-                                                                                              const ForcefieldAtomType *l) const
+OptionalReferenceWrapper<const ForcefieldTorsionTerm> Forcefield::getTorsionTerm(const ForcefieldAtomType &i,
+                                                                                 const ForcefieldAtomType &j,
+                                                                                 const ForcefieldAtomType &k,
+                                                                                 const ForcefieldAtomType &l) const
 {
     return termMatch_(torsionTerms_, i, j, k, l);
 }
 
 // Return improper term for the supplied atom type quartet (if it exists)
-std::optional<std::reference_wrapper<const ForcefieldImproperTerm>>
-Forcefield::getImproperTerm(const ForcefieldAtomType *i, const ForcefieldAtomType *j, const ForcefieldAtomType *k,
-                            const ForcefieldAtomType *l) const
+OptionalReferenceWrapper<const ForcefieldImproperTerm> Forcefield::getImproperTerm(const ForcefieldAtomType &i,
+                                                                                   const ForcefieldAtomType &j,
+                                                                                   const ForcefieldAtomType &k,
+                                                                                   const ForcefieldAtomType &l) const
 {
     return termMatch_(improperTerms_, i, j, k, l);
 }
@@ -231,74 +265,78 @@ Forcefield::getImproperTerm(const ForcefieldAtomType *i, const ForcefieldAtomTyp
 // Assign suitable AtomType to the supplied atom
 bool Forcefield::assignAtomType(SpeciesAtom *i, CoreData &coreData) const
 {
-    ForcefieldAtomType *atomType = determineAtomType(i);
-    if (atomType)
-    {
-        // Check if an AtomType of the same name already exists - if it does, just use that one
-        AtomType *at = coreData.findAtomType(atomType->name());
-        if (!at)
-        {
-            at = coreData.addAtomType(i->element());
-            at->setName(atomType->name());
+    auto optRef = determineAtomType(i);
+    if (!optRef)
+        return false;
 
+    const ForcefieldAtomType &atomType = *optRef;
+
+    // Check if an AtomType of the same name already exists - if it does, just use that one
+    auto at = coreData.findAtomType(atomType.name());
+    if (!at)
+    {
+        at = coreData.addAtomType(i->element());
+        at->setName(atomType.name());
+
+        // Copy parameters from the Forcefield's atom type
+        at->parameters() = atomType.parameters();
+        at->setShortRangeType(shortRangeType());
+
+        // The atomType may reference parameters, rather than owning them, so set charge explicitly
+        at->parameters().setCharge(atomType.charge());
+
+        Messenger::print("Adding AtomType '{}' for atom {} ({}).\n", at->name(), i->userIndex(), i->element()->symbol());
+    }
+    else
+    {
+        Messenger::print("Re-using AtomType '{}' for atom {} ({}).\n", at->name(), i->userIndex(), i->element()->symbol());
+
+        // If the current atomtype is empty, set its parameters
+        if (at->parameters().isEmpty())
+        {
             // Copy parameters from the Forcefield's atom type
-            at->parameters() = atomType->parameters();
+            at->parameters() = atomType.parameters();
             at->setShortRangeType(shortRangeType());
 
             // The atomType may reference parameters, rather than owning them, so set charge explicitly
-            at->parameters().setCharge(atomType->charge());
-
-            Messenger::print("Adding AtomType '%s' for atom %i (%s).\n", at->name(), i->userIndex(), i->element()->symbol());
+            at->parameters().setCharge(atomType.charge());
         }
-        else
-        {
-            Messenger::print("Re-using AtomType '%s' for atom %i (%s).\n", at->name(), i->userIndex(), i->element()->symbol());
-
-            // If the current atomtype is empty, set its parameters
-            if (at->parameters().isEmpty())
-            {
-                // Copy parameters from the Forcefield's atom type
-                at->parameters() = atomType->parameters();
-                at->setShortRangeType(shortRangeType());
-
-                // The atomType may reference parameters, rather than owning them, so set charge explicitly
-                at->parameters().setCharge(atomType->charge());
-            }
-        }
-
-        // Update SpeciesAtom
-        i->setAtomType(at);
-        i->setCharge(at->parameters().charge());
     }
 
-    return (atomType != NULL);
+    // Update SpeciesAtom
+    i->setAtomType(at);
+    i->setCharge(at->parameters().charge());
+
+    return true;
 }
 
 // Assign suitable atom types to the supplied Species, returning the number of failures
 int Forcefield::assignAtomTypes(Species *sp, CoreData &coreData, AtomTypeAssignmentStrategy strategy) const
 {
-    Messenger::print("Assigning atomtypes to species '%s' from forcefield '%s'...\n", sp->name(), name());
+    Messenger::print("Assigning atomtypes to species '{}' from forcefield '{}'...\n", sp->name(), name());
 
     // Loop over Species atoms
     auto nFailed = 0;
-    for (auto *i = sp->atoms().first(); i != NULL; i = i->next())
+    for (auto *i = sp->atoms().first(); i != nullptr; i = i->next())
     {
         // Obey the supplied strategy:
         // -- Don't reassign a type to this atom if one already exists (strategy == Forcefield::TypeMissing)
         if ((strategy == Forcefield::TypeMissing) && i->atomType())
             continue;
+
         // -- Don't assign a type unless the atom is selected (strategy == Forcefield::TypeSelection)
         if ((strategy == Forcefield::TypeSelection) && (!i->isSelected()))
             continue;
 
-        // Messenger::print("No forcefield type available for Atom %i of Species (%s).\n", i->index()+1,
-        // i->element()->symbol());
         if (!assignAtomType(i, coreData))
+        {
+            Messenger::error("No matching forcefield type for atom {} ({}).\n", i->userIndex(), i->element()->symbol());
             ++nFailed;
+        }
     }
 
     if (nFailed)
-        Messenger::error("Failed to assign atom %s to %i %s.\n", (nFailed == 1 ? "type" : "types"), nFailed,
+        Messenger::error("Failed to assign atom {} to {} {}.\n", (nFailed == 1 ? "type" : "types"), nFailed,
                          (nFailed == 1 ? "atom" : "atoms"));
 
     return nFailed;
@@ -311,105 +349,110 @@ bool Forcefield::assignIntramolecular(Species *sp, int flags) const
      * Default implementation - search through term lists for suitable ones to apply, based on ForcefieldAtomType names.
      */
 
-    Messenger::print("Assigning intramolecular terms to species '%s' from forcefield '%s'...\n", sp->name(), name());
+    Messenger::print("Assigning intramolecular terms to species '{}' from forcefield '{}'...\n", sp->name(), name());
 
     auto determineTypes = flags & Forcefield::DetermineTypesFlag;
     auto selectionOnly = flags & Forcefield::SelectionOnlyFlag;
 
     // Assign bond terms
-    DynamicArrayIterator<SpeciesBond> bondIterator(sp->bonds());
-    while (SpeciesBond *bond = bondIterator.iterate())
+    for (auto &bond : sp->bonds())
     {
-        SpeciesAtom *i = bond->i();
-        SpeciesAtom *j = bond->j();
+        auto *i = bond.i();
+        auto *j = bond.j();
 
-        if (selectionOnly && (!bond->isSelected()))
+        if (selectionOnly && (!bond.isSelected()))
             continue;
 
-        ForcefieldAtomType *typeI = determineTypes ? determineAtomType(i) : atomTypeByName(i->atomType()->name(), i->element());
-        if (!typeI)
-            return Messenger::error("Couldn't locate object for atom type named '%s'.\n", i->atomType()->name());
-        ForcefieldAtomType *typeJ = determineTypes ? determineAtomType(j) : atomTypeByName(j->atomType()->name(), j->element());
-        if (!typeJ)
-            return Messenger::error("Couldn't locate object for atom type named '%s'.\n", j->atomType()->name());
+        auto optTypeI = determineTypes ? determineAtomType(i) : atomTypeByName(i->atomType()->name(), i->element());
+        if (!optTypeI)
+            return Messenger::error("Couldn't locate object for atom type named '{}'.\n", i->atomType()->name());
+        const ForcefieldAtomType &typeI = *optTypeI;
+        auto optTypeJ = determineTypes ? determineAtomType(j) : atomTypeByName(j->atomType()->name(), j->element());
+        if (!optTypeJ)
+            return Messenger::error("Couldn't locate object for atom type named '{}'.\n", j->atomType()->name());
+        const ForcefieldAtomType &typeJ = *optTypeJ;
 
-        auto opt_term = getBondTerm(typeI, typeJ);
-        if (!opt_term)
-        {
-            return Messenger::error("Failed to locate parameters for bond %i-%i (%s-%s).\n", i->userIndex(), j->userIndex(),
-                                    typeI->equivalentName(), typeJ->equivalentName());
-        }
-        const ForcefieldBondTerm &term = *opt_term;
-        bond->setForm(term.form());
-        bond->setParameters(term.parameters());
+        auto optTerm = getBondTerm(typeI, typeJ);
+        if (!optTerm)
+            return Messenger::error("Failed to locate parameters for bond {}-{} ({}-{}).\n", i->userIndex(), j->userIndex(),
+                                    typeI.equivalentName(), typeJ.equivalentName());
+
+        const ForcefieldBondTerm &term = *optTerm;
+        bond.setForm(term.form());
+        bond.setParameters(term.parameters());
     }
 
     // Generate angle parameters
-    DynamicArrayIterator<SpeciesAngle> angleIterator(sp->angles());
-    while (SpeciesAngle *angle = angleIterator.iterate())
+    for (auto &angle : sp->angles())
     {
-        SpeciesAtom *i = angle->i();
-        SpeciesAtom *j = angle->j();
-        SpeciesAtom *k = angle->k();
+        auto *i = angle.i();
+        auto *j = angle.j();
+        auto *k = angle.k();
 
-        if (selectionOnly && (!angle->isSelected()))
+        if (selectionOnly && (!angle.isSelected()))
             continue;
 
-        ForcefieldAtomType *typeI = determineTypes ? determineAtomType(i) : atomTypeByName(i->atomType()->name(), i->element());
-        if (!typeI)
-            return Messenger::error("Couldn't locate object for atom type named '%s'.\n", i->atomType()->name());
-        ForcefieldAtomType *typeJ = determineTypes ? determineAtomType(j) : atomTypeByName(j->atomType()->name(), j->element());
-        if (!typeJ)
-            return Messenger::error("Couldn't locate object for atom type named '%s'.\n", j->atomType()->name());
-        ForcefieldAtomType *typeK = determineTypes ? determineAtomType(k) : atomTypeByName(k->atomType()->name(), k->element());
-        if (!typeK)
-            return Messenger::error("Couldn't locate object for atom type named '%s'.\n", k->atomType()->name());
+        auto optTypeI = determineTypes ? determineAtomType(i) : atomTypeByName(i->atomType()->name(), i->element());
+        if (!optTypeI)
+            return Messenger::error("Couldn't locate object for atom type named '{}'.\n", i->atomType()->name());
+        const ForcefieldAtomType &typeI = *optTypeI;
+        auto optTypeJ = determineTypes ? determineAtomType(j) : atomTypeByName(j->atomType()->name(), j->element());
+        if (!optTypeJ)
+            return Messenger::error("Couldn't locate object for atom type named '{}'.\n", j->atomType()->name());
+        const ForcefieldAtomType &typeJ = *optTypeJ;
+        auto optTypeK = determineTypes ? determineAtomType(k) : atomTypeByName(k->atomType()->name(), k->element());
+        if (!optTypeK)
+            return Messenger::error("Couldn't locate object for atom type named '{}'.\n", k->atomType()->name());
+        const ForcefieldAtomType &typeK = *optTypeK;
 
-        auto opt_term = getAngleTerm(typeI, typeJ, typeK);
-        if (!opt_term)
-            return Messenger::error("Failed to locate parameters for angle %i-%i-%i (%s-%s-%s).\n", i->userIndex(),
-                                    j->userIndex(), k->userIndex(), typeI->equivalentName(), typeJ->equivalentName(),
-                                    typeK->equivalentName());
+        auto optTerm = getAngleTerm(typeI, typeJ, typeK);
+        if (!optTerm)
+            return Messenger::error("Failed to locate parameters for angle {}-{}-{} ({}-{}-{}).\n", i->userIndex(),
+                                    j->userIndex(), k->userIndex(), typeI.equivalentName(), typeJ.equivalentName(),
+                                    typeK.equivalentName());
 
-        const ForcefieldAngleTerm &term = *opt_term;
-        angle->setForm(term.form());
-        angle->setParameters(term.parameters());
+        const ForcefieldAngleTerm &term = *optTerm;
+        angle.setForm(term.form());
+        angle.setParameters(term.parameters());
     }
 
     // Generate torsion parameters
-    DynamicArrayIterator<SpeciesTorsion> torsionIterator(sp->torsions());
-    while (SpeciesTorsion *torsion = torsionIterator.iterate())
+    for (auto &torsion : sp->torsions())
     {
-        SpeciesAtom *i = torsion->i();
-        SpeciesAtom *j = torsion->j();
-        SpeciesAtom *k = torsion->k();
-        SpeciesAtom *l = torsion->l();
+        SpeciesAtom *i = torsion.i();
+        SpeciesAtom *j = torsion.j();
+        SpeciesAtom *k = torsion.k();
+        SpeciesAtom *l = torsion.l();
 
-        if (selectionOnly && (!torsion->isSelected()))
+        if (selectionOnly && (!torsion.isSelected()))
             continue;
 
-        ForcefieldAtomType *typeI = determineTypes ? determineAtomType(i) : atomTypeByName(i->atomType()->name(), i->element());
-        if (!typeI)
-            return Messenger::error("Couldn't locate object for atom type named '%s'.\n", i->atomType()->name());
-        ForcefieldAtomType *typeJ = determineTypes ? determineAtomType(j) : atomTypeByName(j->atomType()->name(), j->element());
-        if (!typeJ)
-            return Messenger::error("Couldn't locate object for atom type named '%s'.\n", j->atomType()->name());
-        ForcefieldAtomType *typeK = determineTypes ? determineAtomType(k) : atomTypeByName(k->atomType()->name(), k->element());
-        if (!typeK)
-            return Messenger::error("Couldn't locate object for atom type named '%s'.\n", k->atomType()->name());
-        ForcefieldAtomType *typeL = determineTypes ? determineAtomType(l) : atomTypeByName(l->atomType()->name(), l->element());
-        if (!typeL)
-            return Messenger::error("Couldn't locate object for atom type named '%s'.\n", l->atomType()->name());
+        auto optTypeI = determineTypes ? determineAtomType(i) : atomTypeByName(i->atomType()->name(), i->element());
+        if (!optTypeI)
+            return Messenger::error("Couldn't locate object for atom type named '{}'.\n", i->atomType()->name());
+        const ForcefieldAtomType &typeI = *optTypeI;
+        auto optTypeJ = determineTypes ? determineAtomType(j) : atomTypeByName(j->atomType()->name(), j->element());
+        if (!optTypeJ)
+            return Messenger::error("Couldn't locate object for atom type named '{}'.\n", j->atomType()->name());
+        const ForcefieldAtomType &typeJ = *optTypeJ;
+        auto optTypeK = determineTypes ? determineAtomType(k) : atomTypeByName(k->atomType()->name(), k->element());
+        if (!optTypeK)
+            return Messenger::error("Couldn't locate object for atom type named '{}'.\n", k->atomType()->name());
+        const ForcefieldAtomType &typeK = *optTypeK;
+        auto optTypeL = determineTypes ? determineAtomType(l) : atomTypeByName(l->atomType()->name(), l->element());
+        if (!optTypeL)
+            return Messenger::error("Couldn't locate object for atom type named '{}'.\n", l->atomType()->name());
+        const ForcefieldAtomType &typeL = *optTypeL;
 
-        auto opt_term = getTorsionTerm(typeI, typeJ, typeK, typeL);
-        if (!opt_term)
-            return Messenger::error("Failed to locate parameters for torsion %i-%i-%i-%i (%s-%s-%s-%s).\n", i->userIndex(),
-                                    j->userIndex(), k->userIndex(), l->userIndex(), typeI->equivalentName(),
-                                    typeJ->equivalentName(), typeK->equivalentName(), typeL->equivalentName());
+        auto optTerm = getTorsionTerm(typeI, typeJ, typeK, typeL);
+        if (!optTerm)
+            return Messenger::error("Failed to locate parameters for torsion {}-{}-{}-{} ({}-{}-{}-{}).\n", i->userIndex(),
+                                    j->userIndex(), k->userIndex(), l->userIndex(), typeI.equivalentName(),
+                                    typeJ.equivalentName(), typeK.equivalentName(), typeL.equivalentName());
 
-        const ForcefieldTorsionTerm &term = *opt_term;
-        torsion->setForm(term.form());
-        torsion->setParameters(term.parameters());
+        const ForcefieldTorsionTerm &term = *optTerm;
+        torsion.setForm(term.form());
+        torsion.setParameters(term.parameters());
     }
 
     // Generate improper terms
@@ -423,10 +466,10 @@ bool Forcefield::assignIntramolecular(Species *sp, int flags) const
             if (i->nBonds() < 3)
                 continue;
 
-            ForcefieldAtomType *typeI =
-                determineTypes ? determineAtomType(i) : atomTypeByName(i->atomType()->name(), i->element());
-            if (!typeI)
-                return Messenger::error("Couldn't locate object for atom type named '%s'.\n", i->atomType()->name());
+            auto optTypeI = determineTypes ? determineAtomType(i) : atomTypeByName(i->atomType()->name(), i->element());
+            if (!optTypeI)
+                return Messenger::error("Couldn't locate object for atom type named '{}'.\n", i->atomType()->name());
+            const ForcefieldAtomType &typeI = *optTypeI;
             if (selectionOnly && (!i->isSelected()))
                 continue;
 
@@ -434,51 +477,54 @@ bool Forcefield::assignIntramolecular(Species *sp, int flags) const
             for (int indexJ = 0; indexJ < i->nBonds() - 2; ++indexJ)
             {
                 // Get SpeciesAtom 'j'
-                SpeciesAtom *j = i->bond(indexJ)->partner(i);
-                ForcefieldAtomType *typeJ =
-                    determineTypes ? determineAtomType(j) : atomTypeByName(j->atomType()->name(), j->element());
-                if (!typeJ)
-                    return Messenger::error("Couldn't locate object for atom type named '%s'.\n", j->atomType()->name());
+                auto *j = i->bond(indexJ).partner(i);
+                auto optTypeJ = determineTypes ? determineAtomType(j) : atomTypeByName(j->atomType()->name(), j->element());
+                if (!optTypeJ)
+                    return Messenger::error("Couldn't locate object for atom type named '{}'.\n", j->atomType()->name());
+                const ForcefieldAtomType &typeJ = *optTypeJ;
                 if (selectionOnly && (!j->isSelected()))
                     continue;
+
                 for (int indexK = indexJ + 1; indexK < i->nBonds() - 1; ++indexK)
                 {
                     // Get SpeciesAtom 'k'
-                    SpeciesAtom *k = i->bond(indexK)->partner(i);
-                    ForcefieldAtomType *typeK =
-                        determineTypes ? determineAtomType(k) : atomTypeByName(k->atomType()->name(), k->element());
-                    if (!typeK)
-                        return Messenger::error("Couldn't locate object for atom type named '%s'.\n", k->atomType()->name());
+                    auto *k = i->bond(indexK).partner(i);
+                    auto optTypeK = determineTypes ? determineAtomType(k) : atomTypeByName(k->atomType()->name(), k->element());
+                    if (!optTypeK)
+                        return Messenger::error("Couldn't locate object for atom type named '{}'.\n", k->atomType()->name());
+                    const ForcefieldAtomType &typeK = *optTypeK;
                     if (selectionOnly && (!k->isSelected()))
                         continue;
+
                     for (int indexL = indexK + 1; indexL < i->nBonds(); ++indexL)
                     {
                         // Get SpeciesAtom 'l'
-                        SpeciesAtom *l = i->bond(indexL)->partner(i);
-                        ForcefieldAtomType *typeL =
+                        auto *l = i->bond(indexL).partner(i);
+                        auto optTypeL =
                             determineTypes ? determineAtomType(l) : atomTypeByName(l->atomType()->name(), l->element());
-                        if (!typeL)
-                            return Messenger::error("Couldn't locate object for atom type named '%s'.\n",
+                        if (!optTypeL)
+                            return Messenger::error("Couldn't locate object for atom type named '{}'.\n",
                                                     l->atomType()->name());
+                        const ForcefieldAtomType &typeL = *optTypeL;
                         if (selectionOnly && (!l->isSelected()))
                             continue;
 
-                        auto opt_term = getImproperTerm(typeI, typeJ, typeK, typeL);
-                        if (opt_term)
+                        auto optTerm = getImproperTerm(typeI, typeJ, typeK, typeL);
+                        if (optTerm)
                         {
-                            const ForcefieldImproperTerm &term = *opt_term;
+                            const ForcefieldImproperTerm &term = *optTerm;
                             // Check to see if the Species already has an improper definition - if
                             // not create one
-                            SpeciesImproper *improper = sp->improper(i, j, k, l);
+                            auto improper = sp->getImproper(i, j, k, l);
                             if (!improper)
                                 improper = sp->addImproper(i, j, k, l);
 
-                            Messenger::print("Added improper between atoms %i-%i-%i-%i (%s-%s-%s-%s).\n", i->userIndex(),
-                                             j->userIndex(), k->userIndex(), l->userIndex(), typeI->equivalentName(),
-                                             typeJ->equivalentName(), typeK->equivalentName(), typeL->equivalentName());
+                            Messenger::print("Added improper between atoms {}-{}-{}-{} ({}-{}-{}-{}).\n", i->userIndex(),
+                                             j->userIndex(), k->userIndex(), l->userIndex(), typeI.equivalentName(),
+                                             typeJ.equivalentName(), typeK.equivalentName(), typeL.equivalentName());
 
-                            improper->setForm(term.form());
-                            improper->setParameters(term.parameters());
+                            improper->get().setForm(term.form());
+                            improper->get().setParameters(term.parameters());
                         }
                     }
                 }
@@ -520,8 +566,8 @@ Forcefield::AtomGeometry Forcefield::geometryOfAtom(SpeciesAtom *i) const
             break;
         // For the remaining types, take averages of bond angles about the atom
         case (2):
-            h = i->bond(0)->partner(i);
-            j = i->bond(1)->partner(i);
+            h = i->bond(0).partner(i);
+            j = i->bond(1).partner(i);
             angle = NonPeriodicBox::literalAngleInDegrees(h->r(), i->r(), j->r());
             if (angle > 150.0)
                 result = Forcefield::LinearGeometry;
@@ -547,15 +593,15 @@ Forcefield::AtomGeometry Forcefield::geometryOfAtom(SpeciesAtom *i) const
             // 			else if ((largest > 115.0) && (largest < 125.0)) result =
             // Forcefield::TrigPlanarGeometry; 			else if ((largest < 115.0) && (largest > 100.0))
             // result = Forcefield::TetrahedralGeometry; Get largest of the three angles around the central atom
-            h = i->bond(0)->partner(i);
-            j = i->bond(1)->partner(i);
+            h = i->bond(0).partner(i);
+            j = i->bond(1).partner(i);
             angle = NonPeriodicBox::literalAngleInDegrees(h->r(), i->r(), j->r());
             largest = angle;
-            j = i->bond(2)->partner(i);
+            j = i->bond(2).partner(i);
             angle = NonPeriodicBox::literalAngleInDegrees(h->r(), i->r(), j->r());
             if (angle > largest)
                 largest = angle;
-            h = i->bond(1)->partner(i);
+            h = i->bond(1).partner(i);
             angle = NonPeriodicBox::literalAngleInDegrees(h->r(), i->r(), j->r());
             if (angle > largest)
                 largest = angle;
@@ -574,10 +620,10 @@ Forcefield::AtomGeometry Forcefield::geometryOfAtom(SpeciesAtom *i) const
             angle = 0.0;
             for (int n = 0; n < i->nBonds(); ++n)
             {
-                h = i->bond(n)->partner(i);
+                h = i->bond(n).partner(i);
                 for (int m = n + 1; m < i->nBonds(); ++m)
                 {
-                    j = i->bond(m)->partner(i);
+                    j = i->bond(m).partner(i);
                     angle += NonPeriodicBox::literalAngleInDegrees(h->r(), i->r(), j->r());
                 }
             }
@@ -602,9 +648,9 @@ bool Forcefield::isBondPattern(const SpeciesAtom *i, const int nSingle, const in
                                const int nQuadruple, const int nAromatic) const
 {
     auto actualNSingle = 0, actualNDouble = 0, actualNTriple = 0, actualNQuadruple = 0, actualNAromatic = 0;
-    for (const auto *bond : i->bonds())
+    for (const SpeciesBond &bond : i->bonds())
     {
-        switch (bond->bondType())
+        switch (bond.bondType())
         {
             case (SpeciesBond::SingleBond):
                 if (nSingle == actualNSingle)
@@ -655,11 +701,8 @@ bool Forcefield::isBondPattern(const SpeciesAtom *i, const int nSingle, const in
 // Return whether the specified atom is bound to a specific element (and count thereof)
 bool Forcefield::isBoundTo(const SpeciesAtom *i, Element *element, const int count, bool allowMoreThanCount) const
 {
-    auto found = 0;
-
-    for (const auto *bond : i->bonds())
-        if (bond->partner(i)->element() == element)
-            ++found;
+    auto found = std::count_if(i->bonds().begin(), i->bonds().end(),
+                               [i, element](const SpeciesBond &bond) { return bond.partner(i)->element() == element; });
 
     return (found < count ? false : (found == count ? true : allowMoreThanCount));
 }
@@ -679,10 +722,10 @@ int Forcefield::guessOxidationState(const SpeciesAtom *i) const
     // (OS == 0)
     auto nSameElement = 0;
 
-    const std::vector<SpeciesBond *> &bonds = i->bonds();
-    for (const auto *bond : bonds)
+    const auto &bonds = i->bonds();
+    for (const SpeciesBond &bond : bonds)
     {
-        Element *element = bond->partner(i)->element();
+        Element *element = bond.partner(i)->element();
         switch (element->Z())
         {
             // Group 1A - Alkali earth metals (includes Hydrogen)
@@ -706,7 +749,7 @@ int Forcefield::guessOxidationState(const SpeciesAtom *i) const
                 break;
             // Oxygen
             case (ELEMENT_O):
-                if (bond->bondType() == SpeciesBond::DoubleBond)
+                if (bond.bondType() == SpeciesBond::DoubleBond)
                     osBound -= 2;
                 else
                     osBound -= 1;

@@ -31,7 +31,7 @@ class SpeciesSite;
 class SpeciesSiteKeyword : public KeywordData<SpeciesSite *>
 {
     public:
-    SpeciesSiteKeyword(SpeciesSite *site = NULL, bool axesRequired = false);
+    SpeciesSiteKeyword(SpeciesSite *site = nullptr, bool axesRequired = false);
     ~SpeciesSiteKeyword();
 
     /*
@@ -56,7 +56,7 @@ class SpeciesSiteKeyword : public KeywordData<SpeciesSite *>
     // Parse arguments from supplied LineParser, starting at given argument offset
     bool read(LineParser &parser, int startArg, CoreData &coreData);
     // Write keyword data to specified LineParser
-    bool write(LineParser &parser, const char *keywordName, const char *prefix);
+    bool write(LineParser &parser, std::string_view keywordName, std::string_view prefix);
 
     /*
      * Object Management

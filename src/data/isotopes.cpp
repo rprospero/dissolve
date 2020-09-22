@@ -29,7 +29,7 @@ Array<List<Isotope>> Isotopes::isotopesByElementPrivate_;
  * Isotopic Neutron Scattering Data
  */
 
-Isotope::Isotope(int z, int A, const char *spin, double mass, double bc, double bi, double sc, double si, double totalxs,
+Isotope::Isotope(int z, int A, std::string_view spin, double mass, double bc, double bi, double sc, double si, double totalxs,
                  double absxs)
     : ElementReference(z), ListItem<Isotope>()
 {
@@ -500,7 +500,7 @@ List<Isotope> &Isotopes::isotopesByElement(int Z)
 
     if ((Z < 0) || (Z > nElements()))
     {
-        Messenger::error("Isotopes::isotopesByElement() - Element with Z=%i is out of range!\n", Z);
+        Messenger::error("Isotopes::isotopesByElement() - Element with Z={} is out of range!\n", Z);
         return isotopesByElementPrivate_[0];
     }
 
@@ -513,20 +513,20 @@ void Isotopes::registerIsotope(Isotope *isotope, int Z) { isotopesByElementPriva
 // Return Isotope with specified A for given Element (if it exists)
 Isotope *Isotopes::isotope(int Z, int A)
 {
-    for (auto *isotope = isotopesByElement(Z).first(); isotope != NULL; isotope = isotope->next())
+    for (auto *isotope = isotopesByElement(Z).first(); isotope != nullptr; isotope = isotope->next())
         if (isotope->A() == A)
             return isotope;
 
-    return NULL;
+    return nullptr;
 }
 
 // Return Isotope with specified A for given Element (if it exists)
 Isotope *Isotopes::isotope(Element *el, int A)
 {
-    if (el == NULL)
+    if (el == nullptr)
     {
         Messenger::error("Isotopes::isotope() - Element is NULL.\n");
-        return NULL;
+        return nullptr;
     }
 
     return isotope(el->Z(), A);

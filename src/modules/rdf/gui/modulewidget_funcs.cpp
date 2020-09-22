@@ -26,6 +26,7 @@
 #include "main/dissolve.h"
 #include "modules/rdf/gui/modulewidget.h"
 #include "modules/rdf/rdf.h"
+#include "templates/algorithms.h"
 #include "templates/variantpointer.h"
 
 RDFModuleWidget::RDFModuleWidget(QWidget *parent, RDFModule *module, Dissolve &dissolve)
@@ -71,7 +72,7 @@ RDFModuleWidget::RDFModuleWidget(QWidget *parent, RDFModule *module, Dissolve &d
 
     refreshing_ = false;
 
-    currentConfiguration_ = NULL;
+    currentConfiguration_ = nullptr;
 
     updateControls();
 
@@ -135,14 +136,13 @@ void RDFModuleWidget::setGraphDataTargets(RDFModule *module)
     // Add Configuration targets to the combo box
     ui_.TargetCombo->clear();
     for (Configuration *config : module->targetConfigurations())
-        ui_.TargetCombo->addItem(config->name(), VariantPointer<Configuration>(config));
+        ui_.TargetCombo->addItem(QString::fromStdString(std::string(config->name())), VariantPointer<Configuration>(config));
 
     // Loop over Configurations and add total G(R)
-    CharString blockData;
     for (Configuration *cfg : module->targetConfigurations())
     {
         // Add calculated total G(r)
-        totalsGraph_->createRenderable(Renderable::Data1DRenderable, CharString("%s//UnweightedGR//Total", cfg->niceName()),
+        totalsGraph_->createRenderable(Renderable::Data1DRenderable, fmt::format("{}//UnweightedGR//Total", cfg->niceName()),
                                        cfg->niceName(), "Calc");
     }
 }
@@ -157,33 +157,23 @@ void RDFModuleWidget::on_TargetCombo_currentIndexChanged(int index)
     if (!currentConfiguration_)
         return;
 
-    CharString blockData;
     const AtomTypeList cfgTypes = currentConfiguration_->usedAtomTypesList();
-    auto n = 0;
-    for (AtomType *at1 = dissolve_.atomTypes().first(); at1 != NULL; at1 = at1->next(), ++n)
-    {
-        auto m = n;
-        for (AtomType *at2 = at1; at2 != NULL; at2 = at2->next(), ++m)
-        {
-            CharString id("%s-%s", at1->name(), at2->name());
+    for_each_pair(dissolve_.atomTypes().begin(), dissolve_.atomTypes().end(), [&](int n, auto at1, int m, auto at2) {
+        const std::string id = fmt::format("{}-{}", at1->name(), at2->name());
 
-            // Full partial
-            partialsGraph_->createRenderable(
-                Renderable::Data1DRenderable,
-                CharString("%s//UnweightedGR//%s//Full", currentConfiguration_->niceName(), id.get()),
-                CharString("%s (Full)", id.get()), "Full");
+        // Full partial
+        partialsGraph_->createRenderable(Renderable::Data1DRenderable,
+                                         fmt::format("{}//UnweightedGR//{}//Full", currentConfiguration_->niceName(), id),
+                                         fmt::format("{} (Full)", id), "Full");
 
-            // Bound partial
-            partialsGraph_->createRenderable(
-                Renderable::Data1DRenderable,
-                CharString("%s//UnweightedGR//%s//Bound", currentConfiguration_->niceName(), id.get()),
-                CharString("%s (Bound)", id.get()), "Bound");
+        // Bound partial
+        partialsGraph_->createRenderable(Renderable::Data1DRenderable,
+                                         fmt::format("{}//UnweightedGR//{}//Bound", currentConfiguration_->niceName(), id),
+                                         fmt::format("{} (Bound)", id), "Bound");
 
-            // Unbound partial
-            partialsGraph_->createRenderable(
-                Renderable::Data1DRenderable,
-                CharString("%s//UnweightedGR//%s//Unbound", currentConfiguration_->niceName(), id.get()),
-                CharString("%s (Unbound)", id.get()), "Unbound");
-        }
-    }
+        // Unbound partial
+        partialsGraph_->createRenderable(Renderable::Data1DRenderable,
+                                         fmt::format("{}//UnweightedGR//{}//Unbound", currentConfiguration_->niceName(), id),
+                                         fmt::format("{} (Unbound)", id), "Unbound");
+    });
 }

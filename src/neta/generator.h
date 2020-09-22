@@ -21,7 +21,6 @@
 
 #pragma once
 
-#include "base/charstring.h"
 #include "base/enumoptions.h"
 #include "templates/reflist.h"
 #include <vector>
@@ -41,7 +40,8 @@ class NETANode;
 class NETADefinitionGenerator
 {
     private:
-    NETADefinitionGenerator(NETADefinition &definition, const char *definitionText, const Forcefield *associatedFF = NULL);
+    NETADefinitionGenerator(NETADefinition &definition, std::string_view definitionText,
+                            const Forcefield *associatedFF = nullptr);
 
     public:
     ~NETADefinitionGenerator();
@@ -66,13 +66,13 @@ class NETADefinitionGenerator
      */
     private:
     // Source definition string
-    CharString definitionString_;
+    std::string definitionString_;
     // Integer position in stringSource, total length of string, and starting position of current token/function
     int stringPos_, stringLength_, tokenStart_, functionStart_;
 
     private:
     // Set string source for lexer
-    void setSource(const char *definitionText);
+    void setSource(std::string_view definitionText);
     // Get next character from current input stream
     char getChar();
     // Peek next character from current input stream
@@ -93,7 +93,7 @@ class NETADefinitionGenerator
     // Temporary element array used in definition creation
     static std::vector<Element *> targetElements_;
     // Temporary atomtype array used in definition creation
-    static std::vector<ForcefieldAtomType *> targetAtomTypes_;
+    static std::vector<std::reference_wrapper<const ForcefieldAtomType>> targetAtomTypes_;
     // Context (branch) stack
     static RefList<NETANode> contextStack_;
     // Whether to recognise text elements as generic names, rather than an element or unrecognised token
@@ -105,11 +105,11 @@ class NETADefinitionGenerator
     // Add atomtype target to array (by id)
     static bool addAtomTypeTarget(int id);
     // Add atomtype target to array (by name)
-    static bool addAtomTypeTarget(const char *typeName);
+    static bool addAtomTypeTarget(std::string_view typeName);
     // Return target Elements array
     static std::vector<Element *> targetElements();
     // Return target ForcefieldAtomTypes array
-    static std::vector<ForcefieldAtomType *> targetAtomTypes();
+    static std::vector<std::reference_wrapper<const ForcefieldAtomType>> targetAtomTypes();
     // Clear element / atomtype targets
     static void clearTargets();
     // Return topmost context
@@ -121,5 +121,5 @@ class NETADefinitionGenerator
     // Set whether to recognise text elements as generic names
     static void setExpectName(bool b);
     // Static generation function
-    static bool generate(NETADefinition &neta, const char *netaDefinition, const Forcefield *associatedFF);
+    static bool generate(NETADefinition &neta, std::string_view netaDefinition, const Forcefield *associatedFF);
 };

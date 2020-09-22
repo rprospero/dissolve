@@ -3,7 +3,6 @@ parameters:
     default: ''
 
 steps:
-  - checkout: self
   - bash: |
       set -ex
       # -- General
@@ -12,6 +11,10 @@ steps:
       # -- Qt
       brew install qt5
     displayName: 'Install Prerequisites'
+  - bash: |
+      set -ex
+      pip3 install conan
+    displayName: 'Install Conan'
   - bash: |
       set -ex
       QTVER=`ls -d /usr/local/Cellar/qt/* | sed "s/.*\(5\.[0-9][0-9]\.[0-9]\)/\1/g"`
@@ -23,6 +26,7 @@ steps:
       Qt5_ROOT=/usr/local/Cellar/qt/${QTVER}
       mkdir build
       cd build
+      conan install --remote=conan-center ../
       cmake -G "Ninja" -DGUI:bool=true ${{ parameters.extraflags }} ../
       ninja
     displayName: 'Build'

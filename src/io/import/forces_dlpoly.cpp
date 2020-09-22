@@ -44,7 +44,7 @@ bool ForceImportFileFormat::importDLPOLY(LineParser &parser, Array<double> &fx, 
     if (parser.skipLines(1) != LineParser::Success)
         return false;
 
-    // Read in keytrj, imcon, and number of atoms, and initiliase arrays
+    // Read in keytrj, imcon, and number of atoms, and initialise arrays
     if (parser.getArgsDelim(LineParser::Defaults) != LineParser::Success)
         return false;
 
@@ -53,10 +53,10 @@ bool ForceImportFileFormat::importDLPOLY(LineParser &parser, Array<double> &fx, 
     auto nAtoms = parser.argi(2);
     if (keytrj != 2)
     {
-        Messenger::error("File does not contain forces (keytrj = %i).\n", keytrj);
+        Messenger::error("File does not contain forces (keytrj = {}).\n", keytrj);
         return false;
     }
-    Messenger::print(" --> Expecting forces for %i atoms (DLPOLY keytrj=%i, imcon=%i).\n", nAtoms, keytrj, imcon);
+    Messenger::print(" --> Expecting forces for {} atoms (DLPOLY keytrj={}, imcon={}).\n", nAtoms, keytrj, imcon);
     fx.initialise(nAtoms);
     fy.initialise(nAtoms);
     fz.initialise(nAtoms);

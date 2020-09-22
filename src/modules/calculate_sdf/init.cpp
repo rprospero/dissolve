@@ -75,7 +75,7 @@ void CalculateSDFModule::initialise()
      */
 
     // Select: Site 'A'
-    selectA_ = new SelectProcedureNode(NULL, true);
+    selectA_ = new SelectProcedureNode(nullptr, true);
     selectA_->setName("A");
     SequenceProcedureNode *forEachA = selectA_->addForEachBranch(ProcedureNode::AnalysisContext);
     analyser_.addRootSequenceNode(selectA_);
@@ -100,10 +100,10 @@ void CalculateSDFModule::initialise()
     // Process3D: @dataName
     processPosition_ = new Process3DProcedureNode(collectVector_);
     processPosition_->setName("SDF");
-    processPosition_->setKeyword<CharString>("LabelValue", "\\symbol{rho}(x,y,z)");
-    processPosition_->setKeyword<CharString>("LabelX", "x, \\symbol{Angstrom}");
-    processPosition_->setKeyword<CharString>("LabelY", "y, \\symbol{Angstrom}");
-    processPosition_->setKeyword<CharString>("LabelZ", "z, \\symbol{Angstrom}");
+    processPosition_->setKeyword<std::string>("LabelValue", "\\symbol{rho}(x,y,z)");
+    processPosition_->setKeyword<std::string>("LabelX", "x, \\symbol{Angstrom}");
+    processPosition_->setKeyword<std::string>("LabelY", "y, \\symbol{Angstrom}");
+    processPosition_->setKeyword<std::string>("LabelZ", "z, \\symbol{Angstrom}");
     SequenceProcedureNode *sdfNormalisation = processPosition_->addNormalisationBranch();
     sdfNormalisation->addNode(new OperateSitePopulationNormaliseProcedureNode(selectA_));
     sdfNormalisation->addNode(new OperateGridNormaliseProcedureNode());

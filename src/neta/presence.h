@@ -23,6 +23,7 @@
 
 #include "classes/speciesbond.h"
 #include "neta/node.h"
+#include <memory>
 #include <vector>
 
 // Forward Declarations
@@ -35,14 +36,15 @@ class NETAPresenceNode : public NETANode
 {
     public:
     NETAPresenceNode(NETADefinition *parent, std::vector<Element *> targetElements,
-                     std::vector<ForcefieldAtomType *> targetAtomTypes, SpeciesBond::BondType bt = SpeciesBond::nBondTypes);
+                     std::vector<std::reference_wrapper<const ForcefieldAtomType>> targetAtomTypes,
+                     SpeciesBond::BondType bt = SpeciesBond::nBondTypes);
     ~NETAPresenceNode();
 
     private:
     // Array of elements that the current context atom may be
     std::vector<Element *> allowedElements_;
     // Array of ForcefieldAtomTypes that the current context atom may be
-    std::vector<ForcefieldAtomType *> allowedAtomTypes_;
+    std::vector<std::reference_wrapper<const ForcefieldAtomType>> allowedAtomTypes_;
 
     /*
      * Modifiers
@@ -73,9 +75,9 @@ class NETAPresenceNode : public NETANode
     // Return enum options for NETACharacterModifiers
     static EnumOptions<NETAPresenceNode::NETACharacterModifier> modifiers();
     // Return whether the specified modifier is valid for this node
-    bool isValidModifier(const char *s) const;
+    bool isValidModifier(std::string_view s) const;
     // Set value and comparator for specified modifier
-    bool setModifier(const char *modifier, ComparisonOperator op, int value);
+    bool setModifier(std::string_view modifier, ComparisonOperator op, int value);
 
     /*
      * Scoring

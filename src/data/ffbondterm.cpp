@@ -23,30 +23,27 @@
 #include "data/ff.h"
 #include "data/ffatomtype.h"
 
-ForcefieldBondTerm::ForcefieldBondTerm(const char *typeI, const char *typeJ, SpeciesBond::BondFunction form, double data0,
-                                       double data1, double data2, double data3)
+ForcefieldBondTerm::ForcefieldBondTerm(std::string_view typeI, std::string_view typeJ, SpeciesBond::BondFunction form,
+                                       const std::vector<double> parameters)
 {
     typeI_ = typeI;
     typeJ_ = typeJ;
     form_ = form;
-    parameters_[0] = data0;
-    parameters_[1] = data1;
-    parameters_[2] = data2;
-    parameters_[3] = data3;
+    parameters_ = parameters;
+    if (!SpeciesBond::bondFunctions().validNArgs(form, parameters_.size()))
+        throw(std::runtime_error("Incorrect number of parameters in constructed ForcefieldBondTerm."));
 }
-
-ForcefieldBondTerm::~ForcefieldBondTerm() {}
 
 /*
  * Data
  */
 
 // Return if this term matches the atom types supplied
-bool ForcefieldBondTerm::isMatch(const ForcefieldAtomType *i, const ForcefieldAtomType *j) const
+bool ForcefieldBondTerm::isMatch(const ForcefieldAtomType &i, const ForcefieldAtomType &j) const
 {
-    if (DissolveSys::sameWildString(typeI_, i->equivalentName()) && DissolveSys::sameWildString(typeJ_, j->equivalentName()))
+    if (DissolveSys::sameWildString(typeI_, i.equivalentName()) && DissolveSys::sameWildString(typeJ_, j.equivalentName()))
         return true;
-    if (DissolveSys::sameWildString(typeJ_, i->equivalentName()) && DissolveSys::sameWildString(typeI_, j->equivalentName()))
+    if (DissolveSys::sameWildString(typeJ_, i.equivalentName()) && DissolveSys::sameWildString(typeI_, j.equivalentName()))
         return true;
 
     return false;
@@ -56,4 +53,4 @@ bool ForcefieldBondTerm::isMatch(const ForcefieldAtomType *i, const ForcefieldAt
 SpeciesBond::BondFunction ForcefieldBondTerm::form() const { return form_; }
 
 // Return array of parameters
-const double *ForcefieldBondTerm::parameters() const { return parameters_; }
+const std::vector<double> &ForcefieldBondTerm::parameters() const { return parameters_; }

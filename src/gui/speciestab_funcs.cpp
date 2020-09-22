@@ -32,9 +32,9 @@
 #include "main/dissolve.h"
 #include <QMessageBox>
 
-SpeciesTab::SpeciesTab(DissolveWindow *dissolveWindow, Dissolve &dissolve, MainTabsWidget *parent, const char *title,
+SpeciesTab::SpeciesTab(DissolveWindow *dissolveWindow, Dissolve &dissolve, MainTabsWidget *parent, const QString title,
                        Species *species)
-    : ListItem<SpeciesTab>(), MainTab(dissolveWindow, dissolve, parent, CharString("Species: %s", title), this)
+    : ListItem<SpeciesTab>(), MainTab(dissolveWindow, dissolve, parent, QString("Species: %1").arg(title), this)
 {
     ui_.setupUi(this);
 
@@ -45,7 +45,7 @@ SpeciesTab::SpeciesTab(DissolveWindow *dissolveWindow, Dissolve &dissolve, MainT
     // Set item delegates in tables
     // -- SpeciesAtomTable
     ui_.AtomTable->setItemDelegateForColumn(
-        1, new ComboListDelegate(this, new ComboNameListItems<AtomType>(dissolve_.atomTypes())));
+        1, new ComboListDelegate(this, new ComboSharedNameListItems<AtomType>(dissolve_.atomTypes())));
     for (int n = 2; n < 6; ++n)
         ui_.AtomTable->setItemDelegateForColumn(n, new ExponentialSpinDelegate(this));
     ui_.AtomTable->horizontalHeader()->setFont(font());
@@ -68,7 +68,7 @@ SpeciesTab::SpeciesTab(DissolveWindow *dissolveWindow, Dissolve &dissolve, MainT
     ui_.ImproperTable->horizontalHeader()->setVisible(true);
 
     // Set up SpeciesViewer
-    ui_.ViewerWidget->setCoreData(&dissolve.coreData());
+    ui_.ViewerWidget->setDissolve(&dissolve);
     ui_.ViewerWidget->setSpecies(species_);
 
     // Set up SiteViewer
@@ -130,7 +130,7 @@ QString SpeciesTab::getNewTitle(bool &ok)
 {
     // Get a new, valid name for the Species
     GetSpeciesNameDialog nameDialog(this, dissolve_.coreData());
-    ok = nameDialog.get(species_, species_->name());
+    ok = nameDialog.get(species_, QString::fromStdString(std::string(species_->name())));
 
     if (ok)
     {
@@ -151,7 +151,8 @@ bool SpeciesTab::canClose() const
 {
     // Check that we really want to delete this tab
     QMessageBox queryBox;
-    queryBox.setText(QString("Really delete the species '%1'?\nThis cannot be undone!").arg(species_->name()));
+    queryBox.setText(QString("Really delete the species '%1'?\nThis cannot be undone!")
+                         .arg(QString::fromStdString(std::string(species_->name()))));
     queryBox.setInformativeText("Proceed?");
     queryBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
     queryBox.setDefaultButton(QMessageBox::No);

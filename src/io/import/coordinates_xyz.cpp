@@ -27,7 +27,7 @@ bool CoordinateImportFileFormat::importXYZ(LineParser &parser, Array<Vec3<double
 {
     Messenger::print(" --> Importing coordinates in xyz format...\n");
 
-    // Import in natoms
+    // Read natoms
     if (parser.getArgsDelim() != LineParser::Success)
         return false;
     auto nAtoms = parser.argi(0);
@@ -36,7 +36,7 @@ bool CoordinateImportFileFormat::importXYZ(LineParser &parser, Array<Vec3<double
     if (parser.skipLines(1) != LineParser::Success)
         return false;
 
-    Messenger::print(" --> Expecting coordinates for %i atoms.\n", nAtoms);
+    Messenger::print(" --> Expecting coordinates for {} atoms.\n", nAtoms);
     r.clear();
     for (int n = 0; n < nAtoms; ++n)
     {
