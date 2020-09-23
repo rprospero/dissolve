@@ -188,7 +188,7 @@ bool RDFModule::calculateGRCells(ProcessPool &procPool, Configuration *cfg, Part
     std::vector<int> indices;
     indices.resize(cellArray.nCells());
     std::iota(indices.begin(), indices.end(), 0);
-    std::for_each(std::execution::seq, indices.begin(), indices.end(), [box, &partialSet, rdfRange, &cellArray](int n) {
+    std::for_each(std::execution::par, indices.begin(), indices.end(), [box, &partialSet, rdfRange, &cellArray](int n) {
         Atom *i, *j;
         int m, ii, jj, nI, nJ, typeI;
         Cell *cellI, *cellJ;
