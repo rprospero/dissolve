@@ -26,11 +26,6 @@ CMAKE_POLICY(SET CMP0020 NEW)
 # Request C++17 Standard Support (Required for std::optional and auto types in lambda parameters)
 set(CMAKE_CXX_STANDARD 17)
 
-# Include Conan Packages
-include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-conan_basic_setup(CMAKE_TARGETS)
-
-
 # Catch defines
 if(PARALLEL)
   ADD_DEFINITIONS("-DPARALLEL")
@@ -50,6 +45,7 @@ find_package(BISON PATHS /usr/local/bin NO_DEFAULT_PATH QUIET)
 find_package(BISON REQUIRED)
 
 set(EXTRA_LINK_LIBS ${EXTRA_LINK_LIBS} tbb)
+include_directories(${TBB_ROOT}/include)
 
 if(GUI)
   # Add extra functions
@@ -166,6 +162,8 @@ target_include_directories(${target_name} PRIVATE
   ${FREETYPE_INCLUDE_DIRS}
 )
 
+message(${TBB_ROOT})
+
 # Add GUI targets
 if(GUI)
 
@@ -232,8 +230,6 @@ set(BASIC_LINK_LIBS
   skeletonmodule
   sqmodule
   testmodule
-
-  tbb
 )
 
 # Set linker options for complete/no archive
@@ -283,10 +279,8 @@ target_link_libraries( ${target_name}
 
   ${EXTRA_LINK_LIBS}
 
-  INTERFACE
+  fmt
 
-  CONAN_PKG::fmt
-  CONAN_PKG::tbb
 )
 
 # Build GUI target executables
@@ -348,7 +342,6 @@ if(GUI)
 
     INTERFACE
 
-    CONAN_PKG::fmt
-    CONAN_PKG::tbb
+    fmt
   )
 endif(GUI)
