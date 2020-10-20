@@ -43,7 +43,7 @@ int main(int args, char **argv)
     auto n = 1;
     std::string inputFile, redirectFileName, restartDataFile, outputInputFile;
     auto nIterations = 5;
-    auto nThreads = 256;
+    auto nThreads = -1;
     auto ignoreRestart = false;
     while (n < args)
     {
@@ -218,7 +218,9 @@ int main(int args, char **argv)
         ++n;
     }
 
-    tbb::global_control gc(tbb::global_control::max_allowed_parallelism, nThreads);
+    if (nThreads >0) {
+      tbb::global_control gc(tbb::global_control::max_allowed_parallelism, nThreads);
+    }
 
     // Print GPL license information
 #ifdef PARALLEL
