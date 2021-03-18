@@ -33,61 +33,61 @@ std::vector<std::string> SpeciesTab::validAtomTypeNames(const QModelIndex &index
 }
 
 // SpeciesAtomTable row update function
-void SpeciesTab::updateAtomTableRow(int row, SpeciesAtom *speciesAtom, bool createItems)
-{
-    QTableWidgetItem *item;
+// void SpeciesTab::updateAtomTableRow(int row, SpeciesAtom *speciesAtom, bool createItems)
+// {
+//     QTableWidgetItem *item;
 
-    // Element
-    if (createItems)
-    {
-        item = new QTableWidgetItem;
-        item->setData(Qt::UserRole, QVariant::fromValue(speciesAtom));
-        item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-        ui_.AtomTable->setItem(row, 0, item);
-    }
-    else
-        item = ui_.AtomTable->item(row, 0);
-    item->setText(QString::fromStdString(std::string(Elements::name(speciesAtom->Z()))));
-    item->setSelected(speciesAtom->isSelected());
+//     // Element
+//     if (createItems)
+//     {
+//         item = new QTableWidgetItem;
+//         item->setData(Qt::UserRole, QVariant::fromValue(speciesAtom));
+//         item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+//         ui_.AtomTable->setItem(row, 0, item);
+//     }
+//     else
+//         item = ui_.AtomTable->item(row, 0);
+//     item->setText(QString::fromStdString(std::string(Elements::name(speciesAtom->Z()))));
+//     item->setSelected(speciesAtom->isSelected());
 
-    // AtomType
-    if (createItems)
-    {
-        item = new QTableWidgetItem;
-        ui_.AtomTable->setItem(row, 1, item);
-    }
-    else
-        item = ui_.AtomTable->item(row, 1);
-    item->setText(speciesAtom->atomType() ? QString::fromStdString(std::string(speciesAtom->atomType()->name())) : "");
-    item->setSelected(speciesAtom->isSelected());
+//     // AtomType
+//     if (createItems)
+//     {
+//         item = new QTableWidgetItem;
+//         ui_.AtomTable->setItem(row, 1, item);
+//     }
+//     else
+//         item = ui_.AtomTable->item(row, 1);
+//     item->setText(speciesAtom->atomType() ? QString::fromStdString(std::string(speciesAtom->atomType()->name())) : "");
+//     item->setSelected(speciesAtom->isSelected());
 
-    // Coordinates
-    for (auto n = 0; n < 3; ++n)
-    {
-        if (createItems)
-        {
-            item = new QTableWidgetItem;
-            ui_.AtomTable->setItem(row, n + 2, item);
-        }
-        else
-            item = ui_.AtomTable->item(row, n + 2);
-        item->setText(QString::number(speciesAtom->r().get(n)));
-        item->setSelected(speciesAtom->isSelected());
-    }
+//     // Coordinates
+//     for (auto n = 0; n < 3; ++n)
+//     {
+//         if (createItems)
+//         {
+//             item = new QTableWidgetItem;
+//             ui_.AtomTable->setItem(row, n + 2, item);
+//         }
+//         else
+//             item = ui_.AtomTable->item(row, n + 2);
+//         item->setText(QString::number(speciesAtom->r().get(n)));
+//         item->setSelected(speciesAtom->isSelected());
+//     }
 
-    // Charge
-    if (createItems)
-    {
-        item = new QTableWidgetItem;
-        ui_.AtomTable->setItem(row, 5, item);
-    }
-    else
-        item = ui_.AtomTable->item(row, 5);
-    item->setText(QString::number(speciesAtom->charge()));
-    item->setSelected(speciesAtom->isSelected());
-    item->setFlags(dissolve_.pairPotentialsIncludeCoulomb() ? Qt::ItemIsEnabled | Qt::ItemIsSelectable
-                                                            : Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsEditable);
-}
+//     // Charge
+//     if (createItems)
+//     {
+//         item = new QTableWidgetItem;
+//         ui_.AtomTable->setItem(row, 5, item);
+//     }
+//     else
+//         item = ui_.AtomTable->item(row, 5);
+//     item->setText(QString::number(speciesAtom->charge()));
+//     item->setSelected(speciesAtom->isSelected());
+//     item->setFlags(dissolve_.pairPotentialsIncludeCoulomb() ? Qt::ItemIsEnabled | Qt::ItemIsSelectable
+//                                                             : Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsEditable);
+// }
 
 // BondTable row update function
 void SpeciesTab::updateBondTableRow(int row, SpeciesBond *speciesBond, bool createItems)
@@ -305,17 +305,17 @@ void SpeciesTab::updateAtomTableSelection()
     SpeciesAtom *i;
 
     // Set atom selection in table to reflect the atom data
-    for (auto n = 0; n < ui_.AtomTable->rowCount(); ++n)
-    {
-        item = ui_.AtomTable->item(n, 0);
-        i = item->data(Qt::UserRole).value<SpeciesAtom *>();
-        if (i->isSelected())
-            for (auto m = 0; m < 6; ++m)
-                ui_.AtomTable->item(n, m)->setSelected(true);
-        else
-            for (auto m = 0; m < 6; ++m)
-                ui_.AtomTable->item(n, m)->setSelected(false);
-    }
+    // for (auto n = 0; n < ui_.AtomTable->rowCount(); ++n)
+    // {
+    //     item = ui_.AtomTable->item(n, 0);
+    //     i = item->data(Qt::UserRole).value<SpeciesAtom *>();
+    //     if (i->isSelected())
+    //         for (auto m = 0; m < 6; ++m)
+    //             ui_.AtomTable->item(n, m)->setSelected(true);
+    //     else
+    //         for (auto m = 0; m < 6; ++m)
+    //             ui_.AtomTable->item(n, m)->setSelected(false);
+    // }
 }
 
 void SpeciesTab::on_AtomTable_itemChanged(QTableWidgetItem *w)
@@ -388,16 +388,16 @@ void SpeciesTab::on_AtomTable_itemSelectionChanged()
     SpeciesAtom *i;
 
     // Set atom selection in viewer to be same as the table
-    for (auto n = 0; n < ui_.AtomTable->rowCount(); ++n)
-    {
-        item = ui_.AtomTable->item(n, 0);
-        i = item->data(Qt::UserRole).value<SpeciesAtom *>();
+    // for (auto n = 0; n < ui_.AtomTable->rowCount(); ++n)
+    // {
+    //     item = ui_.AtomTable->item(n, 0);
+    //     i = item->data(Qt::UserRole).value<SpeciesAtom *>();
 
-        if (item->isSelected())
-            species_->selectAtom(i);
-        else
-            species_->deselectAtom(i);
-    }
+    //     if (item->isSelected())
+    //         species_->selectAtom(i);
+    //     else
+    //         species_->deselectAtom(i);
+    // }
 
     // Recreate selection primitive and update viewer
     ui_.ViewerWidget->speciesViewer()->recreateSelectionPrimitive();
@@ -657,11 +657,11 @@ void SpeciesTab::updateGeometryTab()
     // -- SpeciesAtom Table
     // 	if (dissolve_.pairPotentialsIncludeCoulomb()) ui_.AtomTable->showColumn(5);
     // 	else ui_.AtomTable->hideColumn(5);
-    if (!species_)
-        ui_.AtomTable->clearContents();
-    else
-        TableWidgetUpdater<SpeciesTab, SpeciesAtom> speciesAtomUpdater(ui_.AtomTable, species_->atoms(), this,
-                                                                       &SpeciesTab::updateAtomTableRow);
+    // if (!species_)
+    //     ui_.AtomTable->clearContents();
+    // else
+    //     TableWidgetUpdater<SpeciesTab, SpeciesAtom> speciesAtomUpdater(ui_.AtomTable, species_->atoms(), this,
+    //                                                                    &SpeciesTab::updateAtomTableRow);
 
     // -- Intramolecular terms
     if (!species_)

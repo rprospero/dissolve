@@ -204,7 +204,7 @@
             </layout>
            </item>
            <item>
-            <widget class="QTableWidget" name="AtomTable">
+            <widget class="QTableView" name="AtomTable">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                <horstretch>0</horstretch>
@@ -225,9 +225,6 @@
              </property>
              <property name="showGrid">
               <bool>true</bool>
-             </property>
-             <property name="columnCount">
-              <number>6</number>
              </property>
              <attribute name="horizontalHeaderVisible">
               <bool>false</bool>

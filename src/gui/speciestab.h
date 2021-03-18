@@ -9,6 +9,7 @@
 #include "classes/speciesimproper.h"
 #include "classes/speciestorsion.h"
 #include "gui/maintab.h"
+#include "gui/models/speciesAtomModel.h"
 #include "gui/ui_speciestab.h"
 
 // Forward Declarations
@@ -68,6 +69,7 @@ class SpeciesTab : public QWidget, public ListItem<SpeciesTab>, public MainTab
     private:
     // Species data to display
     Species *species_;
+    SpeciesAtomModel atomModel_;
 
     public:
     // Return displayed Species

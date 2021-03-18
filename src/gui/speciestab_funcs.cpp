@@ -17,14 +17,13 @@
 
 SpeciesTab::SpeciesTab(DissolveWindow *dissolveWindow, Dissolve &dissolve, MainTabsWidget *parent, const QString title,
                        Species *species)
-    : ListItem<SpeciesTab>(), MainTab(dissolveWindow, dissolve, parent, QString("Species: %1").arg(title), this)
+  : ListItem<SpeciesTab>(), MainTab(dissolveWindow, dissolve, parent, QString("Species: %1").arg(title), this), species_(species), atomModel_(species)
 {
     ui_.setupUi(this);
 
     Locker refreshLocker(refreshLock_);
 
-    species_ = species;
-
+    ui_.AtomTable->setModel(&atomModel_);
     // Set item delegates
     // -- SpeciesAtomTable
     ui_.AtomTable->setItemDelegateForColumn(1, new CustomComboDelegate<SpeciesTab>(this, &SpeciesTab::validAtomTypeNames));
