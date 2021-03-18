@@ -5,6 +5,7 @@
 #include "classes/box.h"
 #include "main/dissolve.h"
 #include "modules/calculate_avgmol/avgmol.h"
+#include <cassert>
 
 // Run set-up stage
 bool CalculateAvgMolModule::setUp(Dissolve &dissolve, ProcessPool &procPool)

@@ -5,6 +5,7 @@
 #include "gui/render/TextPrimitiveErrorListeners.h"
 #include "gui/render/fontinstance.h"
 #include "gui/render/symbol.h"
+#include <cassert>
 
 // Return enum options for EscapedFormatter
 EnumOptions<TextPrimitiveVisitor::EscapedFormatter> TextPrimitiveVisitor::escapedFormatters()

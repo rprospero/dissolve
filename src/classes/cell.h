@@ -5,6 +5,7 @@
 
 #include "classes/atom.h"
 #include "templates/vector3.h"
+#include <cassert>
 #include <set>
 #include <vector>
 

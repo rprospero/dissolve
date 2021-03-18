@@ -5,6 +5,7 @@
 
 #include "data/elements.h"
 #include "data/ff/ff.h"
+#include <cassert>
 
 // AtomType Definition
 class AtomType

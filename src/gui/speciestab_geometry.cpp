@@ -9,6 +9,7 @@
 #include "main/dissolve.h"
 #include "templates/variantpointer.h"
 #include <QMessageBox>
+#include <cassert>
 
 /*
  * Private Functions
