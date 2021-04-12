@@ -7,6 +7,7 @@
 #include <QFileDialog>
 #include <QInputDialog>
 #include <QMessageBox>
+#include <QQuickView>
 
 void DissolveWindow::setupIteration(int count)
 {
@@ -78,8 +79,12 @@ void DissolveWindow::on_SimulationSaveRestartPointAction_triggered(bool checked)
 
 void DissolveWindow::on_SimulationDataManagerAction_triggered(bool checked)
 {
-    DataManagerDialog dataManagerDialog(this, dissolve_, referencePoints_);
-    dataManagerDialog.exec();
+    // DataManagerDialog dataManagerDialog(this, dissolve_, referencePoints_);
+    // dataManagerDialog.exec();
+    QQuickView view;
+    view.setSource(QUrl::fromLocalFile("~/Code/dissolve/myItem.qml"));
+    view.show();
+    // QObject *object = view.rootObject();
 }
 
 void DissolveWindow::on_SimulationClearModuleDataAction_triggered(bool checked)

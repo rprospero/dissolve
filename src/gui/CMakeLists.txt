@@ -268,7 +268,7 @@ qt5_add_resources(gui_RES ${gui_RES_QRC})
 # Target 'gui'
 add_library(gui ${gui_RES} ${gui_UIS_H} ${gui_SRCS} ${gui_MOC_SRCS})
 target_include_directories(
-  gui PRIVATE ${PROJECT_SOURCE_DIR}/src ${PROJECT_BINARY_DIR}/src ${Qt5Widgets_INCLUDE_DIRS} ${FREETYPE_INCLUDE_DIRS}
+  gui PRIVATE ${PROJECT_SOURCE_DIR}/src ${PROJECT_BINARY_DIR}/src ${Qt5Widgets_INCLUDE_DIRS} ${Qt5Quick_INCLUDE_DIRS} ${FREETYPE_INCLUDE_DIRS}
 )
 target_link_libraries(
   gui
