@@ -89,11 +89,7 @@ if(GUI)
   # Add extra functions
   include(FindFTGL)
 
-  find_package(Qt5Widgets 5.4 REQUIRED)
-  find_package(Qt5Core 5.4 REQUIRED)
-  find_package(Qt5Gui 5.4 REQUIRED)
-  find_package(Qt5Quick 5.4 REQUIRED)
-  find_package(Qt5PrintSupport 5.4 REQUIRED)
+  find_package(Qt5 COMPONENTS Widgets Quick QuickControls2 Core Gui PrintSupport)
   find_package(OpenGL REQUIRED)
   find_package(FTGL REQUIRED)
   find_package(Freetype REQUIRED)
@@ -314,8 +310,9 @@ if(GUI)
     PRIVATE # External libs
             antlr4-runtime
             Qt5::Widgets
-            Qt5::Quick
             Qt5::Core
+	    Qt5::Quick
+	    Qt5::QuickControls2
             Qt5::PrintSupport
             ${FTGL_LIBRARIES}
             ${OPENGL_LIBRARIES}
