@@ -4,11 +4,12 @@
 #include "gui/datamanagerdialog.h"
 #include "gui/gui.h"
 #include "main/dissolve.h"
+#include <QDebug>
 #include <QFileDialog>
 #include <QInputDialog>
 #include <QMessageBox>
-#include <QQuickView>
-#include <QQuickControls2>
+#include <QQmlComponent>
+#include <QQmlEngine>
 
 void DissolveWindow::setupIteration(int count)
 {
@@ -82,9 +83,15 @@ void DissolveWindow::on_SimulationDataManagerAction_triggered(bool checked)
 {
     // DataManagerDialog dataManagerDialog(this, dissolve_, referencePoints_);
     // dataManagerDialog.exec();
-    QQuickView view;
-    view.setSource(QUrl::fromLocalFile("../myItem.qml"));
-    view.show();
+
+    QQmlEngine engine;
+    QQmlComponent component(&engine);
+    component.loadUrl(QUrl::fromLocalFile("../src/gui/qml/myItem.qml"));
+
+    if (component.isReady())
+        component.create();
+    else
+        qWarning() << component.errorString();
     // QObject *object = view.rootObject();
 }
 
