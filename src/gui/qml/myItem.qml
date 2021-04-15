@@ -4,12 +4,23 @@ import QtQuick.Controls 2.0
 
 Dialog {
     visible: true
-    title: "Here is a title"
-    width: 100
-    height: 100
+    title: "Data Manager"
+    width: 300
+    height: 300
 
-    Text {
-	anchors.centerIn: parent
-	text: "Hello, World!"
+    Column {
+	Text {
+	    id: label1
+	    text: "Hello, Foo!"
+	    height: 50
+	}
+	Text {
+	    id: label2
+	    text: "Do More"
+	    height: 50
+	}
+	Button {
+	    text: "+"
+	}
     }
 }
