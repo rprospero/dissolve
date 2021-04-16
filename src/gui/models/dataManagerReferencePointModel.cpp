@@ -1,7 +1,7 @@
 #include "gui/models/dataManagerReferencePointModel.h"
 #include "templates/variantpointer.h"
 
-DataManagerReferencePointModel::DataManagerReferencePointModel(std::vector<ReferencePoint> &referencePoints)
+DataManagerReferencePointModel::DataManagerReferencePointModel(std::vector<ReferencePoint> *referencePoints)
     : referencePoints_(referencePoints)
 {
 }
@@ -9,7 +9,9 @@ DataManagerReferencePointModel::DataManagerReferencePointModel(std::vector<Refer
 int DataManagerReferencePointModel::rowCount(const QModelIndex &parent) const
 {
     Q_UNUSED(parent);
-    return referencePoints_.size();
+    if (!referencePoints_)
+        return 3;
+    return referencePoints_->size();
 }
 
 int DataManagerReferencePointModel::columnCount(const QModelIndex &parent) const
@@ -22,7 +24,18 @@ QVariant DataManagerReferencePointModel::data(const QModelIndex &index, int role
 {
     if (!index.isValid())
         return QVariant();
-    auto &item = referencePoints_[index.row()];
+    if (!referencePoints_ && role == Qt::DisplayRole)
+        switch (index.column())
+        {
+            case 0:
+                return "Foo";
+            case 1:
+                return "Bar";
+            default:
+                return "Quux";
+        }
+
+    auto &item = referencePoints_->at(index.row());
 
     switch (role)
     {
@@ -30,7 +43,6 @@ QVariant DataManagerReferencePointModel::data(const QModelIndex &index, int role
             if (index.column() == 0)
                 return std::string(item.suffix()).c_str();
             return std::string(item.restartFile()).c_str();
-            ;
         case Qt::UserRole:
             return VariantPointer<ReferencePoint>(&item);
         default:
@@ -58,3 +70,5 @@ void DataManagerReferencePointModel::update()
     beginResetModel();
     endResetModel();
 }
+
+QHash<int, QByteArray> DataManagerReferencePointModel::roleNames() const { return {{Qt::DisplayRole, "display"}}; }

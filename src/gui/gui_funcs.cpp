@@ -10,6 +10,7 @@
 #include "gui/workspacetab.h"
 #include "main/dissolve.h"
 #include "main/version.h"
+#include "gui/models/dataManagerReferencePointModel.h"
 #include <QCloseEvent>
 #include <QDir>
 #include <QDirIterator>
@@ -18,12 +19,16 @@
 #include <QLCDNumber>
 #include <QMdiSubWindow>
 #include <QMessageBox>
+#include <QQmlEngine>
 
 DissolveWindow::DissolveWindow(Dissolve &dissolve)
     : QMainWindow(nullptr), dissolve_(dissolve), threadController_(this, dissolve)
 {
     // Initialise resources
     Q_INIT_RESOURCE(main);
+
+    qmlRegisterType<DataManagerReferencePointModel>("DataManagerReferencePoints", 1, 0, "DataManagerReferencePoints");
+
 
     // Register custom font(s)
     QFontDatabase::addApplicationFont(":/fonts/fonts/Cousine-Regular.ttf");

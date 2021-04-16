@@ -11,7 +11,7 @@
 #include <QRegExp>
 
 DataManagerDialog::DataManagerDialog(QWidget *parent, Dissolve &dissolve, std::vector<ReferencePoint> &referencePoints)
-    : QDialog(parent), dissolve_(dissolve), referencePoints_(referencePoints), refModel_(referencePoints_)
+    : QDialog(parent), dissolve_(dissolve), referencePoints_(referencePoints), refModel_(&referencePoints_)
 {
     ui_.setupUi(this);
     ui_.ReferencePointsTable->setModel(&refModel_);

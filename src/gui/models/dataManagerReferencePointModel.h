@@ -13,10 +13,10 @@ class DataManagerReferencePointModel : public QAbstractTableModel
     Q_OBJECT
 
     private:
-    std::vector<ReferencePoint> &referencePoints_;
+    std::vector<ReferencePoint> *referencePoints_;
 
     public:
-    DataManagerReferencePointModel(std::vector<ReferencePoint> &referencePoints);
+    DataManagerReferencePointModel(std::vector<ReferencePoint> *referencePoints = nullptr);
 
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
 
@@ -28,4 +28,6 @@ class DataManagerReferencePointModel : public QAbstractTableModel
 
     // Register all changes to the model
     void update();
+
+    QHash<int, QByteArray> roleNames() const override;
 };
