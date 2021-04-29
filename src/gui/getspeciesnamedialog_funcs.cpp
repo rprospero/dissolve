@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "base/sysfunc.h"
 #include "classes/coredata.h"
@@ -42,10 +42,9 @@ void GetSpeciesNameDialog::on_NameEdit_textChanged(const QString text)
         nameValid = false;
     else
     {
-        ListIterator<Species> speciesIterator(coreData_.species());
-        while (Species *sp = speciesIterator.iterate())
+        for (const auto &sp : coreData_.species())
         {
-            if (species_ == sp)
+            if (species_ == sp.get())
                 continue;
 
             if (DissolveSys::sameString(sp->name(), qPrintable(text)))

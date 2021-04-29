@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "procedure/nodes/calculatevector.h"
 #include "base/lineparser.h"
@@ -12,18 +12,16 @@
 
 CalculateVectorProcedureNode::CalculateVectorProcedureNode(SelectProcedureNode *site0, SelectProcedureNode *site1,
                                                            bool rotateIntoFrame)
-    : CalculateProcedureNodeBase(ProcedureNode::CalculateVectorNode, site0, site1)
+    : CalculateProcedureNodeBase(ProcedureNode::NodeType::CalculateVector, site0, site1)
 {
     // Create keywords - store the pointers to the superclasses for later use
-    siteKeywords_[0] = new NodeKeyword<SelectProcedureNode>(this, ProcedureNode::SelectNode, true, site0);
-    keywords_.add("Sites", siteKeywords_[0], "I", "Site that represents 'i' in the vector i->j");
-    siteKeywords_[1] = new NodeKeyword<SelectProcedureNode>(this, ProcedureNode::SelectNode, true, site1);
-    keywords_.add("Sites", siteKeywords_[1], "J", "Site that represents 'j' in the vector i->j");
-    keywords_.add("Sites", new BoolKeyword(rotateIntoFrame), "RotateIntoFrame",
+    siteKeywords_[0] = new NodeKeyword<SelectProcedureNode>(this, ProcedureNode::NodeType::Select, true, site0);
+    keywords_.add("Control", siteKeywords_[0], "I", "Site that represents 'i' in the vector i->j");
+    siteKeywords_[1] = new NodeKeyword<SelectProcedureNode>(this, ProcedureNode::NodeType::Select, true, site1);
+    keywords_.add("Control", siteKeywords_[1], "J", "Site that represents 'j' in the vector i->j");
+    keywords_.add("Control", new BoolKeyword(rotateIntoFrame), "RotateIntoFrame",
                   "Whether to rotate the calculated vector into the local frame defined on 'I'");
 }
-
-CalculateVectorProcedureNode::~CalculateVectorProcedureNode() {}
 
 /*
  * Observable Target
@@ -53,19 +51,12 @@ bool CalculateVectorProcedureNode::prepare(Configuration *cfg, std::string_view 
 }
 
 // Execute node, targetting the supplied Configuration
-ProcedureNode::NodeExecutionResult CalculateVectorProcedureNode::execute(ProcessPool &procPool, Configuration *cfg,
-                                                                         std::string_view prefix, GenericList &targetList)
+bool CalculateVectorProcedureNode::execute(ProcessPool &procPool, Configuration *cfg, std::string_view prefix,
+                                           GenericList &targetList)
 {
-#ifdef CHECKS
-    for (auto n = 0; n < nSitesRequired(); ++n)
-    {
-        if (sites_[n]->currentSite() == nullptr)
-        {
-            Messenger::error("Observable {} has no current site.\n", n);
-            return ProcedureNode::Failure;
-        }
-    }
-#endif
+    assert(sites_[0] && sites_[0]->currentSite());
+    assert(sites_[1] && sites_[1]->currentSite());
+
     // Determine the value of the observable
     value_ = cfg->box()->minimumVector(sites_[0]->currentSite()->origin(), sites_[1]->currentSite()->origin());
 
@@ -73,5 +64,5 @@ ProcedureNode::NodeExecutionResult CalculateVectorProcedureNode::execute(Process
     if (rotateIntoFrame_)
         value_ = sites_[0]->currentSite()->axes() * value_;
 
-    return ProcedureNode::Success;
+    return true;
 }

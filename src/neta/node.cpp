@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "neta/node.h"
 #include "base/messenger.h"
@@ -12,27 +12,23 @@
 // Return enum options for NodeTypes
 EnumOptions<NETANode::NodeType> NETANode::nodeTypes()
 {
-    static EnumOptionsList NETANodeTypes = EnumOptionsList()
-                                           << EnumOption(BasicNode, "Basic") << EnumOption(ConnectionNode, "Connection")
-                                           << EnumOption(OrNode, "Or") << EnumOption(PresenceNode, "Presence")
-                                           << EnumOption(RingNode, "Ring") << EnumOption(RootNode, "Root");
-
-    static EnumOptions<NETANode::NodeType> options("NodeTypes", NETANodeTypes);
-
-    return options;
+    return EnumOptions<NETANode::NodeType>("NodeTypes", {{NodeType::Basic, "Basic"},
+                                                         {NodeType::Connection, "Connection"},
+                                                         {NodeType::Or, "Or"},
+                                                         {NodeType::Presence, "Presence"},
+                                                         {NodeType::Ring, "Ring"},
+                                                         {NodeType::Root, "Root"}});
 }
 
 // Return enum options for ComparisonOperator
 EnumOptions<NETANode::ComparisonOperator> NETANode::comparisonOperators()
 {
-    static EnumOptionsList ComparisonOperatorOptions =
-        EnumOptionsList() << EnumOption(EqualTo, "=") << EnumOption(NotEqualTo, "!=") << EnumOption(GreaterThan, ">")
-                          << EnumOption(LessThan, "<") << EnumOption(GreaterThanEqualTo, ">=")
-                          << EnumOption(LessThanEqualTo, "<=");
-
-    static EnumOptions<NETANode::ComparisonOperator> options("ComparisonOperator", ComparisonOperatorOptions);
-
-    return options;
+    return EnumOptions<NETANode::ComparisonOperator>("ComparisonOperator", {{ComparisonOperator::EqualTo, "="},
+                                                                            {ComparisonOperator::NotEqualTo, "!="},
+                                                                            {ComparisonOperator::GreaterThan, ">"},
+                                                                            {ComparisonOperator::LessThan, "<"},
+                                                                            {ComparisonOperator::GreaterThanEqualTo, ">="},
+                                                                            {ComparisonOperator::LessThanEqualTo, "<="}});
 }
 
 NETANode::NETANode(NETADefinition *parent, NETANode::NodeType type)
@@ -59,7 +55,7 @@ NETADefinition *NETANode::parent() const { return parent_; }
  */
 
 // Add element target to node
-bool NETANode::addElementTarget(const Element &el)
+bool NETANode::addElementTarget(Elements::Element Z)
 {
     return Messenger::error("NETA {} does not accept element targets.\n", nodeTypes().keyword(nodeType_));
 }
@@ -89,7 +85,7 @@ std::shared_ptr<NETAOrNode> NETANode::createOrNode()
 
 // Create connectivity node from current targets
 std::shared_ptr<NETAConnectionNode>
-NETANode::createConnectionNode(std::vector<std::reference_wrapper<const Element>> targetElements,
+NETANode::createConnectionNode(std::vector<Elements::Element> targetElements,
                                std::vector<std::reference_wrapper<const ForcefieldAtomType>> targetAtomTypes)
 {
     auto node = std::make_shared<NETAConnectionNode>(parent_, targetElements, targetAtomTypes);
@@ -100,7 +96,7 @@ NETANode::createConnectionNode(std::vector<std::reference_wrapper<const Element>
 
 // Create presence node in the branch
 std::shared_ptr<NETAPresenceNode>
-NETANode::createPresenceNode(std::vector<std::reference_wrapper<const Element>> targetElements,
+NETANode::createPresenceNode(std::vector<Elements::Element> targetElements,
                              std::vector<std::reference_wrapper<const ForcefieldAtomType>> targetAtomTypes)
 {
     auto node = std::make_shared<NETAPresenceNode>(parent_, targetElements, targetAtomTypes);
@@ -130,6 +126,16 @@ bool NETANode::isValidModifier(std::string_view s) const { return false; }
 bool NETANode::setModifier(std::string_view modifier, ComparisonOperator op, int value) { return false; }
 
 /*
+ * Options
+ */
+
+// Return whether the specified option is valid for this node
+bool NETANode::isValidOption(std::string_view s) const { return false; }
+
+// Set value and comparator for specified modifier
+bool NETANode::setOption(std::string_view option, ComparisonOperator op, std::string_view value) { return false; }
+
+/*
  * Flags
  */
 
@@ -150,22 +156,22 @@ bool NETANode::compareValues(int lhsValue, ComparisonOperator op, int rhsValue)
 
     switch (op)
     {
-        case (EqualTo):
+        case (ComparisonOperator::EqualTo):
             result = (lhsValue == rhsValue);
             break;
-        case (NotEqualTo):
+        case (ComparisonOperator::NotEqualTo):
             result = (lhsValue != rhsValue);
             break;
-        case (GreaterThan):
+        case (ComparisonOperator::GreaterThan):
             result = (lhsValue > rhsValue);
             break;
-        case (LessThan):
+        case (ComparisonOperator::LessThan):
             result = (lhsValue < rhsValue);
             break;
-        case (GreaterThanEqualTo):
+        case (ComparisonOperator::GreaterThanEqualTo):
             result = (lhsValue >= rhsValue);
             break;
-        case (LessThanEqualTo):
+        case (ComparisonOperator::LessThanEqualTo):
             result = (lhsValue <= rhsValue);
             break;
         default:

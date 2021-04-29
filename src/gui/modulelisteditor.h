@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -85,13 +85,4 @@ class ModuleListEditor : public QWidget
     void chartWidgetDataModified();
     void chartWidgetSizeChanged();
     void controlsWidgetDataModified();
-
-    /*
-     * State
-     */
-    public:
-    // Write widget state through specified LineParser
-    bool writeState(LineParser &parser) const;
-    // Read widget state through specified LineParser
-    bool readState(LineParser &parser);
 };

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -20,7 +20,7 @@ class AtomShakeModuleWidget : public ModuleWidget
     AtomShakeModule *module_;
 
     public:
-    AtomShakeModuleWidget(QWidget *parent, AtomShakeModule *module);
+    AtomShakeModuleWidget(QWidget *parent, const GenericList &processingData, AtomShakeModule *module);
     ~AtomShakeModuleWidget();
 
     /*

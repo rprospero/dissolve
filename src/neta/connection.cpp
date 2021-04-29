@@ -1,45 +1,43 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "neta/connection.h"
 #include "classes/speciesatom.h"
-#include "data/ffatomtype.h"
-#include "templates/dynamicarray.h"
+#include "data/ff/atomtype.h"
 #include <algorithm>
 #include <map>
 
-NETAConnectionNode::NETAConnectionNode(NETADefinition *parent,
-                                       std::vector<std::reference_wrapper<const Element>> targetElements,
+NETAConnectionNode::NETAConnectionNode(NETADefinition *parent, std::vector<Elements::Element> targetElements,
                                        std::vector<std::reference_wrapper<const ForcefieldAtomType>> targetAtomTypes,
                                        SpeciesBond::BondType bt)
-    : NETANode(parent, NETANode::ConnectionNode)
+    : NETANode(parent, NETANode::NodeType::Connection)
 {
     allowedElements_ = targetElements;
     allowedAtomTypes_ = targetAtomTypes;
     bondType_ = bt;
+    geometry_ = SpeciesAtom::AtomGeometry::Unknown;
+    geometryOperator_ = NETANode::ComparisonOperator::EqualTo;
 
     // Modifiers
     repeatCount_ = 1;
-    repeatCountOperator_ = NETANode::GreaterThanEqualTo;
+    repeatCountOperator_ = NETANode::ComparisonOperator::GreaterThanEqualTo;
     nBondsValue_ = -1;
-    nBondsValueOperator_ = NETANode::EqualTo;
+    nBondsValueOperator_ = NETANode::ComparisonOperator::EqualTo;
     nHydrogensValue_ = -1;
-    nHydrogensValueOperator_ = NETANode::EqualTo;
+    nHydrogensValueOperator_ = NETANode::ComparisonOperator::EqualTo;
 
     // Flags
     allowRootMatch_ = false;
 }
-
-NETAConnectionNode::~NETAConnectionNode() {}
 
 /*
  * Atom Targets
  */
 
 // Add element target to node
-bool NETAConnectionNode::addElementTarget(const Element &el)
+bool NETAConnectionNode::addElementTarget(Elements::Element Z)
 {
-    allowedElements_.push_back(el);
+    allowedElements_.push_back(Z);
 
     return true;
 }
@@ -47,7 +45,7 @@ bool NETAConnectionNode::addElementTarget(const Element &el)
 // Add forcefield type target to node
 bool NETAConnectionNode::addFFTypeTarget(const ForcefieldAtomType &ffType)
 {
-    allowedAtomTypes_.push_back(ffType);
+    allowedAtomTypes_.emplace_back(ffType);
 
     return true;
 }
@@ -59,13 +57,10 @@ bool NETAConnectionNode::addFFTypeTarget(const ForcefieldAtomType &ffType)
 // Return enum options for NETAConnectionModifiers
 EnumOptions<NETAConnectionNode::NETAConnectionModifier> NETAConnectionNode::modifiers()
 {
-    static EnumOptionsList ModifierOptions = EnumOptionsList()
-                                             << EnumOption(NBondsModifier, "nbonds") << EnumOption(NHydrogensModifier, "nh")
-                                             << EnumOption(RepeatConnectionModifier, "n");
-
-    static EnumOptions<NETAConnectionNode::NETAConnectionModifier> options("ConnectionModifier", ModifierOptions);
-
-    return options;
+    return EnumOptions<NETAConnectionNode::NETAConnectionModifier>("ConnectionModifier",
+                                                                   {{NETAConnectionModifier::NBonds, "nbonds"},
+                                                                    {NETAConnectionModifier::NHydrogens, "nh"},
+                                                                    {NETAConnectionModifier::Repeat, "n"}});
 }
 
 // Return whether the specified modifier is valid for this node
@@ -80,20 +75,58 @@ bool NETAConnectionNode::setModifier(std::string_view modifier, ComparisonOperat
 
     switch (modifiers().enumeration(modifier))
     {
-        case (NETAConnectionNode::NBondsModifier):
+        case (NETAConnectionNode::NETAConnectionModifier::NBonds):
             nBondsValue_ = value;
             nBondsValueOperator_ = op;
             break;
-        case (NETAConnectionNode::NHydrogensModifier):
+        case (NETAConnectionNode::NETAConnectionModifier::NHydrogens):
             nHydrogensValue_ = value;
             nHydrogensValueOperator_ = op;
             break;
-        case (NETAConnectionNode::RepeatConnectionModifier):
+        case (NETAConnectionNode::NETAConnectionModifier::Repeat):
             repeatCount_ = value;
             repeatCountOperator_ = op;
             break;
         default:
             return Messenger::error("Don't know how to handle modifier '{}' in connection node.\n", modifier);
+    }
+
+    return true;
+}
+
+/*
+ * Options
+ */
+
+// Return enum options for NETARootOptions
+EnumOptions<NETAConnectionNode::NETAConnectionOption> NETAConnectionNode::options()
+{
+    return EnumOptions<NETAConnectionNode::NETAConnectionOption>("ConnectionOption",
+                                                                 {{NETAConnectionOption::Geometry, "geometry"}});
+}
+
+// Return whether the specified option is valid for this node
+bool NETAConnectionNode::isValidOption(std::string_view s) const { return options().isValid(s); }
+
+// Set value and comparator for specified option
+bool NETAConnectionNode::setOption(std::string_view option, ComparisonOperator op, std::string_view value)
+{
+    // Check that the supplied option is valid
+    if (!options().isValid(option))
+        return Messenger::error("Invalid option '{}' passed to NETARootNode.\n", option);
+
+    switch (options().enumeration(option))
+    {
+        case (NETAConnectionNode::NETAConnectionOption::Geometry):
+            // Check that the value is a valid AtomGeometry
+            if (SpeciesAtom::geometries().isValid(value))
+                geometry_ = SpeciesAtom::geometries().enumeration(value);
+            else
+                return SpeciesAtom::geometries().errorAndPrintValid(value);
+            geometryOperator_ = op;
+            break;
+        default:
+            return Messenger::error("Don't know how to handle option '{}' in root node.\n", option);
     }
 
     return true;
@@ -106,11 +139,7 @@ bool NETAConnectionNode::setModifier(std::string_view modifier, ComparisonOperat
 // Return enum options for NETAConnectionFlags
 EnumOptions<NETAConnectionNode::NETAConnectionFlag> NETAConnectionNode::flags()
 {
-    static EnumOptionsList FlagOptions = EnumOptionsList() << EnumOption(RootFlag, "root");
-
-    static EnumOptions<NETAConnectionNode::NETAConnectionFlag> options("ConnectionFlag", FlagOptions);
-
-    return options;
+    return EnumOptions<NETAConnectionNode::NETAConnectionFlag>("ConnectionFlag", {{NETAConnectionFlag::Root, "root"}});
 }
 
 // Return whether the specified flag is valid for this node
@@ -125,7 +154,7 @@ bool NETAConnectionNode::setFlag(std::string_view flag, bool state)
 
     switch (flags().enumeration(flag))
     {
-        case (NETAConnectionNode::RootFlag):
+        case (NETAConnectionNode::NETAConnectionFlag::Root):
             allowRootMatch_ = state;
             break;
         default:
@@ -165,9 +194,9 @@ int NETAConnectionNode::score(const SpeciesAtom *i, std::vector<const SpeciesAto
 
         // Evaluate the neighbour against our elements
         int atomScore = NETANode::NoMatch;
-        for (const auto &element : allowedElements_)
+        for (const auto Z : allowedElements_)
         {
-            if (j->element() != &element.get())
+            if (j->Z() != Z)
                 continue;
 
             // Process branch definition via the base class, using a copy of the current match path
@@ -190,7 +219,7 @@ int NETAConnectionNode::score(const SpeciesAtom *i, std::vector<const SpeciesAto
             for (const ForcefieldAtomType &atomType : allowedAtomTypes_)
             {
                 // Check the element of the atom type against that of the neighbours
-                if (j->element() != &atomType.element())
+                if (j->Z() != atomType.Z())
                     continue;
 
                 // Evaluate the neighbour against the atom type
@@ -231,7 +260,7 @@ int NETAConnectionNode::score(const SpeciesAtom *i, std::vector<const SpeciesAto
         {
             // Count number of hydrogens attached to this atom
             auto nH = std::count_if(j->bonds().begin(), j->bonds().end(),
-                                    [j](const SpeciesBond &bond) { return bond.partner(j)->element()->Z() == ELEMENT_H; });
+                                    [j](const SpeciesBond &bond) { return bond.partner(j)->Z() == Elements::H; });
             if (!compareValues(nH, nHydrogensValueOperator_, nHydrogensValue_))
                 continue;
 
@@ -243,7 +272,8 @@ int NETAConnectionNode::score(const SpeciesAtom *i, std::vector<const SpeciesAto
         nbr.second = atomScore;
 
         // Exit early in the case of GreaterThan GreaterThanEqualTo logic
-        if ((repeatCountOperator_ == NETANode::GreaterThan || repeatCountOperator_ == NETANode::GreaterThanEqualTo) &&
+        if ((repeatCountOperator_ == NETANode::ComparisonOperator::GreaterThan ||
+             repeatCountOperator_ == NETANode::ComparisonOperator::GreaterThanEqualTo) &&
             compareValues(nMatches, repeatCountOperator_, repeatCount_))
             break;
     }

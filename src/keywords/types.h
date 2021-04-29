@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -24,14 +24,14 @@
 #include "keywords/elementreflist.h"
 #include "keywords/enumoptions.h"
 #include "keywords/expression.h"
-#include "keywords/expressionvariablelist.h"
+#include "keywords/expressionvariablevector.h"
 #include "keywords/fileandformat.h"
 #include "keywords/geometrylist.h"
 #include "keywords/isotopologueset.h"
 #include "keywords/linkto.h"
 #include "keywords/module.h"
 #include "keywords/modulegroups.h"
-#include "keywords/modulereflist.h"
+#include "keywords/modulevector.h"
 #include "keywords/node.h"
 #include "keywords/nodeandinteger.h"
 #include "keywords/nodearray.h"
@@ -52,4 +52,4 @@
 #include "keywords/vec3nodevalue.h"
 #include "keywords/vector_intdouble.h"
 #include "keywords/vector_intstring.h"
-#include "keywords/windowfunction.h"
+#include "keywords/vector_stringpair.h"

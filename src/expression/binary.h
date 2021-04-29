@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
-#include "expression/nodeNEW.h"
+#include "expression/node.h"
 
 // Expression Binary Operator Node
-class ExpressionBinaryOperatorNode : public ExpressionNodeNEW
+class ExpressionBinaryOperatorNode : public ExpressionNode
 {
     public:
     // Binary Operators Enum
@@ -20,6 +20,13 @@ class ExpressionBinaryOperatorNode : public ExpressionNodeNEW
     };
     ExpressionBinaryOperatorNode(BinaryOperator op);
     ~ExpressionBinaryOperatorNode() = default;
+
+    /*
+     * Nodes
+     */
+    protected:
+    // Duplicate this node and its contents
+    std::shared_ptr<ExpressionNode> duplicate();
 
     /*
      * Data

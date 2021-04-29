@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -7,7 +7,6 @@
 #include "procedure/nodes/node.h"
 #include "templates/array.h"
 #include "templates/list.h"
-#include "templates/orderedvector.h"
 #include "templates/reflist.h"
 #include <memory>
 
@@ -25,14 +24,14 @@ class SelectProcedureNode : public ProcedureNode
 {
     public:
     SelectProcedureNode(SpeciesSite *site = nullptr, bool axesRequired = false);
-    ~SelectProcedureNode();
+    ~SelectProcedureNode() override;
 
     /*
      * Identity
      */
     public:
     // Return whether specified context is relevant for this node type
-    bool isContextRelevant(ProcedureNode::NodeContext context);
+    bool isContextRelevant(ProcedureNode::NodeContext context) override;
 
     /*
      * Selection Targets
@@ -52,7 +51,7 @@ class SelectProcedureNode : public ProcedureNode
     // List of other sites (nodes) which will exclude one of our sites if it has the same Molecule parent
     RefList<SelectProcedureNode> sameMoleculeExclusions_;
     // List of Molecules currently excluded from selection
-    OrderedVector<std::shared_ptr<const Molecule>> excludedMolecules_;
+    std::vector<std::shared_ptr<const Molecule>> excludedMolecules_;
     // List of other sites (nodes) which will exclude one of our sites if it is the same site
     RefList<SelectProcedureNode> sameSiteExclusions_;
     // List of Sites currently excluded from selection
@@ -66,7 +65,7 @@ class SelectProcedureNode : public ProcedureNode
 
     public:
     // Return list of Molecules currently excluded from selection
-    const OrderedVector<std::shared_ptr<const Molecule>> &excludedMolecules() const;
+    const std::vector<std::shared_ptr<const Molecule>> &excludedMolecules() const;
     // List of Sites currently excluded from selection
     const RefList<const Site> &excludedSites() const;
     // Return Molecule (from site) in which the site must exist
@@ -104,9 +103,9 @@ class SelectProcedureNode : public ProcedureNode
 
     public:
     // Return whether this node has a branch
-    bool hasBranch() const;
+    bool hasBranch() const override;
     // Return SequenceNode for the branch (if it exists)
-    SequenceProcedureNode *branch();
+    SequenceProcedureNode *branch() override;
     // Add and return ForEach sequence
     SequenceProcedureNode *addForEachBranch(ProcedureNode::NodeContext context);
 
@@ -115,10 +114,9 @@ class SelectProcedureNode : public ProcedureNode
      */
     public:
     // Prepare any necessary data, ready for execution
-    bool prepare(Configuration *cfg, std::string_view prefix, GenericList &targetList);
+    bool prepare(Configuration *cfg, std::string_view prefix, GenericList &targetList) override;
     // Execute node, targetting the supplied Configuration
-    ProcedureNode::NodeExecutionResult execute(ProcessPool &procPool, Configuration *cfg, std::string_view prefix,
-                                               GenericList &targetList);
+    bool execute(ProcessPool &procPool, Configuration *cfg, std::string_view prefix, GenericList &targetList) override;
     // Finalise any necessary data after execution
-    bool finalise(ProcessPool &procPool, Configuration *cfg, std::string_view prefix, GenericList &targetList);
+    bool finalise(ProcessPool &procPool, Configuration *cfg, std::string_view prefix, GenericList &targetList) override;
 };

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "io/import/forces.h"
 #include "base/lineparser.h"
@@ -33,26 +33,22 @@ void ForceImportFileFormat::setUpKeywords()
  */
 
 // Return enum options for ForceImportFormat
-EnumOptions<ForceImportFileFormat::ForceImportFormat> &ForceImportFileFormat::forceImportFormats()
+EnumOptions<ForceImportFileFormat::ForceImportFormat> ForceImportFileFormat::forceImportFormats()
 {
-    static EnumOptionsList ForceImportFileFormats =
-        EnumOptionsList() << EnumOption(ForceImportFileFormat::DLPOLYForces, "dlpoly", "DL_POLY Config File Forces")
-                          << EnumOption(ForceImportFileFormat::MoscitoForces, "moscito", "Moscito Structure File Forces")
-                          << EnumOption(ForceImportFileFormat::SimpleForces, "simple", "Simple Free-Formatted Forces");
-
-    static EnumOptions<ForceImportFileFormat::ForceImportFormat> options("ForceImportFileFormat", ForceImportFileFormats);
-
-    return options;
+    return EnumOptions<ForceImportFileFormat::ForceImportFormat>(
+        "ForceImportFileFormat", {{ForceImportFileFormat::DLPOLYForces, "dlpoly", "DL_POLY Config File Forces"},
+                                  {ForceImportFileFormat::MoscitoForces, "moscito", "Moscito Structure File Forces"},
+                                  {ForceImportFileFormat::SimpleForces, "simple", "Simple Free-Formatted Forces"}});
 }
 
 // Return number of available formats
 int ForceImportFileFormat::nFormats() const { return ForceImportFileFormat::nForceImportFormats; }
 
 // Return format keyword for supplied index
-std::string_view ForceImportFileFormat::formatKeyword(int id) const { return forceImportFormats().keywordByIndex(id); }
+std::string ForceImportFileFormat::formatKeyword(int id) const { return forceImportFormats().keywordByIndex(id); }
 
 // Return description string for supplied index
-std::string_view ForceImportFileFormat::formatDescription(int id) const { return forceImportFormats().descriptionByIndex(id); }
+std::string ForceImportFileFormat::formatDescription(int id) const { return forceImportFormats().descriptionByIndex(id); }
 
 // Return current format as ForceImportFormat
 ForceImportFileFormat::ForceImportFormat ForceImportFileFormat::forceFormat() const
@@ -65,7 +61,7 @@ ForceImportFileFormat::ForceImportFormat ForceImportFileFormat::forceFormat() co
  */
 
 // Read forces using current filename and format
-bool ForceImportFileFormat::importData(Array<double> &fx, Array<double> &fy, Array<double> &fz, ProcessPool *procPool)
+bool ForceImportFileFormat::importData(std::vector<Vec3<double>> &f, ProcessPool *procPool)
 {
     // Open file and check that we're OK to proceed importing from it
     LineParser parser(procPool);
@@ -73,7 +69,7 @@ bool ForceImportFileFormat::importData(Array<double> &fx, Array<double> &fy, Arr
         return Messenger::error("Couldn't open file '{}' for loading forces data.\n", filename_);
 
     // Import the data
-    auto result = importData(parser, fx, fy, fz);
+    auto result = importData(parser, f);
 
     parser.closeFiles();
 
@@ -81,20 +77,20 @@ bool ForceImportFileFormat::importData(Array<double> &fx, Array<double> &fy, Arr
 }
 
 // Import forces using supplied parser and current format
-bool ForceImportFileFormat::importData(LineParser &parser, Array<double> &fx, Array<double> &fy, Array<double> &fz)
+bool ForceImportFileFormat::importData(LineParser &parser, std::vector<Vec3<double>> &f)
 {
     // Import the data
     auto result = false;
     switch (forceFormat())
     {
         case (ForceImportFileFormat::DLPOLYForces):
-            result = importDLPOLY(parser, fx, fy, fz);
+            result = importDLPOLY(parser, f);
             break;
         case (ForceImportFileFormat::MoscitoForces):
-            result = importMoscito(parser, fx, fy, fz);
+            result = importMoscito(parser, f);
             break;
         case (ForceImportFileFormat::SimpleForces):
-            result = importSimple(parser, fx, fy, fz);
+            result = importSimple(parser, f);
             break;
         default:
             Messenger::error("Don't know how to load forces in format '{}'.\n", formatKeyword(forceFormat()));
@@ -102,9 +98,8 @@ bool ForceImportFileFormat::importData(LineParser &parser, Array<double> &fx, Ar
 
     // Apply factor to data
     auto factor = keywords_.asDouble("Factor");
-    fx *= factor;
-    fy *= factor;
-    fz *= factor;
+std:
+    transform(f.begin(), f.end(), f.begin(), [factor](auto &value) { return value * factor; });
 
     return result;
 }

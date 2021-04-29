@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "math/gj.h"
 #include "templates/array2d.h"
 
+namespace GaussJordan
+{
 // Perform Gauss-Jordan inversion of the supplied Array2D<double>
-bool GaussJordan::invert(Array2D<double> &A)
+bool invert(Array2D<double> &A)
 {
     // Matrix must be square, and not stored as a half-matrix
     if (A.nRows() != A.nColumns())
@@ -106,3 +108,4 @@ bool GaussJordan::invert(Array2D<double> &A)
 
     return true;
 }
+} // namespace GaussJordan

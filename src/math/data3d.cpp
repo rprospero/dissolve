@@ -1,30 +1,15 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "math/data3d.h"
 #include "base/lineparser.h"
 #include "base/messenger.h"
+#include "base/sysfunc.h"
 #include "math/histogram3d.h"
 
-// Static Members (ObjectStore)
-template <class Data3D> RefDataList<Data3D, int> ObjectStore<Data3D>::objects_;
-template <class Data3D> int ObjectStore<Data3D>::objectCount_ = 0;
-template <class Data3D> int ObjectStore<Data3D>::objectType_ = ObjectInfo::Data3DObject;
-template <class Data3D> std::string_view ObjectStore<Data3D>::objectTypeName_ = "Data3D";
+Data3D::Data3D() : hasError_(false) {}
 
-Data3D::Data3D() : PlottableData(PlottableData::TwoAxisPlottable), ListItem<Data3D>(), ObjectStore<Data3D>(this)
-{
-    hasError_ = false;
-
-    clear();
-}
-
-Data3D::~Data3D() {}
-
-Data3D::Data3D(const Data3D &source) : PlottableData(PlottableData::TwoAxisPlottable), ObjectStore<Data3D>(this)
-{
-    (*this) = source;
-}
+Data3D::Data3D(const Data3D &source) { (*this) = source; }
 
 // Clear Data
 void Data3D::clear()
@@ -41,6 +26,12 @@ void Data3D::clear()
 /*
  * Data
  */
+
+// Set tag
+void Data3D::setTag(std::string_view tag) { tag_ = tag; }
+
+// Return tag
+std::string_view Data3D::tag() const { return tag_; }
 
 // Initialise arrays to specified size
 void Data3D::initialise(int xSize, int ySize, int zSize, bool withError)
@@ -106,72 +97,32 @@ int Data3D::version() const { return version_; }
 // Return x value specified
 double &Data3D::xAxis(int index)
 {
-#ifdef CHECKS
-    if ((index < 0) || (index >= x_.size()))
-    {
-        static double dummy;
-        Messenger::error("OUT_OF_RANGE - Index {} is out of range for x_ array in Data3D::xAxis().\n", index);
-        return dummy;
-    }
-#endif
-
     ++version_;
 
     return x_[index];
 }
 
-// Return x value specified (const)
-double Data3D::constXAxis(int index) const
-{
-#ifdef CHECKS
-    if ((index < 0) || (index >= x_.size()))
-    {
-        Messenger::error("OUT_OF_RANGE - Index {} is out of range for x_ array in Data3D::constXAxis().\n", index);
-        return 0.0;
-    }
-#endif
-    return x_[index];
-}
+const double &Data3D::xAxis(int index) const { return x_[index]; }
 
-// Return x axis Array
+// Return x axis vector
 std::vector<double> &Data3D::xAxis()
 {
-    return x_;
-
     ++version_;
+
+    return x_;
 }
 
-// Return x axis Array (const)
 const std::vector<double> &Data3D::xAxis() const { return x_; }
 
 // Return y value specified
 double &Data3D::yAxis(int index)
 {
-#ifdef CHECKS
-    if ((index < 0) || (index >= y_.size()))
-    {
-        static double dummy;
-        Messenger::error("OUT_OF_RANGE - Index {} is out of range for x_ array in Data3D::yAxis().\n", index);
-        return dummy;
-    }
-#endif
     ++version_;
 
     return y_[index];
 }
 
-// Return y value specified (const)
-double Data3D::constYAxis(int index) const
-{
-#ifdef CHECKS
-    if ((index < 0) || (index >= y_.size()))
-    {
-        Messenger::error("OUT_OF_RANGE - Index {} is out of range for x_ array in Data3D::constYAxis().\n", index);
-        return 0.0;
-    }
-#endif
-    return y_[index];
-}
+const double &Data3D::yAxis(int index) const { return y_[index]; }
 
 // Return y Array
 std::vector<double> &Data3D::yAxis()
@@ -181,37 +132,17 @@ std::vector<double> &Data3D::yAxis()
     return y_;
 }
 
-// Return y axis Array (const)
 const std::vector<double> &Data3D::yAxis() const { return y_; }
 
 // Return z value specified
 double &Data3D::zAxis(int index)
 {
-#ifdef CHECKS
-    if ((index < 0) || (index >= z_.size()))
-    {
-        static double dummy;
-        Messenger::error("OUT_OF_RANGE - Index {} is out of range for z_ array in Data3D::zAxis().\n", index);
-        return dummy;
-    }
-#endif
     ++version_;
 
     return z_[index];
 }
 
-// Return z value specified (const)
-double Data3D::constZAxis(int index) const
-{
-#ifdef CHECKS
-    if ((index < 0) || (index >= z_.size()))
-    {
-        Messenger::error("OUT_OF_RANGE - Index {} is out of range for z_ array in Data3D::constZAxis().\n", index);
-        return 0.0;
-    }
-#endif
-    return z_[index];
-}
+const double &Data3D::zAxis(int index) const { return z_[index]; }
 
 // Return z Array
 std::vector<double> &Data3D::zAxis()
@@ -221,61 +152,19 @@ std::vector<double> &Data3D::zAxis()
     return z_;
 }
 
-// Return z axis Array (const)
 const std::vector<double> &Data3D::zAxis() const { return z_; }
 
 // Return value specified
 double &Data3D::value(int xIndex, int yIndex, int zIndex)
 {
-#ifdef CHECKS
-    if ((xIndex < 0) || (xIndex >= x_.size()))
-    {
-        static double dummy;
-        Messenger::error("OUT_OF_RANGE - Index {} is out of range for x axis in Data3D::value().\n", xIndex);
-        return dummy;
-    }
-    if ((yIndex < 0) || (yIndex >= y_.size()))
-    {
-        static double dummy;
-        Messenger::error("OUT_OF_RANGE - Index {} is out of range for y axis in Data3D::value().\n", yIndex);
-        return dummy;
-    }
-    if ((zIndex < 0) || (zIndex >= z_.size()))
-    {
-        static double dummy;
-        Messenger::error("OUT_OF_RANGE - Index {} is out of range for z axis in Data3D::value().\n", zIndex);
-        return dummy;
-    }
-#endif
     ++version_;
 
     return values_[{xIndex, yIndex, zIndex}];
 }
 
-// Return value specified (const)
-double Data3D::constValue(int xIndex, int yIndex, int zIndex) const
-{
-#ifdef CHECKS
-    if ((xIndex < 0) || (xIndex >= x_.size()))
-    {
-        Messenger::error("OUT_OF_RANGE - Index {} is out of range for x axis in Data3D::constValue().\n", xIndex);
-        return 0.0;
-    }
-    if ((yIndex < 0) || (yIndex >= y_.size()))
-    {
-        Messenger::error("OUT_OF_RANGE - Index {} is out of range for y axis in Data3D::constValue().\n", yIndex);
-        return 0.0;
-    }
-    if ((zIndex < 0) || (zIndex >= z_.size()))
-    {
-        Messenger::error("OUT_OF_RANGE - Index {} is out of range for z axis in Data3D::constValue().\n", zIndex);
-        return 0.0;
-    }
-#endif
-    return values_[{xIndex, yIndex, zIndex}];
-}
+const double &Data3D::value(int xIndex, int yIndex, int zIndex) const { return values_[{xIndex, yIndex, zIndex}]; }
 
-// Return values Array
+// Return three-dimensional values Array
 Array3D<double> &Data3D::values()
 {
     ++version_;
@@ -283,8 +172,7 @@ Array3D<double> &Data3D::values()
     return values_;
 }
 
-// Return values Array (const)
-const Array3D<double> &Data3D::constValues3D() const { return values_; }
+const Array3D<double> &Data3D::values() const { return values_; }
 
 // Return number of values present in whole dataset
 int Data3D::nValues() const { return values_.linearArraySize(); }
@@ -295,7 +183,7 @@ double Data3D::minValue() const
     if (values_.empty())
         return 0.0;
 
-    return *std::min_element(values_.cbegin(), values_.cend());
+    return *std::min_element(values_.begin(), values_.end());
 }
 
 // Return maximum value over all data points
@@ -304,7 +192,7 @@ double Data3D::maxValue() const
     if (values_.empty())
         return 0.0;
 
-    return *std::max_element(values_.cbegin(), values_.cend());
+    return *std::max_element(values_.begin(), values_.end());
 }
 
 // Add / initialise errors array
@@ -326,86 +214,33 @@ bool Data3D::valuesHaveErrors() const { return hasError_; }
 // Return error value specified
 double &Data3D::error(int xIndex, int yIndex, int zIndex)
 {
-    if (!hasError_)
-    {
-        static double dummy;
-        Messenger::warn("This Data3D (name='{}', tag='{}') has no errors to return, but error(int) was requested.\n", name(),
-                        objectTag());
-        return dummy;
-    }
-#ifdef CHECKS
-    if ((xIndex < 0) || (xIndex >= x_.size()))
-    {
-        static double dummy;
-        Messenger::error("OUT_OF_RANGE - Index {} is out of range for x axis in Data3D::error().\n", xIndex);
-        return dummy;
-    }
-    if ((yIndex < 0) || (yIndex >= y_.size()))
-    {
-        static double dummy;
-        Messenger::error("OUT_OF_RANGE - Index {} is out of range for y axis in Data3D::error().\n", yIndex);
-        return dummy;
-    }
-    if ((zIndex < 0) || (zIndex >= z_.size()))
-    {
-        static double dummy;
-        Messenger::error("OUT_OF_RANGE - Index {} is out of range for z axis in Data3D::error().\n", zIndex);
-        return dummy;
-    }
-#endif
+    assert(hasError_);
+
     ++version_;
 
     return errors_[{xIndex, yIndex, zIndex}];
 }
 
-// Return error value specified (const)
-double Data3D::constError(int xIndex, int yIndex, int zIndex) const
+const double &Data3D::error(int xIndex, int yIndex, int zIndex) const
 {
-    if (!hasError_)
-    {
-        Messenger::warn("This Data3D (name='{}', tag='{}') has no errors to return, but constError(int,int) was requested.\n",
-                        name(), objectTag());
-        return 0.0;
-    }
-#ifdef CHECKS
-    if ((xIndex < 0) || (xIndex >= x_.size()))
-    {
-        Messenger::error("OUT_OF_RANGE - Index {} is out of range for x axis in Data3D::constError().\n", xIndex);
-        return 0.0;
-    }
-    if ((yIndex < 0) || (yIndex >= y_.size()))
-    {
-        Messenger::error("OUT_OF_RANGE - Index {} is out of range for y axis in Data3D::constError().\n", yIndex);
-        return 0.0;
-    }
-    if ((zIndex < 0) || (zIndex >= z_.size()))
-    {
-        Messenger::error("OUT_OF_RANGE - Index {} is out of range for z axis in Data3D::constError().\n", zIndex);
-        return 0.0;
-    }
-#endif
+    assert(hasError_);
 
     return errors_[{xIndex, yIndex, zIndex}];
 }
 
-// Return error Array
+// Return three-dimensional errors Array
 Array3D<double> &Data3D::errors()
 {
-    if (!hasError_)
-        Messenger::warn("This Data3D (name='{}', tag='{}') has no errors to return, but errors() was requested.\n", name(),
-                        objectTag());
+    assert(hasError_);
 
     ++version_;
 
     return errors_;
 }
 
-// Return error Array (const)
-const Array3D<double> &Data3D::constErrors3D() const
+const Array3D<double> &Data3D::errors() const
 {
-    if (!hasError_)
-        Messenger::warn("This Data3D (name='{}', tag='{}') has no errors to return, but constErrors() was requested.\n", name(),
-                        objectTag());
+    assert(hasError_);
 
     return errors_;
 }
@@ -416,7 +251,7 @@ const Array3D<double> &Data3D::constErrors3D() const
 
 void Data3D::operator=(const Data3D &source)
 {
-    name_ = source.name_;
+    tag_ = source.tag_;
     x_ = source.x_;
     y_ = source.y_;
     z_ = source.z_;
@@ -462,26 +297,18 @@ void Data3D::operator/=(const double factor)
 }
 
 /*
- * GenericItemBase Implementations
+ * Serialisation
  */
 
-// Return class name
-std::string_view Data3D::itemClassName() { return "Data3D"; }
-
 // Read data through specified LineParser
-bool Data3D::read(LineParser &parser, CoreData &coreData)
+bool Data3D::deserialise(LineParser &parser)
 {
     clear();
-
-    // Read object tag
-    if (parser.readNextLine(LineParser::Defaults) != LineParser::Success)
-        return false;
-    setObjectTag(parser.line());
 
     // Read object name
     if (parser.readNextLine(LineParser::KeepBlanks) != LineParser::Success)
         return false;
-    name_ = parser.line();
+    tag_ = parser.line();
 
     // Read axis sizes and initialise arrays
     if (parser.getArgsDelim(LineParser::Defaults) != LineParser::Success)
@@ -547,12 +374,10 @@ bool Data3D::read(LineParser &parser, CoreData &coreData)
 }
 
 // Write data through specified LineParser
-bool Data3D::write(LineParser &parser)
+bool Data3D::serialise(LineParser &parser) const
 {
-    // Write object tag and name
-    if (!parser.writeLineF("{}\n", objectTag()))
-        return false;
-    if (!parser.writeLineF("{}\n", name()))
+    // Write tag
+    if (!parser.writeLineF("{}\n", tag_))
         return false;
 
     // Write axis sizes and errors flag
@@ -591,54 +416,10 @@ bool Data3D::write(LineParser &parser)
     }
     else
     {
-        for (auto &value : values_)
+        for (const auto &value : values_)
             if (!parser.writeLineF("{:e}\n", value))
                 return false;
     }
 
-    return true;
-}
-
-/*
- * Parallel Comms
- */
-
-// Broadcast data
-bool Data3D::broadcast(ProcessPool &procPool, const int root, const CoreData &coreData)
-{
-#ifdef PARALLEL
-    if (!procPool.broadcast(x_, root))
-        return false;
-    if (!procPool.broadcast(y_, root))
-        return false;
-    if (!procPool.broadcast(z_, root))
-        return false;
-    if (!procPool.broadcast(values_.linearArray(), root))
-        return false;
-    if (!procPool.broadcast(hasError_, root))
-        return false;
-    if (!procPool.broadcast(errors_.linearArray(), root))
-        return false;
-#endif
-    return true;
-}
-
-// Check item equality
-bool Data3D::equality(ProcessPool &procPool)
-{
-#ifdef PARALLEL
-    if (!procPool.equality(x_))
-        return Messenger::error("Data3D x axis values not equivalent.\n");
-    if (!procPool.equality(y_))
-        return Messenger::error("Data3D y axis values not equivalent.\n");
-    if (!procPool.equality(z_))
-        return Messenger::error("Data3D z axis values not equivalent.\n");
-    if (!procPool.equality(values_.linearArray()))
-        return Messenger::error("Data3D values not equivalent.\n");
-    if (!procPool.equality(hasError_))
-        return Messenger::error("Data3D error flag not equivalent.\n");
-    if (!procPool.equality(errors_.linearArray()))
-        return Messenger::error("Data3D error values not equivalent.\n");
-#endif
     return true;
 }

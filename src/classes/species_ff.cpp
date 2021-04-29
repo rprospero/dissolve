@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "base/sysfunc.h"
 #include "classes/box.h"
 #include "classes/species.h"
-#include "data/ff.h"
+#include "data/ff/ff.h"
 
 /*
  * Public
@@ -35,7 +35,7 @@ bool Species::applyForcefieldTerms(CoreData &coreData)
         return Messenger::error("No forcefield set in Species '{}', so can't apply terms.\n", name());
 
     // Assign atom types to the species
-    if (forcefield_->assignAtomTypes(this, coreData, Forcefield::TypeAll) != 0)
+    if (forcefield_->assignAtomTypes(this, coreData, Forcefield::TypeAll, false) != 0)
         return false;
 
     // Assign intramolecular terms

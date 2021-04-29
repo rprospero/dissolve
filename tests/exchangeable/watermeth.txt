@@ -70,7 +70,7 @@ Layer  'Correlations'
   # Calculate and test g(r)
   Module  RDF  RDFs
     Configuration  'Mix'
-    # Save  On
+    #Save  On
     Frequency  1
     BinWidth 0.03
   EndModule
@@ -79,7 +79,8 @@ Layer  'Correlations'
     SourceRDFs  'RDFs'
     QMin 0.05
     QBroadening  OmegaDependentGaussian  0.02    # For SLS
-    WindowFunction  None
+    WindowFunction  Lorch0
+    #Save  On
   EndModule
 
   # Sample Structure Factor Calculations
@@ -97,7 +98,9 @@ Layer  'Correlations'
     Isotopologue  'Methanol'  'Protiated'  0.5
     Isotopologue  'Methanol'  'OD-MethylH'  0.5
     Exchangeable  HW  HO
-    #  Save  On
+    #SaveGR  On
+    #SaveSQ  On
+    #SaveReference  On
     Frequency  1
   EndModule
   
@@ -106,7 +109,9 @@ Layer  'Correlations'
     Isotopologue  'Water'  'Deuteriated'  1.0
     Isotopologue  'Methanol'  'Protiated'  1.0
     Exchangeable  HW  HO
-    #  Save  On
+    #SaveGR  On
+    #SaveSQ  On
+    #SaveReference  On
     Frequency  1
   EndModule
   
@@ -115,7 +120,9 @@ Layer  'Correlations'
     Isotopologue  'Water'  'Protiated'  1.0
     Isotopologue  'Methanol'  'OD-MethylH'  1.0
     Exchangeable  HW  HO
-    #  Save  On
+    #SaveGR  On
+    #SaveSQ  On
+    #SaveReference  On
     Frequency  1
   EndModule
   
@@ -124,7 +131,9 @@ Layer  'Correlations'
     Isotopologue  'Water'  'Protiated'  1.0
     Isotopologue  'Methanol'  'MethylD-OH'  1.0
     Exchangeable  HW  HO
-    #  Save  On
+    #SaveGR  On
+    #SaveSQ  On
+    #SaveReference  On
     Frequency  1
   EndModule
   
@@ -133,7 +142,9 @@ Layer  'Correlations'
     Isotopologue  'Water'  'Deuteriated'  1.0
     Isotopologue  'Methanol'  'OD-MethylH'  1.0
     Exchangeable  HW  HO
-    #  Save  On
+    #SaveGR  On
+    #SaveSQ  On
+    #SaveReference  On
     Frequency  1
   EndModule
   
@@ -142,7 +153,9 @@ Layer  'Correlations'
     Isotopologue  'Water'  'Protiated'  1.0
     Isotopologue  'Methanol'  'Deuteriated'  1.0
     Exchangeable  HW  HO
-    #  Save  On
+    #SaveGR  On
+    #SaveSQ  On
+    #SaveReference  On
     Frequency  1
   EndModule
   
@@ -151,7 +164,9 @@ Layer  'Correlations'
     Isotopologue  'Water'  'Deuteriated'  1.0
     Isotopologue  'Methanol'  'Deuteriated'  1.0
     Exchangeable  HW  HO
-    #  Save  On
+    #SaveGR  On
+    #SaveSQ  On
+    #SaveReference  On
     Frequency  1
   EndModule
 EndLayer
@@ -169,151 +184,148 @@ Layer  'Processing'
 
 # -- Partial g(r) (unbound terms)
 Module DataTest  'Unbound g(r)'
-  ErrorType  RMSE
-  Threshold  0.3
-  Data1D  'Mix//RDFs//OriginalGR//OW-OW//Unbound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.g01'
+  Threshold 1.0 
+  Data1D  'RDFs//Mix//OriginalGR//OW-OW//Unbound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.g01'
     Y  2
   EndData1D
-  Data1D  'Mix//RDFs//OriginalGR//OW-HW//Unbound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.g01'
+  Data1D  'RDFs//Mix//OriginalGR//OW-HW//Unbound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.g01'
     Y  4
   EndData1D
-  Data1D  'Mix//RDFs//OriginalGR//OW-CT//Unbound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.g01'
+  Data1D  'RDFs//Mix//OriginalGR//OW-CT//Unbound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.g01'
     Y  6
   EndData1D
-  Data1D  'Mix//RDFs//OriginalGR//OW-HC//Unbound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.g01'
+  Data1D  'RDFs//Mix//OriginalGR//OW-HC//Unbound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.g01'
     Y  8
   EndData1D
-  Data1D  'Mix//RDFs//OriginalGR//OW-OH//Unbound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.g01'
+  Data1D  'RDFs//Mix//OriginalGR//OW-OH//Unbound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.g01'
     Y  10
   EndData1D
-  Data1D  'Mix//RDFs//OriginalGR//OW-HO//Unbound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.g01'
+  Data1D  'RDFs//Mix//OriginalGR//OW-HO//Unbound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.g01'
     Y  12
   EndData1D
-  Data1D  'Mix//RDFs//OriginalGR//HW-HW//Unbound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.g01'
+  Data1D  'RDFs//Mix//OriginalGR//HW-HW//Unbound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.g01'
     Y  14
   EndData1D
-  Data1D  'Mix//RDFs//OriginalGR//HW-CT//Unbound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.g01'
+  Data1D  'RDFs//Mix//OriginalGR//HW-CT//Unbound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.g01'
     Y  16
   EndData1D
-  Data1D  'Mix//RDFs//OriginalGR//HW-HC//Unbound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.g01'
+  Data1D  'RDFs//Mix//OriginalGR//HW-HC//Unbound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.g01'
     Y  18
   EndData1D
-  Data1D  'Mix//RDFs//OriginalGR//HW-OH//Unbound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.g01'
+  Data1D  'RDFs//Mix//OriginalGR//HW-OH//Unbound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.g01'
     Y  20
   EndData1D
-  Data1D  'Mix//RDFs//OriginalGR//HW-HO//Unbound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.g01'
+  Data1D  'RDFs//Mix//OriginalGR//HW-HO//Unbound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.g01'
     Y  22
   EndData1D
-  Data1D  'Mix//RDFs//OriginalGR//CT-CT//Unbound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.g01'
+  Data1D  'RDFs//Mix//OriginalGR//CT-CT//Unbound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.g01'
     Y  24
   EndData1D
-  Data1D  'Mix//RDFs//OriginalGR//CT-HC//Unbound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.g01'
+  Data1D  'RDFs//Mix//OriginalGR//CT-HC//Unbound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.g01'
     Y  26
   EndData1D
-  Data1D  'Mix//RDFs//OriginalGR//CT-OH//Unbound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.g01'
+  Data1D  'RDFs//Mix//OriginalGR//CT-OH//Unbound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.g01'
     Y  28
   EndData1D
-  Data1D  'Mix//RDFs//OriginalGR//CT-HO//Unbound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.g01'
+  Data1D  'RDFs//Mix//OriginalGR//CT-HO//Unbound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.g01'
     Y  30
   EndData1D
-  Data1D  'Mix//RDFs//OriginalGR//HC-HC//Unbound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.g01'
+  Data1D  'RDFs//Mix//OriginalGR//HC-HC//Unbound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.g01'
     Y  32
   EndData1D
-  Data1D  'Mix//RDFs//OriginalGR//HC-OH//Unbound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.g01'
+  Data1D  'RDFs//Mix//OriginalGR//HC-OH//Unbound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.g01'
     Y  34
   EndData1D
-  Data1D  'Mix//RDFs//OriginalGR//HC-HO//Unbound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.g01'
+  Data1D  'RDFs//Mix//OriginalGR//HC-HO//Unbound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.g01'
     Y  36
   EndData1D
-  Data1D  'Mix//RDFs//OriginalGR//OH-OH//Unbound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.g01'
+  Data1D  'RDFs//Mix//OriginalGR//OH-OH//Unbound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.g01'
     Y  38
   EndData1D
-  Data1D  'Mix//RDFs//OriginalGR//OH-HO//Unbound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.g01'
+  Data1D  'RDFs//Mix//OriginalGR//OH-HO//Unbound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.g01'
     Y  40
   EndData1D
-  Data1D  'Mix//RDFs//OriginalGR//HO-HO//Unbound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.g01'
+  Data1D  'RDFs//Mix//OriginalGR//HO-HO//Unbound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.g01'
     Y  42
   EndData1D
 EndModule
 
 # -- Partial g(r) (intramolecular terms)
 Module DataTest  'Bound g(r)'
-  ErrorType  RMSE
-  Threshold  0.5
-  Data1D  'Mix//RDFs//OriginalGR//OW-HW//Bound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.y01'
+  Threshold  1.0
+  Data1D  'RDFs//Mix//OriginalGR//OW-HW//Bound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.y01'
     Y  4
   EndData1D
-  Data1D  'Mix//RDFs//OriginalGR//HW-HW//Bound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.y01'
+  Data1D  'RDFs//Mix//OriginalGR//HW-HW//Bound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.y01'
     Y  14
   EndData1D
-  Data1D  'Mix//RDFs//OriginalGR//CT-HC//Bound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.y01'
+  Data1D  'RDFs//Mix//OriginalGR//CT-HC//Bound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.y01'
     Y  26
   EndData1D
-  Data1D  'Mix//RDFs//OriginalGR//CT-OH//Bound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.y01'
+  Data1D  'RDFs//Mix//OriginalGR//CT-OH//Bound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.y01'
     Y  28
   EndData1D
-  Data1D  'Mix//RDFs//OriginalGR//CT-HO//Bound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.y01'
+  Data1D  'RDFs//Mix//OriginalGR//CT-HO//Bound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.y01'
     Y  30
   EndData1D
-  Data1D  'Mix//RDFs//OriginalGR//HC-HC//Bound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.y01'
+  Data1D  'RDFs//Mix//OriginalGR//HC-HC//Bound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.y01'
     Y  32
   EndData1D
-  Data1D  'Mix//RDFs//OriginalGR//HC-OH//Bound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.y01'
+  Data1D  'RDFs//Mix//OriginalGR//HC-OH//Bound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.y01'
     Y  34
   EndData1D
-  Data1D  'Mix//RDFs//OriginalGR//HC-HO//Bound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.y01'
+  Data1D  'RDFs//Mix//OriginalGR//HC-HO//Bound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.y01'
     Y  36
   EndData1D
-  Data1D  'Mix//RDFs//OriginalGR//OH-HO//Bound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.y01'
+  Data1D  'RDFs//Mix//OriginalGR//OH-HO//Bound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.y01'
     Y  40
   EndData1D
 EndModule
 
 # -- Partial g(r) (intramolecular terms, zero)
 Module DataTest  'Zeroed bound g(r)
+  Threshold  1.0e-5
   ErrorType  RMSE
-  Threshold  0.00001
-  Data1D  'Mix//RDFs//OriginalGR//OW-OW//Bound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.y01'
+  Data1D  'RDFs//Mix//OriginalGR//OW-OW//Bound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.y01'
     Y  2
   EndData1D
-  Data1D  'Mix//RDFs//OriginalGR//OW-CT//Bound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.y01'
+  Data1D  'RDFs//Mix//OriginalGR//OW-CT//Bound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.y01'
     Y  6
   EndData1D
-  Data1D  'Mix//RDFs//OriginalGR//OW-HC//Bound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.y01'
+  Data1D  'RDFs//Mix//OriginalGR//OW-HC//Bound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.y01'
     Y  8
   EndData1D
-  Data1D  'Mix//RDFs//OriginalGR//OW-OH//Bound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.y01'
+  Data1D  'RDFs//Mix//OriginalGR//OW-OH//Bound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.y01'
     Y  10
   EndData1D
-  Data1D  'Mix//RDFs//OriginalGR//OW-HO//Bound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.y01'
+  Data1D  'RDFs//Mix//OriginalGR//OW-HO//Bound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.y01'
     Y  12
   EndData1D
-  Data1D  'Mix//RDFs//OriginalGR//HW-CT//Bound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.y01'
+  Data1D  'RDFs//Mix//OriginalGR//HW-CT//Bound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.y01'
     Y  16
   EndData1D
-  Data1D  'Mix//RDFs//OriginalGR//HW-HC//Bound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.y01'
+  Data1D  'RDFs//Mix//OriginalGR//HW-HC//Bound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.y01'
     Y  18
   EndData1D
-  Data1D  'Mix//RDFs//OriginalGR//HW-OH//Bound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.y01'
+  Data1D  'RDFs//Mix//OriginalGR//HW-OH//Bound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.y01'
     Y  20
   EndData1D
-  Data1D  'Mix//RDFs//OriginalGR//HW-HO//Bound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.y01'
+  Data1D  'RDFs//Mix//OriginalGR//HW-HO//Bound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.y01'
     Y  22
   EndData1D
-  Data1D  'Mix//RDFs//OriginalGR//CT-CT//Bound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.y01'
+  Data1D  'RDFs//Mix//OriginalGR//CT-CT//Bound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.y01'
     Y  24
   EndData1D
-  Data1D  'Mix//RDFs//OriginalGR//OH-OH//Bound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.y01'
+  Data1D  'RDFs//Mix//OriginalGR//OH-OH//Bound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.y01'
     Y  38
   EndData1D
-  Data1D  'Mix//RDFs//OriginalGR//HO-HO//Bound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.y01'
+  Data1D  'RDFs//Mix//OriginalGR//HO-HO//Bound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.y01'
     Y  42
   EndData1D
 EndModule
 
 # -- Partial S(Q) (unbound terms), unweighted
 Module DataTest  'Partial unweighted unbound S(Q)'
-  ErrorType  RMSE
   Threshold  0.4
   Data1D  'SQs//UnweightedSQ//OW-OW//Unbound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.f01'
     Y  2
@@ -382,8 +394,6 @@ EndModule
 
 # -- Partial S(Q) (bound terms)
 Module DataTest  'Partial unweighted bound S(Q)'
-  ErrorType  RMSE
-  Threshold  0.05
   Data1D  'SQs//UnweightedSQ//OW-HW//Bound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.s01'
     Y  4
   EndData1D
@@ -416,7 +426,7 @@ EndModule
 # -- Partial S(Q) (bound terms, zero)
 Module DataTest  'Partial unweighted zeroed bound S(Q)'
   ErrorType  RMSE
-  Threshold  0.00001
+  Threshold  1.0e-5
   Data1D  'SQs//UnweightedSQ//OW-OW//Bound'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.s01'
     Y  2
   EndData1D
@@ -459,8 +469,6 @@ EndModule
 # u01 file: 1  2   4   6   8   10  12  14  16
 #           Q HHH H5H DHH HDH HHD DDH HDD DDD 
 Module DataTest  'Total weighted S(Q)'
-  ErrorType  RMSE
-  Threshold  0.02
   Data1D  'HHH//WeightedSQ//Total'  xy  '../_data/epsr25/water300methanol600/watermeth.EPSR.u01'
     Y  2
   EndData1D
@@ -487,9 +495,6 @@ Module DataTest  'Total weighted S(Q)'
   EndData1D
 EndModule
 
-Module SanityCheck
-EndModule
-
 EndLayer
 
 # Pair Potentials
@@ -501,5 +506,5 @@ PairPotentials
   Parameters  'CT'  C  -0.18   LJGeometric   0.276     3.55
   Parameters  'HC'  H  0.06    LJGeometric   0.126     2.5
   Parameters  'OH'  O  -0.68 LJGeometric	0.711	3.12
-  Parameters  'HO'  H  -0.48 LJGeometric	0.126	2.4
+  Parameters  'HO'  H   0.68 LJGeometric	0.126	2.4
 EndPairPotentials

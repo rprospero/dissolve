@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "gui/getgizmonamedialog.h"
 // #include "gui/workspacetab.h"
@@ -36,7 +36,6 @@ void GetGizmoNameDialog::on_NameEdit_textChanged(const QString text)
     auto nameValid = true;
     if (text.isEmpty())
         nameValid = false;
-    // 	else if (WorkspaceTab::findGizmo(qPrintable(text), currentGizmo_)) nameValid = false;
 
     // Update indicator
     ui_.NameIndicator->setOK(nameValid);

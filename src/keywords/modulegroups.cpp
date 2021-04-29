@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "keywords/modulegroups.h"
 #include "base/lineparser.h"
@@ -29,7 +29,7 @@ int ModuleGroupsKeyword::maxArguments() const
 }
 
 // Parse arguments from supplied LineParser, starting at given argument offset
-bool ModuleGroupsKeyword::read(LineParser &parser, int startArg, CoreData &coreData)
+bool ModuleGroupsKeyword::read(LineParser &parser, int startArg, const CoreData &coreData)
 {
     // Find specified Module by its unique name
     Module *module = coreData.findModule(parser.argsv(startArg));
@@ -59,7 +59,7 @@ bool ModuleGroupsKeyword::read(LineParser &parser, int startArg, CoreData &coreD
 }
 
 // Write keyword data to specified LineParser
-bool ModuleGroupsKeyword::write(LineParser &parser, std::string_view keywordName, std::string_view prefix)
+bool ModuleGroupsKeyword::write(LineParser &parser, std::string_view keywordName, std::string_view prefix) const
 {
     // Loop over defined groups
     ListIterator<ModuleGroup> groupIterator(data_.groups());

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "io/export/pairpotential.h"
 #include "base/lineparser.h"
@@ -17,30 +17,26 @@ PairPotentialExportFileFormat::PairPotentialExportFileFormat(std::string_view fi
  */
 
 // Return enum options for PairPotentialExportFormat
-EnumOptions<PairPotentialExportFileFormat::PairPotentialExportFormat> &
+EnumOptions<PairPotentialExportFileFormat::PairPotentialExportFormat>
 PairPotentialExportFileFormat::pairPotentialExportFormats()
 {
-    static EnumOptionsList PairPotentialExportFormats =
-        EnumOptionsList() << EnumOption(PairPotentialExportFileFormat::BlockPairPotential, "block", "Block Data")
-                          << EnumOption(PairPotentialExportFileFormat::DLPOLYTABLEPairPotential, "table", "DL_POLY TABLE File");
-
-    static EnumOptions<PairPotentialExportFileFormat::PairPotentialExportFormat> options("PairPotentialExportFileFormat",
-                                                                                         PairPotentialExportFormats);
-
-    return options;
+    return EnumOptions<PairPotentialExportFileFormat::PairPotentialExportFormat>(
+        "PairPotentialExportFileFormat",
+        {{PairPotentialExportFileFormat::BlockPairPotential, "block", "Block Data"},
+         {PairPotentialExportFileFormat::DLPOLYTABLEPairPotential, "table", "DL_POLY TABLE File"}});
 }
 
 // Return number of available formats
 int PairPotentialExportFileFormat::nFormats() const { return PairPotentialExportFileFormat::nPairPotentialExportFormats; }
 
 // Return format keyword for supplied index
-std::string_view PairPotentialExportFileFormat::formatKeyword(int id) const
+std::string PairPotentialExportFileFormat::formatKeyword(int id) const
 {
     return pairPotentialExportFormats().keywordByIndex(id);
 }
 
 // Return description string for supplied index
-std::string_view PairPotentialExportFileFormat::formatDescription(int id) const
+std::string PairPotentialExportFileFormat::formatDescription(int id) const
 {
     return pairPotentialExportFormats().descriptionByIndex(id);
 }
@@ -74,10 +70,9 @@ bool PairPotentialExportFileFormat::exportBlock(LineParser &parser, PairPotentia
         return false;
 
     for (auto n = 0; n < nPoints; ++n)
-        if (!parser.writeLineF("{:10.6e}  {:12.6e}  {:12.6e}  {:12.6e}  {:12.6e}  {:12.6e}  {:12.6e}\n",
-                               uOriginal.constXAxis(n), uFull.constValue(n), dUFull.constValue(n), uOriginal.constValue(n),
-                               uAdditional.constValue(n), pp->analyticEnergy(uOriginal.constXAxis(n)),
-                               pp->analyticForce(uOriginal.constXAxis(n))))
+        if (!parser.writeLineF("{:10.6e}  {:12.6e}  {:12.6e}  {:12.6e}  {:12.6e}  {:12.6e}  {:12.6e}\n", uOriginal.xAxis(n),
+                               uFull.value(n), dUFull.value(n), uOriginal.value(n), uAdditional.value(n),
+                               pp->analyticEnergy(uOriginal.xAxis(n)), pp->analyticForce(uOriginal.xAxis(n))))
             return false;
 
     return true;
@@ -106,7 +101,7 @@ bool PairPotentialExportFileFormat::exportDLPOLY(LineParser &parser, PairPotenti
     // Write energy data
     for (auto n = 0; n < nPoints; ++n)
     {
-        if (!parser.writeLineF("{:17.12e} ", uFull.constValue(n)))
+        if (!parser.writeLineF("{:17.12e} ", uFull.value(n)))
             return false;
         if (((n + 1) % 4 == 0) || (n == (nPoints - 1)))
         {
@@ -118,7 +113,7 @@ bool PairPotentialExportFileFormat::exportDLPOLY(LineParser &parser, PairPotenti
     // Write force data
     for (auto n = 0; n < nPoints; ++n)
     {
-        if (!parser.writeLineF("{:17.12e} ", dUFull.constValue(n)))
+        if (!parser.writeLineF("{:17.12e} ", dUFull.value(n)))
             return false;
         if (((n + 1) % 4 == 0) || (n == (nPoints - 1)))
         {

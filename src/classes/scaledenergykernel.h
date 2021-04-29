@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -33,5 +33,5 @@ class ScaledEnergyKernel : public EnergyKernel
      */
     private:
     // Return PairPotential energy between atoms provided as pointers, at the distance specified
-    double pairPotentialEnergy(const Atom *i, const Atom *j, double r);
+    double pairPotentialEnergy(const std::shared_ptr<Atom> i, const std::shared_ptr<Atom> j, double r);
 };

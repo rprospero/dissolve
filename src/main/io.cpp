@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "base/lineparser.h"
 #include "base/sysfunc.h"
 #include "classes/atomtype.h"
 #include "classes/species.h"
 #include "data/isotopes.h"
-#include "genericitems/listhelper.h"
 #include "main/dissolve.h"
 #include "main/keywords.h"
 #include "main/version.h"
@@ -178,49 +177,49 @@ bool Dissolve::saveInput(std::string_view filename)
         return false;
 
     // Write master terms
-    if (coreData_.nMasterBonds() || coreData_.nMasterAngles() || coreData_.nMasterTorsions())
+    if (coreData_.nMasterBonds() || coreData_.nMasterAngles() || coreData_.nMasterTorsions() || coreData_.nMasterImpropers())
     {
         if (!parser.writeBannerComment("Master Terms"))
             return false;
         if (!parser.writeLineF("\n{}\n", BlockKeywords::keywords().keyword(BlockKeywords::MasterBlockKeyword)))
             return false;
 
-        for (auto *b = coreData_.masterBonds().first(); b != nullptr; b = b->next())
+        for (auto &b : coreData_.masterBonds())
         {
             std::string line = fmt::format("  {}  '{}'  {}", MasterBlock::keywords().keyword(MasterBlock::BondKeyword),
-                                           b->name(), SpeciesBond::bondFunctions().keywordFromInt(b->form()));
-            for (auto n = 0; n < b->nParameters(); ++n)
-                line += fmt::format("  {:8.3f}", b->parameter(n));
+                                           b.name(), SpeciesBond::bondFunctions().keywordFromInt(b.form()));
+            for (auto p : b.parameters())
+                line += fmt::format("  {:8.3f}", p);
             if (!parser.writeLine(line))
                 return false;
         }
 
-        for (auto *a = coreData_.masterAngles().first(); a != nullptr; a = a->next())
+        for (auto &a : coreData_.masterAngles())
         {
             std::string line = fmt::format("  {}  '{}'  {}", MasterBlock::keywords().keyword(MasterBlock::AngleKeyword),
-                                           a->name(), SpeciesAngle::angleFunctions().keywordFromInt(a->form()));
-            for (auto n = 0; n < a->nParameters(); ++n)
-                line += fmt::format("  {:8.3f}", a->parameter(n));
+                                           a.name(), SpeciesAngle::angleFunctions().keywordFromInt(a.form()));
+            for (auto p : a.parameters())
+                line += fmt::format("  {:8.3f}", p);
             if (!parser.writeLine(line))
                 return false;
         }
 
-        for (auto *t = coreData_.masterTorsions().first(); t != nullptr; t = t->next())
+        for (auto &t : coreData_.masterTorsions())
         {
             std::string line = fmt::format("  {}  '{}'  {}", MasterBlock::keywords().keyword(MasterBlock::TorsionKeyword),
-                                           t->name(), SpeciesTorsion::torsionFunctions().keywordFromInt(t->form()));
-            for (auto n = 0; n < t->nParameters(); ++n)
-                line += fmt::format("  {:8.3f}", t->parameter(n));
+                                           t.name(), SpeciesTorsion::torsionFunctions().keywordFromInt(t.form()));
+            for (auto p : t.parameters())
+                line += fmt::format("  {:8.3f}", p);
             if (!parser.writeLine(line))
                 return false;
         }
 
-        for (auto *imp = coreData_.masterImpropers().first(); imp != nullptr; imp = imp->next())
+        for (auto &imp : coreData_.masterImpropers())
         {
             std::string line = fmt::format("  {}  '{}'  {}", MasterBlock::keywords().keyword(MasterBlock::ImproperKeyword),
-                                           imp->name(), SpeciesImproper::improperFunctions().keywordFromInt(imp->form()));
-            for (auto n = 0; n < imp->nParameters(); ++n)
-                line += fmt::format("  {:8.3f}", imp->parameter(n));
+                                           imp.name(), SpeciesTorsion::torsionFunctions().keywordFromInt(imp.form()));
+            for (auto p : imp.parameters())
+                line += fmt::format("  {:8.3f}", p);
             if (!parser.writeLine(line))
                 return false;
         }
@@ -232,7 +231,7 @@ bool Dissolve::saveInput(std::string_view filename)
 
     // Write Species data
     parser.writeBannerComment("Species");
-    for (auto *sp = species().first(); sp != nullptr; sp = sp->next())
+    for (auto &sp : species())
     {
         if (!parser.writeLineF("\n"))
             return false;
@@ -253,10 +252,10 @@ bool Dissolve::saveInput(std::string_view filename)
     {
         std::string line = fmt::format("  {}  {}  {}  {:12.6e}  {}",
                                        PairPotentialsBlock::keywords().keyword(PairPotentialsBlock::ParametersKeyword),
-                                       atomType->name(), atomType->element()->symbol(), atomType->parameters().charge(),
+                                       atomType->name(), Elements::symbol(atomType->Z()), atomType->charge(),
                                        Forcefield::shortRangeTypes().keyword(atomType->shortRangeType()));
-        for (auto n = 0; n < MAXSRPARAMETERS; ++n)
-            line += fmt::format("  {:12.6e}", atomType->parameters().parameter(n));
+        for (auto x : atomType->shortRangeParameters())
+            line += fmt::format("  {:12.6e}", x);
         if (!parser.writeLine(line))
             return false;
     }
@@ -319,32 +318,11 @@ bool Dissolve::saveInput(std::string_view filename)
                                cfg->temperature()))
             return false;
 
-        // Modules
-        if (!parser.writeLineF("\n  # Modules\n"))
+        if (!parser.writeLineF("\n"))
             return false;
-        if ((cfg->nModules() == 0) && (!parser.writeLineF("  # -- None\n")))
+        if (!parser.writeLineF("  {}  {}\n", ConfigurationBlock::keywords().keyword(ConfigurationBlock::SizeFactorKeyword),
+                               cfg->requestedSizeFactor()))
             return false;
-        ListIterator<Module> moduleIterator(cfg->modules().modules());
-        while (Module *module = moduleIterator.iterate())
-        {
-            if (!parser.writeLineF("  {}  {}  '{}'\n",
-                                   ConfigurationBlock::keywords().keyword(ConfigurationBlock::ModuleKeyword), module->type(),
-                                   module->uniqueName()))
-                return false;
-
-            // Write frequency and disabled keywords
-            if (!parser.writeLineF("    Frequency  {}\n", module->frequency()))
-                return false;
-            if (module->isDisabled() && (!parser.writeLineF("    Disabled\n")))
-                return false;
-
-            // Write keyword options
-            if (!module->keywords().write(parser, "    ", true))
-                return false;
-
-            if (!parser.writeLineF("  {}\n", ModuleBlock::keywords().keyword(ModuleBlock::EndModuleKeyword)))
-                return false;
-        }
 
         if (!parser.writeLineF("{}\n", ConfigurationBlock::keywords().keyword(ConfigurationBlock::EndConfigurationKeyword)))
             return false;
@@ -457,55 +435,14 @@ bool Dissolve::loadRestart(std::string_view filename)
                 break;
             }
         }
-        else if (DissolveSys::sameString(parser.argsv(0), "Local"))
-        {
-            // Let the user know what we are doing
-            Messenger::print("Reading item '{}' ({}) into Configuration '{}'...\n", parser.argsv(2), parser.argsv(3),
-                             parser.argsv(1));
-
-            // Local processing data - find the parent Configuration...
-            cfg = findConfiguration(parser.argsv(1));
-            if (!cfg)
-            {
-                Messenger::error("No Configuration named '{}' exists.\n", parser.argsv(1));
-                error = true;
-                break;
-            }
-
-            // Realise the item in the list
-            GenericItem *item = cfg->moduleData().create(parser.argsv(2), parser.argsv(3), parser.argi(4),
-                                                         parser.hasArg(5) ? parser.argi(5) : 0);
-
-            // Read in the data
-            if ((!item) || (!item->read(parser, coreData_)))
-            {
-                Messenger::error("Failed to read item data '{}' from restart file.\n", item->name());
-                error = true;
-                break;
-            }
-
-            // Add the InRestartFileFlag for the item
-            item->addFlag(GenericItem::InRestartFileFlag);
-        }
         else if (DissolveSys::sameString(parser.argsv(0), "Processing"))
         {
             // Let the user know what we are doing
             Messenger::print("Reading item '{}' ({}) into processing module data...\n", parser.argsv(1), parser.argsv(2));
 
             // Realise the item in the list
-            GenericItem *item = processingModuleData_.create(parser.argsv(1), parser.argsv(2), parser.argi(3),
-                                                             parser.hasArg(4) ? parser.argi(4) : 0);
-
-            // Read in the data
-            if ((!item) || (!item->read(parser, coreData_)))
-            {
-                Messenger::error("Failed to read item data '{}' from restart file.\n", item->name());
-                error = true;
-                break;
-            }
-
-            // Add the InRestartFileFlag for the item
-            item->addFlag(GenericItem::InRestartFileFlag);
+            processingModuleData_.deserialise(parser, coreData_, parser.args(1), parser.args(2), parser.argi(3),
+                                              parser.hasArg(4) ? parser.argi(4) : 0);
         }
         else if (DissolveSys::sameString(parser.argsv(0), "Configuration"))
         {
@@ -534,7 +471,7 @@ bool Dissolve::loadRestart(std::string_view filename)
                 Messenger::warn("Timing information for Module '{}' found, but no Module with this unique name "
                                 "exists...\n",
                                 parser.argsv(1));
-                if (!SampledDouble().read(parser, coreData_))
+                if (!SampledDouble().deserialise(parser))
                     error = true;
             }
             else if (!module->readProcessTimes(parser))
@@ -555,7 +492,7 @@ bool Dissolve::loadRestart(std::string_view filename)
         Messenger::print("Finished reading restart file.\n");
 
     // Set current iteration number
-    iteration_ = GenericListHelper<int>::value(processingModuleData_, "Iteration", "Dissolve", 0);
+    iteration_ = processingModuleData_.valueOr<int>("Iteration", "Dissolve", 0);
 
     // Error encountered?
     if (error)
@@ -577,12 +514,8 @@ bool Dissolve::loadRestartAsReference(std::string_view filename, std::string_vie
         return false;
 
     // Variables
-    Configuration *cfg;
     std::string newName;
     auto error = false, skipCurrentItem = false;
-
-    // Enable suffixing of all ObjectStore types
-    ObjectInfo::enableAutoSuffixing(dataSuffix);
 
     while (!parser.eofOrBlank())
     {
@@ -598,43 +531,6 @@ bool Dissolve::loadRestartAsReference(std::string_view filename, std::string_vie
 
             skipCurrentItem = true;
         }
-        else if (DissolveSys::sameString(parser.argsv(0), "Local"))
-        {
-            // Create new suffixed name
-            newName = fmt::format("{}@{}", parser.argsv(2), dataSuffix);
-
-            // Let the user know what we are doing
-            Messenger::print("Reading item '{}' => '{}' ({}) into Configuration '{}'...\n", parser.argsv(2), newName,
-                             parser.argsv(3), parser.argsv(1));
-
-            // Local processing data - find the parent Configuration...
-            cfg = findConfiguration(parser.argsv(1));
-            if (!cfg)
-            {
-                Messenger::error("No Configuration named '{}' exists, so skipping this data...\n", parser.argsv(1));
-                skipCurrentItem = true;
-            }
-            else
-            {
-                // Realise the item in the list
-                GenericItem *item =
-                    cfg->moduleData().create(newName, parser.argsv(3), parser.argi(4), parser.hasArg(5) ? parser.argi(5) : 0);
-
-                // Read in the data
-                if ((!item) || (!item->read(parser, coreData_)))
-                {
-                    Messenger::error("Failed to read item data '{}' from restart file.\n", item->name());
-                    error = true;
-                    break;
-                }
-
-                // Add the ReferencePointData flag for the item, and remove the InRestartFileFlag
-                item->addFlag(GenericItem::IsReferencePointDataFlag);
-                item->removeFlag(GenericItem::InRestartFileFlag);
-
-                skipCurrentItem = false;
-            }
-        }
         else if (DissolveSys::sameString(parser.argsv(0), "Processing"))
         {
             // Create new suffixed name
@@ -644,21 +540,9 @@ bool Dissolve::loadRestartAsReference(std::string_view filename, std::string_vie
             Messenger::print("Reading item '{}' => '{}' ({}) into processing module data...\n", parser.argsv(1), newName,
                              parser.argsv(2));
 
-            // Realise the item in the list
-            GenericItem *item =
-                processingModuleData_.create(newName, parser.argsv(2), parser.argi(3), parser.hasArg(4) ? parser.argi(4) : 0);
-
-            // Read in the data
-            if ((!item) || (!item->read(parser, coreData_)))
-            {
-                Messenger::error("Failed to read item data '{}' from restart file.\n", item->name());
-                error = true;
-                break;
-            }
-
-            // Add the ReferencePointData for the item
-            item->addFlag(GenericItem::IsReferencePointDataFlag);
-            item->removeFlag(GenericItem::InRestartFileFlag);
+            // Deserialise the item
+            processingModuleData_.deserialise(parser, coreData_, newName, parser.args(2), parser.argi(3),
+                                              GenericItem::IsReferencePointDataFlag);
 
             skipCurrentItem = false;
         }
@@ -693,9 +577,6 @@ bool Dissolve::loadRestartAsReference(std::string_view filename, std::string_vie
     // Error encountered?
     if (error)
         Messenger::error("Errors encountered while loading restart file.\n");
-
-    // Disable suffixing of all ObjectStore types
-    ObjectInfo::disableAutoSuffixing();
 
     // Done
     if (worldPool().isWorldMaster())
@@ -736,46 +617,16 @@ bool Dissolve::saveRestart(std::string_view filename)
         }
     }
 
-    // Configuration Module Data
-    for (auto *cfg = configurations().first(); cfg != nullptr; cfg = cfg->next())
-    {
-        // Cycle over data store in the Configuration
-        ListIterator<GenericItem> itemIterator(cfg->moduleData().items());
-        while (GenericItem *item = itemIterator.iterate())
-        {
-            // If it is not flagged to be saved in the restart file, skip it
-            if (!(item->flags() & GenericItem::InRestartFileFlag))
-                continue;
-
-            if (!parser.writeLineF("Local  {}  {}  {}  {}  {}\n", cfg->name(), item->name(), item->itemClassName(),
-                                   item->version(), item->flags()))
-                return false;
-            if (!item->write(parser))
-                return false;
-        }
-    }
-
     // Processing Module Data
-    ListIterator<GenericItem> itemIterator(processingModuleData_.items());
-    while (GenericItem *item = itemIterator.iterate())
-    {
-        // If it is not flagged to be saved in the restart file, skip it
-        if (!(item->flags() & GenericItem::InRestartFileFlag))
-            continue;
-
-        if (!parser.writeLineF("Processing  {}  {}  {}  {}\n", item->name(), item->itemClassName(), item->version(),
-                               item->flags()))
-            return false;
-        if (!item->write(parser))
-            return false;
-    }
+    if (!processingModuleData_.serialiseAll(parser, "Processing"))
+        return false;
 
     // Configurations
     for (auto *cfg = configurations().first(); cfg != nullptr; cfg = cfg->next())
     {
         if (!parser.writeLineF("Configuration  '{}'\n", cfg->name()))
             return false;
-        if (!cfg->write(parser))
+        if (!cfg->serialise(parser))
             return false;
     }
 
@@ -784,7 +635,7 @@ bool Dissolve::saveRestart(std::string_view filename)
     {
         if (!parser.writeLineF("Timing  {}\n", module->uniqueName()))
             return false;
-        if (!module->processTimes().write(parser))
+        if (!module->processTimes().serialise(parser))
             return false;
     }
 

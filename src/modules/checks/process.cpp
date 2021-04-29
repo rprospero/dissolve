@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "base/sysfunc.h"
 #include "classes/box.h"
@@ -35,7 +35,7 @@ bool ChecksModule::process(Dissolve &dissolve, ProcessPool &procPool)
         Messenger::print("Checks: Threshold for distance checks is {} Angstroms\n", distanceThreshold);
         Messenger::print("Checks: Threshold for angle checks is {} degrees\n", angleThreshold);
 
-        Atom **atoms = cfg->atoms().array();
+        auto &atoms = cfg->atoms();
 
         double actual, delta;
         bool ok;

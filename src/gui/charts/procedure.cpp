@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "gui/charts/procedure.h"
 #include "gui/charts/proceduremetrics.h"
@@ -27,10 +27,6 @@ ProcedureChart::ProcedureChart(Procedure *procedure, const CoreData &coreData) :
     updateContentBlocks();
 
     recalculateLayout();
-
-    // Create the insertion widget if we don't already have one
-    // 	insertionWidget_ = new ProcedureChartInsertionBlock(this, dissolveWindow_);
-    // 	insertionWidget_->setVisible(false);
 
     updateControls();
 }
@@ -97,7 +93,6 @@ void ProcedureChart::updateContentBlocks(const SequenceProcedureNode *sequence,
             block = new ProcedureChartNodeBlock(this, node, coreData_);
             connect(block, SIGNAL(dataModified()), this, SLOT(chartDataModified()));
             connect(block, SIGNAL(keywordsToggled()), this, SLOT(recalculateLayout()));
-            // 			connect(mcmBlock, SIGNAL(remove(QString)), this, SLOT(removeModule(QString)));
             newSequenceWidgets.append(block);
             chartBlocks_.append(block);
         }
@@ -232,13 +227,3 @@ QSize ProcedureChart::calculateNewWidgetGeometry(QSize currentSize)
 
     return requiredSize;
 }
-
-/*
- * State I/O
- */
-
-// Write widget state through specified LineParser
-bool ProcedureChart::writeState(LineParser &parser) const { return true; }
-
-// Read widget state through specified LineParser
-bool ProcedureChart::readState(LineParser &parser) { return true; }

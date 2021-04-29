@@ -1,20 +1,19 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
 #include "classes/isotopologueweight.h"
-#include "genericitems/base.h"
 #include <vector>
 
 // Forward Declarations
-class Species;
+class CoreData;
 class Isotopologue;
-class ProcessPool;
 class LineParser;
+class Species;
 
 // Isotopologues
-class Isotopologues : public GenericItemBase
+class Isotopologues
 {
     public:
     Isotopologues(const Species *species = nullptr, int speciesPopulation = 0);
@@ -54,8 +53,7 @@ class Isotopologues : public GenericItemBase
     bool contains(const Isotopologue *iso) const;
     // Return Isotopologue/weight mix
     std::vector<IsotopologueWeight> &mix();
-    // Return Isotopologue/weight mix (const)
-    const std::vector<IsotopologueWeight> &constMix() const;
+    const std::vector<IsotopologueWeight> &mix() const;
     // Return number of Isotopologues in mix
     int nIsotopologues() const;
     // Return total relative population
@@ -64,22 +62,11 @@ class Isotopologues : public GenericItemBase
     void normalise();
 
     /*
-     * GenericItemBase Implementations
+     * Serialisation
      */
     public:
-    // Return class name
-    static std::string_view itemClassName();
     // Read data through specified LineParser
-    bool read(LineParser &parser, CoreData &coreData);
+    bool deserialise(LineParser &parser, const CoreData &coreData);
     // Write data through specified LineParser
-    bool write(LineParser &parser);
-
-    /*
-     * Parallel Comms
-     */
-    public:
-    // Broadcast data
-    bool broadcast(ProcessPool &procPool, const int root, const CoreData &coreData);
-    // Check item equality
-    bool equality(ProcessPool &procPool);
+    bool serialise(LineParser &parser) const;
 };

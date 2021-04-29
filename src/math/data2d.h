@@ -1,23 +1,21 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
 #include "base/version.h"
-#include "math/data1d.h"
-#include "math/plottable.h"
+#include "math/data2dbase.h"
 #include "templates/array2d.h"
-#include "templates/objectstore.h"
 
 // Forward Declarations
 class Histogram2D;
 
 // One-Dimensional Data
-class Data2D : public PlottableData, public ListItem<Data2D>, public ObjectStore<Data2D>, public GenericItemBase
+class Data2D : public Data2DBase
 {
     public:
     Data2D();
-    virtual ~Data2D();
+    virtual ~Data2D() = default;
     Data2D(const Data2D &source);
     // Clear data
     void clear();
@@ -26,6 +24,8 @@ class Data2D : public PlottableData, public ListItem<Data2D>, public ObjectStore
      * Data
      */
     private:
+    // Tag for data (optional)
+    std::string tag_;
     // X axis array
     std::vector<double> x_;
     // Y axis array
@@ -40,6 +40,10 @@ class Data2D : public PlottableData, public ListItem<Data2D>, public ObjectStore
     VersionCounter version_;
 
     public:
+    // Set tag
+    void setTag(std::string_view tag);
+    // Return tag
+    std::string_view tag() const;
     // Initialise arrays to specified size
     void initialise(int xSize, int ySize, bool withError = false);
     // Initialise to be consistent in size and axes with supplied object
@@ -51,51 +55,43 @@ class Data2D : public PlottableData, public ListItem<Data2D>, public ObjectStore
     // Zero values array
     void zero();
     // Return data version
-    int version() const;
+    int version() const override;
     // Return x axis value specified
     double &xAxis(int index);
-    // Return x axis value specified (const)
-    double constXAxis(int index) const;
-    // Return x axis Array
+    const double &xAxis(int index) const;
+    // Return x axis vector
     std::vector<double> &xAxis();
-    // Return x axis Array (const)
-    const std::vector<double> &xAxis() const;
+    const std::vector<double> &xAxis() const override;
     // Return y axis value specified
     double &yAxis(int index);
-    // Return y axis value specified (const)
-    double constYAxis(int index) const;
-    // Return y axis Array
+    const double &yAxis(int index) const;
+    // Return y axis vector
     std::vector<double> &yAxis();
-    // Return y axis Array (const)
-    const std::vector<double> &yAxis() const;
+    const std::vector<double> &yAxis() const override;
     // Return value specified
     double &value(int xIndex, int yIndex);
-    // Return value value specified (const)
-    double constValue(int xIndex, int yIndex) const;
-    // Return value Array
+    const double &value(int xIndex, int yIndex) const;
+    // Return two-dimensional values Array
     Array2D<double> &values();
-    // Return values Array
-    const Array2D<double> &constValues2D() const;
+    const Array2D<double> &values() const override;
     // Return value specified from linear array
     double value(int index);
     // Return number of values present in whole dataset
-    int nValues() const;
+    int nValues() const override;
     // Return minimum value over all data points
-    double minValue() const;
+    double minValue() const override;
     // Return maximum value over all data points
-    double maxValue() const;
+    double maxValue() const override;
     // Add / initialise errors array
     void addErrors();
     // Return whether the values have associated errors
-    bool valuesHaveErrors() const;
+    bool valuesHaveErrors() const override;
     // Return error value specified
     double &error(int xIndex, int yIndex);
-    // Return error value specified (const)
-    double constError(int xIndex, int yIndex) const;
-    // Return error Array
+    const double &error(int xIndex, int yIndex) const;
+    // Return two-dimensional errors Array
     Array2D<double> &errors();
-    // Return errors Array
-    const Array2D<double> &constErrors2D() const;
+    const Array2D<double> &errors() const override;
 
     /*
      * Operators
@@ -108,22 +104,11 @@ class Data2D : public PlottableData, public ListItem<Data2D>, public ObjectStore
     void operator/=(const double factor);
 
     /*
-     * GenericItemBase Implementations
+     * Serialisation
      */
     public:
-    // Return class name
-    static std::string_view itemClassName();
     // Read data through specified LineParser
-    bool read(LineParser &parser, CoreData &coreData);
+    bool deserialise(LineParser &parser);
     // Write data through specified LineParser
-    bool write(LineParser &parser);
-
-    /*
-     * Parallel Comms
-     */
-    public:
-    // Broadcast data
-    bool broadcast(ProcessPool &procPool, const int root, const CoreData &coreData);
-    // Check item equality
-    bool equality(ProcessPool &procPool);
+    bool serialise(LineParser &parser) const;
 };

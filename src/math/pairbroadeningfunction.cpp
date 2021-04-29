@@ -1,15 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "math/pairbroadeningfunction.h"
 #include "base/lineparser.h"
-#include "base/processpool.h"
 #include "base/sysfunc.h"
 #include "classes/atomtype.h"
 #include "classes/speciesintra.h"
-#include "data/atomicmass.h"
-#include "genericitems/array2ddouble.h"
-#include "templates/enumhelpers.h"
+#include "data/atomicmasses.h"
+#include "templates/algorithms.h"
 
 PairBroadeningFunction::PairBroadeningFunction(PairBroadeningFunction::FunctionType function)
 {
@@ -18,8 +16,8 @@ PairBroadeningFunction::PairBroadeningFunction(PairBroadeningFunction::FunctionT
     gaussianFWHM_ = 0.18;
 
     // Create element broadening array
-    elementPairGaussianFWHM_.initialise(Elements::nElements(), Elements::nElements(), true);
-    elementPairGaussianFlags_.initialise(Elements::nElements(), Elements::nElements(), true);
+    elementPairGaussianFWHM_.initialise(Elements::nElements, Elements::nElements, true);
+    elementPairGaussianFlags_.initialise(Elements::nElements, Elements::nElements, true);
     elementPairGaussianFWHM_ = 0.13;
     elementPairGaussianFlags_ = false;
 }
@@ -64,11 +62,11 @@ int PairBroadeningFunction::nFunctionParameters(FunctionType func) { return Pair
  */
 
 // Read function data from LineParser source
-bool PairBroadeningFunction::readAsKeyword(LineParser &parser, int startArg, CoreData &coreData)
+bool PairBroadeningFunction::readAsKeyword(LineParser &parser, int startArg, const CoreData &coreData)
 {
     // First argument is the form of the function, or a '&' to indicate that a full block-style definition of the data
     if (DissolveSys::sameString("&", parser.argsv(startArg)))
-        return read(parser, coreData);
+        return deserialise(parser);
 
     PairBroadeningFunction::FunctionType funcType = PairBroadeningFunction::functionType(parser.argsv(startArg));
     if (funcType == PairBroadeningFunction::nFunctionTypes)
@@ -110,7 +108,7 @@ bool PairBroadeningFunction::readAsKeyword(LineParser &parser, int startArg, Cor
 }
 
 // Write function data to LineParser source
-bool PairBroadeningFunction::writeAsKeyword(LineParser &parser, std::string_view prefix, bool writeBlockMarker)
+bool PairBroadeningFunction::writeAsKeyword(LineParser &parser, std::string_view prefix, bool writeBlockMarker) const
 {
     // If the functional form requires a block rather than a single line, write an '&' and start a new line
     if (writeBlockMarker && (function_ == PairBroadeningFunction::GaussianElementPairFunction))
@@ -147,8 +145,8 @@ bool PairBroadeningFunction::writeAsKeyword(LineParser &parser, std::string_view
                 {
                     if (elementPairGaussianFlags_[{i, j}])
                     {
-                        if (!parser.writeLineF("{}{}  {}  {}\n", prefix, Elements::element(i).symbol(),
-                                               Elements::element(j).symbol(), elementPairGaussianFWHM_[{i, j}]))
+                        if (!parser.writeLineF("{}{}  {}  {}\n", prefix, Elements::symbol(Elements::element(i)),
+                                               Elements::symbol(Elements::element(j)), elementPairGaussianFWHM_[{i, j}]))
                             return false;
                     }
                 }
@@ -185,11 +183,9 @@ std::vector<double *> PairBroadeningFunction::parameters()
             params.push_back(&gaussianFWHM_);
             break;
         case (PairBroadeningFunction::GaussianElementPairFunction):
-            for (auto n = 0; n < elementPairGaussianFlags_.size(); ++n)
-            {
-                if (elementPairGaussianFlags_[n])
-                    params.push_back(&elementPairGaussianFWHM_[n]);
-            }
+            for (auto &&[flags, fwhm] : zip(elementPairGaussianFlags_, elementPairGaussianFWHM_))
+                if (flags)
+                    params.push_back(&fwhm);
             break;
         default:
             break;
@@ -235,10 +231,9 @@ BroadeningFunction PairBroadeningFunction::broadeningFunction(std::shared_ptr<At
             break;
         case (PairBroadeningFunction::GaussianElementPairFunction):
             // If this matrix value has never been used/read, set the flag now
-            if (!elementPairGaussianFlags_[{at1->element()->Z(), at2->element()->Z()}])
-                elementPairGaussianFlags_[{at1->element()->Z(), at2->element()->Z()}] = true;
-            result.set(BroadeningFunction::GaussianFunction,
-                       elementPairGaussianFWHM_[{at1->element()->Z(), at2->element()->Z()}]);
+            if (!elementPairGaussianFlags_[{at1->Z(), at2->Z()}])
+                elementPairGaussianFlags_[{at1->Z(), at2->Z()}] = true;
+            result.set(BroadeningFunction::GaussianFunction, elementPairGaussianFWHM_[{at1->Z(), at2->Z()}]);
             break;
         default:
             Messenger::error("Function form '{}' not accounted for in setUpDependentParameters().\n",
@@ -249,14 +244,11 @@ BroadeningFunction PairBroadeningFunction::broadeningFunction(std::shared_ptr<At
 }
 
 /*
- * GenericItemBase Implementations
+ * Serialisation
  */
 
-// Return class name
-std::string_view PairBroadeningFunction::itemClassName() { return "PairBroadeningFunction"; }
-
 // Read data through specified LineParser
-bool PairBroadeningFunction::read(LineParser &parser, CoreData &coreData)
+bool PairBroadeningFunction::deserialise(LineParser &parser)
 {
     // First line is function name
     if (parser.getArgsDelim(LineParser::Defaults) != LineParser::Success)
@@ -290,18 +282,18 @@ bool PairBroadeningFunction::read(LineParser &parser, CoreData &coreData)
                         return false;
 
                     // Line format is:  Element1  Element2  FWHM
-                    Element &el1 = Elements::element(parser.argsv(0));
-                    if (el1.isUnknown())
+                    auto Z1 = Elements::element(parser.argsv(0));
+                    if (Z1 == Elements::Unknown)
                         return Messenger::error("Unrecognised element '{}' found in pair broadening parameters.\n",
                                                 parser.argsv(0));
-                    Element &el2 = Elements::element(parser.argsv(1));
-                    if (el2.isUnknown())
+                    auto Z2 = Elements::element(parser.argsv(1));
+                    if (Z2 == Elements::Unknown)
                         return Messenger::error("Unrecognised element '{}' found in pair broadening parameters.\n",
                                                 parser.argsv(1));
 
                     // Set the value
-                    elementPairGaussianFlags_[{el1.Z(), el2.Z()}] = parser.argd(2);
-                    elementPairGaussianFlags_[{el1.Z(), el2.Z()}] = true;
+                    elementPairGaussianFlags_[{Z1, Z2}] = parser.argd(2);
+                    elementPairGaussianFlags_[{Z1, Z2}] = true;
                 }
             }
             break;
@@ -314,40 +306,3 @@ bool PairBroadeningFunction::read(LineParser &parser, CoreData &coreData)
 
 // Write data through specified LineParser
 bool PairBroadeningFunction::write(LineParser &parser) { return writeAsKeyword(parser, "", false); }
-
-/*
- * Parallel Comms
- */
-
-// Broadcast data from Master to all Slaves
-bool PairBroadeningFunction::broadcast(ProcessPool &procPool, const int root, const CoreData &coreData)
-{
-#ifdef PARALLEL
-    if (!procPool.broadcast(EnumCast<PairBroadeningFunction::FunctionType>(function_), root))
-        return false;
-    if (!procPool.broadcast(gaussianFWHM_, root))
-        return false;
-    if (!procPool.broadcast(elementPairGaussianFWHM_, root))
-        return false;
-    if (!procPool.broadcast(elementPairGaussianFlags_, root))
-        return false;
-#endif
-    return true;
-}
-
-// Check item equality
-bool PairBroadeningFunction::equality(ProcessPool &procPool)
-{
-#ifdef PARALLEL
-    if (!procPool.equality(EnumCast<PairBroadeningFunction::FunctionType>(function_)))
-        return Messenger::error("PairBroadeningFunction function type is not equivalent (process {} has {}).\n",
-                                procPool.poolRank(), function_);
-    if (!procPool.equality(gaussianFWHM_))
-        return Messenger::error("PairBroadeningFunction Gaussian parameters are not equivalent.\n");
-    if (!procPool.equality(elementPairGaussianFWHM_))
-        return Messenger::error("PairBroadeningFunction element pair Gaussian parameters are not equivalent.\n");
-    if (!procPool.equality(elementPairGaussianFlags_))
-        return Messenger::error("PairBroadeningFunction element pair Gaussian parameters are not equivalent.\n");
-#endif
-    return true;
-}

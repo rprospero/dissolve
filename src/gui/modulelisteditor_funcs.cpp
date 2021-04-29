@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "base/lineparser.h"
 #include "gui/charts/moduleblock.h"
@@ -40,6 +40,7 @@ bool ModuleListEditor::setUp(DissolveWindow *dissolveWindow, ModuleLayer *module
     ui_.ChartScrollArea->setWidgetResizable(true);
     ui_.ChartScrollArea->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Expanding);
     connect(chartWidget_, SIGNAL(dataModified()), dissolveWindow_, SLOT(setModified()));
+    connect(chartWidget_, SIGNAL(fullUpdate()), dissolveWindow_, SLOT(fullUpdate()));
     connect(chartWidget_, SIGNAL(dataModified()), this, SLOT(chartWidgetDataModified()));
     connect(chartWidget_, SIGNAL(requiredSizeChanged()), this, SLOT(chartWidgetSizeChanged()));
     connect(chartWidget_, SIGNAL(blockRemoved(const QString &)), this, SLOT(moduleDeleted(const QString &)));
@@ -289,26 +290,4 @@ void ModuleListEditor::controlsWidgetDataModified()
     // The controls widget must correspond to the selected module in the chart, so update it
     if (chartWidget_->selectedBlock())
         chartWidget_->selectedBlock()->updateControls();
-}
-
-/*
- * State
- */
-
-// Write widget state through specified LineParser
-bool ModuleListEditor::writeState(LineParser &parser) const
-{
-    if ((!chartWidget_) || (!chartWidget_->writeState(parser)))
-        return false;
-
-    return true;
-}
-
-// Read widget state through specified LineParser
-bool ModuleListEditor::readState(LineParser &parser)
-{
-    if ((!chartWidget_) || (!chartWidget_->readState(parser)))
-        return false;
-
-    return true;
 }

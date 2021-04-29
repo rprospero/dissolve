@@ -408,7 +408,7 @@ Configuration  'Py5-NTf2'
   # Modules
   Generator
     Parameters
-      Real  rho  1.000000e-01
+      Parameter  rho  1.000000e-01
     EndParameters
     Box
       Lengths  20  20  20
@@ -459,9 +459,6 @@ Layer  'Processing'
     TestReference  moscito  '../_data/moscito/py5_torsions/py5-ntf2-final.str'
     EndTestReference
     TestThreshold  0.4
-    EndModule
-
-    Module SanityCheck
     EndModule
 
 EndLayer

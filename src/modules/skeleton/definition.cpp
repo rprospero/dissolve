@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "modules/skeleton/skeleton.h"
 
@@ -7,7 +7,7 @@
 std::string_view SkeletonModule::type() const { return "Skeleton"; }
 
 // Return category for module
-std::string_view SkeletonModule::category() const { return "NO CATEGORY ASSIGNED"; }
+std::string_view SkeletonModule::category() const { return "HIDDEN"; }
 
 // Return brief description of module
 std::string_view SkeletonModule::brief() const

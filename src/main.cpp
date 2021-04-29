@@ -1,14 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "base/messenger.h"
 #include "base/processpool.h"
 #include "main/cli.h"
 #include "main/dissolve.h"
 #include "main/version.h"
-#include <ctime>
-#include <stdlib.h>
-#include <time.h>
 
 int main(int args, char **argv)
 {
@@ -36,9 +33,9 @@ int main(int args, char **argv)
         Messenger::enableRedirect(fmt::format("{}.{}", options.redirectionBasename().value(), ProcessPool::worldRank()));
 
 #ifdef PARALLEL
-    Messenger::print("Dissolve PARALLEL version {}, Copyright (C) 2020 Team Dissolve and contributors.\n", Version::info());
+    Messenger::print("Dissolve PARALLEL version {}, Copyright (C) 2021 Team Dissolve and contributors.\n", Version::info());
 #else
-    Messenger::print("Dissolve SERIAL version {}, Copyright (C) 2020 Team Dissolve and contributors.\n", Version::info());
+    Messenger::print("Dissolve SERIAL version {}, Copyright (C) 2021 Team Dissolve and contributors.\n", Version::info());
 #endif
     Messenger::print("Source repository: {}.\n", Version::repoUrl());
     Messenger::print("Dissolve comes with ABSOLUTELY NO WARRANTY.\n");
@@ -150,7 +147,7 @@ int main(int args, char **argv)
 #endif
 
     // Run main simulation?
-    auto result = dissolve.iterate(options.nIterations().value());
+    auto result = dissolve.iterate(options.nIterations());
 
     // Print timing information
     dissolve.printTiming();
@@ -163,11 +160,11 @@ int main(int args, char **argv)
     else
         Messenger::print("Dissolve is done, but with errors.\n");
 
-    // End parallel communication
-    ProcessPool::finalise();
-
     // Stop redirecting
     Messenger::ceaseRedirect();
+
+    // End parallel communication
+    ProcessPool::finalise();
 
     // Done.
     return (result ? 0 : 1);

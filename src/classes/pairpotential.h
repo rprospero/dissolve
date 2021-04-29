@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
-#include "base/parameters.h"
-#include "data/ff.h"
+#include "data/ff/ff.h"
 #include "math/data1d.h"
 #include "math/interpolator.h"
 #include "templates/list.h"
@@ -21,22 +20,20 @@ class PairPotential : public ListItem<PairPotential>
     // Coulomb Truncation Scheme enum
     enum CoulombTruncationScheme
     {
-        NoCoulombTruncation,      /* No truncation scheme */
-        ShiftedCoulombTruncation, /* Shifted and truncated */
-        nCoulombTruncationSchemes /* Number of Coulomb truncation schemes */
+        NoCoulombTruncation,     /* No truncation scheme */
+        ShiftedCoulombTruncation /* Shifted and truncated */
     };
     // Return enum options for CoulombTruncationScheme
-    static EnumOptions<PairPotential::CoulombTruncationScheme> &coulombTruncationSchemes();
+    static EnumOptions<PairPotential::CoulombTruncationScheme> coulombTruncationSchemes();
     // Short-Range Truncation Scheme enum
     enum ShortRangeTruncationScheme
     {
         NoShortRangeTruncation,      /* No truncation scheme */
         ShiftedShortRangeTruncation, /* Shifted and truncated */
-        CosineShortRangeTruncation,  /* Cosine-multiplied truncation */
-        nShortRangeTruncationSchemes /* Number of Short-Range truncation schemes */
+        CosineShortRangeTruncation   /* Cosine-multiplied truncation */
     };
     // Return enum options for ShortRangeTruncationScheme
-    static EnumOptions<PairPotential::ShortRangeTruncationScheme> &shortRangeTruncationSchemes();
+    static EnumOptions<PairPotential::ShortRangeTruncationScheme> shortRangeTruncationSchemes();
 
     /*
      * Seed Interaction Type
@@ -84,7 +81,7 @@ class PairPotential : public ListItem<PairPotential>
     // Original source AtomTypes
     std::shared_ptr<AtomType> atomTypeI_, atomTypeJ_;
     // Parameters for short-range potential
-    double parameters_[MAXSRPARAMETERS];
+    std::vector<double> parameters_;
     // Short range type (determined from AtomTypes)
     Forcefield::ShortRangeType shortRangeType_;
     // Charge on I (taken from AtomType)
@@ -111,6 +108,8 @@ class PairPotential : public ListItem<PairPotential>
     std::shared_ptr<AtomType> atomTypeJ() const;
     // Set parameter specified
     void setParameter(int index, double value);
+    // Return parameters vector
+    const std::vector<double> &parameters() const;
     // Return short-range parameter specified
     double parameter(int index) const;
     // Set charge I

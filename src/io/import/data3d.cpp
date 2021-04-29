@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "io/import/data3d.h"
 #include "base/lineparser.h"
@@ -29,27 +29,20 @@ void Data3DImportFileFormat::setUpKeywords() {}
  */
 
 // Return enum options for Data3DImportFormat
-EnumOptions<Data3DImportFileFormat::Data3DImportFormat> &Data3DImportFileFormat::data3DImportFormats()
+EnumOptions<Data3DImportFileFormat::Data3DImportFormat> Data3DImportFileFormat::data3DImportFormats()
 {
-    static EnumOptionsList Data3DImportFormats =
-        EnumOptionsList() << EnumOption(Data3DImportFileFormat::CartesianData3D, "cartesian", "Cartesian X,Y,Z,f(x,y,z) data");
-
-    static EnumOptions<Data3DImportFileFormat::Data3DImportFormat> options("Data3DImportFileFormat", Data3DImportFormats);
-
-    return options;
+    return EnumOptions<Data3DImportFileFormat::Data3DImportFormat>(
+        "Data3DImportFileFormat", {{Data3DImportFileFormat::CartesianData3D, "cartesian", "Cartesian X,Y,Z,f(x,y,z) data"}});
 }
 
 // Return number of available formats
 int Data3DImportFileFormat::nFormats() const { return Data3DImportFileFormat::nData3DImportFormats; }
 
 // Return format keyword for supplied index
-std::string_view Data3DImportFileFormat::formatKeyword(int id) const { return data3DImportFormats().keywordByIndex(id); }
+std::string Data3DImportFileFormat::formatKeyword(int id) const { return data3DImportFormats().keywordByIndex(id); }
 
 // Return description string for supplied index
-std::string_view Data3DImportFileFormat::formatDescription(int id) const
-{
-    return data3DImportFormats().descriptionByIndex(id);
-}
+std::string Data3DImportFileFormat::formatDescription(int id) const { return data3DImportFormats().descriptionByIndex(id); }
 
 // Return current format as Data3DImportFormat
 Data3DImportFileFormat::Data3DImportFormat Data3DImportFileFormat::data3DFormat() const

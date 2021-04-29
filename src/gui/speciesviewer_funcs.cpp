@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "classes/species.h"
 #include "data/elements.h"
@@ -13,9 +13,10 @@ SpeciesViewer::SpeciesViewer(QWidget *parent) : BaseViewer(parent)
     speciesRenderable_ = nullptr;
 
     // Interaction
-    setInteractionMode(SpeciesViewer::DefaultInteraction);
+    setInteractionMode(SpeciesViewer::InteractionMode::Select);
+    transientInteractionMode_ = SpeciesViewer::TransientInteractionMode::None;
     clickedAtom_ = nullptr;
-    drawElement_ = &Elements::element(ELEMENT_C);
+    drawElement_ = Elements::H;
 
     // Set up the view
     view_.setViewType(View::NormalView);
@@ -45,13 +46,13 @@ void SpeciesViewer::setSpecies(Species *sp)
     // Create a new Renderable for the supplied Species
     if (species_)
     {
-        speciesRenderable_ = new RenderableSpecies(species_, species_->objectTag());
-        ownRenderable(speciesRenderable_);
+        speciesRenderable_ = createRenderable<RenderableSpecies, Species>(species_, species_->name());
+
         view_.showAllData();
     }
 
     // Send relevant signals
-    emit(atomSelectionChanged());
+    emit(atomsChanged());
 }
 
 // Return target Species
@@ -66,7 +67,6 @@ void SpeciesViewer::setRenderableDrawStyle(RenderableSpecies::SpeciesDisplayStyl
 {
     if (speciesRenderable_)
         speciesRenderable_->setDisplayStyle(ds);
-    // 	else Messenger::warn("No RenderableSpecies exists, so can't set its draw style.\n");
 }
 
 // Return current renderable draw style
@@ -74,7 +74,6 @@ RenderableSpecies::SpeciesDisplayStyle SpeciesViewer::renderableDrawStyle() cons
 {
     if (speciesRenderable_)
         return speciesRenderable_->displayStyle();
-    // 	else Messenger::warn("No RenderableSpecies exists, so can't return its draw style.\n");
 
     return RenderableSpecies::LinesStyle;
 }

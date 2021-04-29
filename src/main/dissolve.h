@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -17,7 +17,6 @@ class Box;
 class Cell;
 class Isotopologue;
 class Molecule;
-class ChangeStore;
 
 // Dissolve Main Class
 class Dissolve
@@ -36,12 +35,9 @@ class Dissolve
     public:
     // Return reference to CoreData
     CoreData &coreData();
-    // Return const reference to CoreData
-    const CoreData &constCoreData() const;
+    const CoreData &coreData() const;
     // Clear all data
     void clear();
-    // Register GenericItems
-    void registerGenericItems();
 
     /*
      * Atom Types
@@ -49,7 +45,7 @@ class Dissolve
      */
     public:
     // Add AtomType with specified Element
-    std::shared_ptr<AtomType> addAtomType(Element *el);
+    std::shared_ptr<AtomType> addAtomType(Elements::Element Z);
     // Return number of AtomTypes in list
     int nAtomTypes() const;
     // Return AtomTypes list
@@ -67,13 +63,13 @@ class Dissolve
      */
     public:
     // Return list of master Bond parameters
-    const List<MasterIntra> &masterBonds() const;
+    const std::list<MasterIntra> &masterBonds() const;
     // Return list of master Angle parameters
-    const List<MasterIntra> &masterAngles() const;
+    const std::list<MasterIntra> &masterAngles() const;
     // Return list of master Torsion parameters
-    const List<MasterIntra> &masterTorsions() const;
+    const std::list<MasterIntra> &masterTorsions() const;
     // Return list of master Improper parameters
-    const List<MasterIntra> &masterImpropers() const;
+    const std::list<MasterIntra> &masterImpropers() const;
     // Check and print MasterTerm usage
     void checkMasterTermUsage() const;
 
@@ -89,9 +85,7 @@ class Dissolve
     // Return number of defined Species
     int nSpecies() const;
     // Return Species list
-    List<Species> &species();
-    // Return nth Species in the list
-    Species *species(int n);
+    std::vector<std::unique_ptr<Species>> &species();
     // Search for Species by name
     Species *findSpecies(std::string_view name) const;
     // Copy AtomType, creating a new one if necessary
@@ -171,8 +165,7 @@ class Dissolve
     int nConfigurations() const;
     // Return Configuration list
     List<Configuration> &configurations();
-    // Return Configuration list (const)
-    const List<Configuration> &constConfigurations() const;
+    const List<Configuration> &configurations() const;
     // Find configuration by name
     Configuration *findConfiguration(std::string_view name) const;
     // Find configuration by 'nice' name
@@ -205,7 +198,7 @@ class Dissolve
     // Search for any instance of any Module with the specified unique name
     Module *findModuleInstance(std::string_view uniqueName);
     // Search for any instance of any Module with the specified Module type
-    RefList<Module> findModuleInstances(std::string_view moduleType);
+    std::vector<Module *> findModuleInstances(std::string_view moduleType);
     // Generate unique Module name with base name provided
     std::string uniqueModuleName(std::string_view name, Module *excludeThis = nullptr);
     // Delete specified Module instance
@@ -349,31 +342,6 @@ class Dissolve
      * Parallel Comms
      */
     public:
-    // Parallel Strategy
-    enum ParallelStrategy
-    {
-        SequentialConfigStrategy,
-        EvenStrategy,
-        nParallelStrategies
-    };
-    // Convert string to ParallelStrategy
-    static ParallelStrategy parallelStrategy(std::string_view s);
-
-    private:
-    // Parallel strategy for Configuration work
-    ParallelStrategy parallelStrategy_;
-    // Default process group population (per Configuration)
-    int parallelGroupPopulation_;
-
-    public:
-    // Set parallel strategy for Configuration work
-    void setParallelStrategy(ParallelStrategy ps);
-    // Return parallel strategy for Configuration work
-    ParallelStrategy parallelStrategy() const;
-    // Set default process group population (per Configuration)
-    void setParallelGroupPopulation(int groupPopulation);
-    // Return default process group population (per Configuration)
-    int parallelGroupPopulation() const;
     // Return world process pool
     ProcessPool &worldPool();
     // Set up local MPI pools

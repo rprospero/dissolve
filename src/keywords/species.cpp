@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "keywords/species.h"
 #include "base/lineparser.h"
@@ -21,7 +21,7 @@ int SpeciesKeyword::minArguments() const { return 1; }
 int SpeciesKeyword::maxArguments() const { return 1; }
 
 // Parse arguments from supplied LineParser, starting at given argument offset
-bool SpeciesKeyword::read(LineParser &parser, int startArg, CoreData &coreData)
+bool SpeciesKeyword::read(LineParser &parser, int startArg, const CoreData &coreData)
 {
     // Find target Species (first argument)
     data_ = coreData.findSpecies(parser.argsv(startArg));
@@ -37,7 +37,7 @@ bool SpeciesKeyword::read(LineParser &parser, int startArg, CoreData &coreData)
 }
 
 // Write keyword data to specified LineParser
-bool SpeciesKeyword::write(LineParser &parser, std::string_view keywordName, std::string_view prefix)
+bool SpeciesKeyword::write(LineParser &parser, std::string_view keywordName, std::string_view prefix) const
 {
     if (data_)
     {

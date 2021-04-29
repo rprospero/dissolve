@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "classes/box.h"
 #include "base/processpool.h"
@@ -7,11 +7,10 @@
 #include "math/data1d.h"
 #include "math/interpolator.h"
 #include <algorithm>
-#include <string.h>
 
 Box::Box()
 {
-    type_ = Box::nBoxTypes;
+    type_ = Box::CubicBoxType;
     periodic_.set(true, true, true);
     volume_ = 0.0;
 }
@@ -44,14 +43,11 @@ void Box::operator=(const Box &source)
 // Return enum options for BoxType
 EnumOptions<Box::BoxType> Box::boxTypes()
 {
-    static EnumOptionsList BoxTypeOptions =
-        EnumOptionsList() << EnumOption(Box::NonPeriodicBoxType, "NonPeriodic") << EnumOption(Box::CubicBoxType, "Cubic")
-                          << EnumOption(Box::OrthorhombicBoxType, "Orthorhombic")
-                          << EnumOption(Box::MonoclinicBoxType, "Monoclinic") << EnumOption(Box::TriclinicBoxType, "Triclinic");
-
-    static EnumOptions<Box::BoxType> options("BoxType", BoxTypeOptions);
-
-    return options;
+    return EnumOptions<Box::BoxType>("BoxType", {{Box::NonPeriodicBoxType, "NonPeriodic"},
+                                                 {Box::CubicBoxType, "Cubic"},
+                                                 {Box::OrthorhombicBoxType, "Orthorhombic"},
+                                                 {Box::MonoclinicBoxType, "Monoclinic"},
+                                                 {Box::TriclinicBoxType, "Triclinic"}});
 }
 
 // Return Box type
@@ -92,13 +88,8 @@ Vec3<double> Box::axisLengths() const
 // Return axis length specified
 double Box::axisLength(int n) const
 {
-#ifdef CHECKS
-    if ((n < 0) || (n > 2))
-    {
-        Messenger::print("OUT_OF_RANGE - Requested length for a bad axis ({}) in Box::axisLength().\n", n);
-        return 0.0;
-    }
-#endif
+    assert(n >= 0 && n < 3);
+
     return axes_.columnMagnitude(n);
 }
 
@@ -108,13 +99,8 @@ Vec3<double> Box::axisAngles() const { return Vec3<double>(axisAngle(0), axisAng
 // Return axis angle specified
 double Box::axisAngle(int n) const
 {
-#ifdef CHECKS
-    if ((n < 0) || (n > 2))
-    {
-        Messenger::print("OUT_OF_RANGE - Requested angle for a bad axis ({}) in Box::axisAngle().\n", n);
-        return 0.0;
-    }
-#endif
+    assert(n >= 0 && n < 3);
+
     Vec3<double> u, v;
     u = axes_.columnAsVec3((n + 1) % 3);
     v = axes_.columnAsVec3((n + 2) % 3);
@@ -308,7 +294,7 @@ bool Box::calculateRDFNormalisation(ProcessPool &procPool, Data1D &boxNorm, doub
  */
 
 // Return angle (in degrees) between Atoms
-double Box::angleInDegrees(const Atom *i, const Atom *j, const Atom *k) const
+double Box::angleInDegrees(const std::shared_ptr<Atom> i, const std::shared_ptr<Atom> j, const std::shared_ptr<Atom> k) const
 {
     Vec3<double> vecji, vecjk;
 

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "io/export/data2d.h"
 #include "base/lineparser.h"
@@ -16,28 +16,21 @@ Data2DExportFileFormat::Data2DExportFileFormat(std::string_view filename, Data2D
  */
 
 // Return enum options for Data2DExportFormat
-EnumOptions<Data2DExportFileFormat::Data2DExportFormat> &Data2DExportFileFormat::data2DExportFormats()
+EnumOptions<Data2DExportFileFormat::Data2DExportFormat> Data2DExportFileFormat::data2DExportFormats()
 {
-    static EnumOptionsList Data2DExportFormats =
-        EnumOptionsList() << EnumOption(Data2DExportFileFormat::BlockData2D, "block", "Block Data")
-                          << EnumOption(Data2DExportFileFormat::CartesianData2D, "cartesian", "Cartesian (x,y,value) Data");
-
-    static EnumOptions<Data2DExportFileFormat::Data2DExportFormat> options("Data2DExportFileFormat", Data2DExportFormats);
-
-    return options;
+    return EnumOptions<Data2DExportFileFormat::Data2DExportFormat>(
+        "Data2DExportFileFormat", {{Data2DExportFileFormat::BlockData2D, "block", "Block Data"},
+                                   {Data2DExportFileFormat::CartesianData2D, "cartesian", "Cartesian (x,y,value) Data"}});
 }
 
 // Return number of available formats
 int Data2DExportFileFormat::nFormats() const { return Data2DExportFileFormat::nData2DExportFormats; }
 
 // Return format keyword for supplied index
-std::string_view Data2DExportFileFormat::formatKeyword(int id) const { return data2DExportFormats().keywordByIndex(id); }
+std::string Data2DExportFileFormat::formatKeyword(int id) const { return data2DExportFormats().keywordByIndex(id); }
 
 // Return description string for supplied index
-std::string_view Data2DExportFileFormat::formatDescription(int id) const
-{
-    return data2DExportFormats().descriptionByIndex(id);
-}
+std::string Data2DExportFileFormat::formatDescription(int id) const { return data2DExportFormats().descriptionByIndex(id); }
 
 // Return current format as CoordinateExportFormat
 Data2DExportFileFormat::Data2DExportFormat Data2DExportFileFormat::data2DFormat() const
@@ -50,14 +43,14 @@ Data2DExportFileFormat::Data2DExportFormat Data2DExportFileFormat::data2DFormat(
  */
 
 // Export Data2D as simple block data
-bool Data2DExportFileFormat::exportBlock(LineParser &parser, const Data2D &data)
+bool Data2DExportFileFormat::exportBlock(LineParser &parser, const std::vector<double> &xAxis, const std::vector<double> &yAxis,
+                                         const Array2D<double> &values, OptionalReferenceWrapper<const Array2D<double>> errors)
 {
     // Export header comment
-    if (!parser.writeLineF("# {} blocks (nX) of {} points (nY).\n", data.xAxis().size(), data.yAxis().size()))
+    if (!parser.writeLineF("# {} blocks (nX) of {} points (nY).\n", xAxis.size(), yAxis.size()))
         return false;
 
     // Export datapoints, separating each block of a specific x value with a single blank line
-    const Array2D<double> &values = data.constValues2D();
     for (auto x = 0; x < values.nRows(); ++x)
     {
         for (auto y = 0; y < values.nColumns(); ++y)
@@ -71,12 +64,11 @@ bool Data2DExportFileFormat::exportBlock(LineParser &parser, const Data2D &data)
 }
 
 // Export Data2D as cartesian data
-bool Data2DExportFileFormat::exportCartesian(LineParser &parser, const Data2D &data)
+bool Data2DExportFileFormat::exportCartesian(LineParser &parser, const std::vector<double> &xAxis,
+                                             const std::vector<double> &yAxis, const Array2D<double> &values,
+                                             OptionalReferenceWrapper<const Array2D<double>> errors)
 {
-    // Three-column format (x  y  value) in blocks of similar y value, separated by blank lines
-    const Array2D<double> &values = data.constValues2D();
-    const auto &xAxis = data.xAxis();
-    const auto &yAxis = data.yAxis();
+    // Three-column format (x  y value) in blocks of similar y value, separated by blank lines
     for (auto x = 0; x < values.nRows(); ++x)
     {
         for (auto y = 0; y < values.nColumns(); ++y)
@@ -90,7 +82,7 @@ bool Data2DExportFileFormat::exportCartesian(LineParser &parser, const Data2D &d
 }
 
 // Export Data2D using current filename and format
-bool Data2DExportFileFormat::exportData(const Data2D &data)
+bool Data2DExportFileFormat::exportData(const Data2DBase &data)
 {
     // Open the file
     LineParser parser;
@@ -103,8 +95,9 @@ bool Data2DExportFileFormat::exportData(const Data2D &data)
     // Write data
     auto result = false;
     if (data2DFormat() == Data2DExportFileFormat::BlockData2D)
-        result = exportBlock(parser, data);
-    // 	else if (data2DFormat() == Data2DExportFileFormat::CartesianData2D) result = exportCartesian(parser, data);
+        result = exportBlock(parser, data.xAxis(), data.yAxis(), data.values());
+    else if (data2DFormat() == Data2DExportFileFormat::CartesianData2D)
+        result = exportCartesian(parser, data.xAxis(), data.yAxis(), data.values());
     else
     {
         Messenger::error("Unrecognised Data2D format.\nKnown formats are:\n");

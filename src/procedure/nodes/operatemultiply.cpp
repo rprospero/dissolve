@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "procedure/nodes/operatemultiply.h"
 #include "base/lineparser.h"
@@ -7,12 +7,11 @@
 #include "keywords/types.h"
 #include "math/data1d.h"
 
-OperateMultiplyProcedureNode::OperateMultiplyProcedureNode() : OperateProcedureNodeBase(ProcedureNode::OperateMultiplyNode)
+OperateMultiplyProcedureNode::OperateMultiplyProcedureNode()
+    : OperateProcedureNodeBase(ProcedureNode::NodeType::OperateMultiply)
 {
-    keywords_.add("Multiplier", new NodeValueKeyword(this, 1.0), "Value", "Value expression to multiply by");
+    keywords_.add("Control", new NodeValueKeyword(this, 1.0), "Value", "Constant value to use as the multiplier");
 }
-
-OperateMultiplyProcedureNode::~OperateMultiplyProcedureNode() {}
 
 /*
  * Data Target (implements virtuals in OperateProcedureNodeBase)

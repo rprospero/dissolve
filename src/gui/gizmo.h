@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -88,14 +88,5 @@ class Gizmo : public ListItem<Gizmo>
     // Return all Gizmos that accept data of the specified type
     static RefList<Gizmo> allThatAccept(const QString &ataType);
     // Send data (referenced by its object tag) to the Gizmo
-    virtual bool sendData(const QString &dataType, std::string_view objectTag, std::string_view name = "");
-
-    /*
-     * State
-     */
-    public:
-    // Write widget state through specified LineParser
-    virtual bool writeState(LineParser &parser) const = 0;
-    // Read widget state through specified LineParser
-    virtual bool readState(LineParser &parser) = 0;
+    virtual bool sendData(const QString &dataType, std::string_view tag, std::string_view name = "");
 };

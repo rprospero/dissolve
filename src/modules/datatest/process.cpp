@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "base/sysfunc.h"
-#include "genericitems/listhelper.h"
 #include "main/dissolve.h"
 #include "math/error.h"
+#include "math/sampleddata1d.h"
 #include "modules/datatest/datatest.h"
 
 // Run main processing
@@ -14,71 +14,71 @@ bool DataTestModule::process(Dissolve &dissolve, ProcessPool &procPool)
      * This is a serial routine.
      */
 
-    // Get options and target Module
+    // Get options
     const auto testThreshold = keywords_.asDouble("Threshold");
-    Module *targetModule = targetModule_.firstItem();
     auto errorType = keywords_.enumeration<Error::ErrorType>("ErrorType");
 
     // Print summary
-    if (!targetModule)
-        Messenger::print("DataTest: No target Module specified for data location - only tags will be searched.\n");
-    else
-        Messenger::print("DataTest: Target Module '{}' will be used as search prefix for data.\n", targetModule->uniqueName());
     Messenger::print("DataTest: Error calculation is '{}', threshold is {:e}.", Error::errorTypes().keyword(errorType),
                      testThreshold);
     Messenger::print("\n");
 
     // Loop over reference one-dimensional data supplied
-    ListIterator<Data1D> data1DIterator(test1DData_.data());
-    while (Data1D *testData1D = data1DIterator.iterate())
+    for (auto &[referenceData, format] : test1DData_.data())
     {
         // Locate the target reference data
-        auto found = false;
-        const auto &data = findReferenceData<Data1D>(testData1D->name(), targetModule, dissolve.processingModuleData(), found);
-
-        // Did we succeed?
-        if (!found)
-        {
-            if (targetModule)
-                return Messenger::error("No data named '{}_{}' or '{}', or tagged '{}', exists.\n", targetModule->uniqueName(),
-                                        testData1D->name(), testData1D->name(), testData1D->name());
-            else
-                return Messenger::error("No data with tag '{}' exists.\n", testData1D->name());
-        }
-        Messenger::print("Located reference data with tag '{}'.\n", data.objectTag());
+        auto optData = dissolve.processingModuleData().searchBase<Data1DBase, Data1D, SampledData1D>(referenceData.tag());
+        if (!optData)
+            return Messenger::error("No data with tag '{}' exists.\n", referenceData.tag());
+        const Data1D &data = optData->get();
+        Messenger::print("Located reference data '{}'.\n", referenceData.tag());
 
         // Generate the error estimate and compare against the threshold value
-        double error = Error::error(errorType, data, *testData1D, true);
-        Messenger::print("Target data '{}' has error of {:7.3f} with calculated data and is {} (threshold is {:6.3e})\n\n",
-                         testData1D->name(), error, error <= testThreshold ? "OK" : "NOT OK", testThreshold);
-        if (error > testThreshold)
+        double error = Error::error(errorType, data, referenceData, true);
+        Messenger::print("Target data '{}' has error of {:7.3e} with reference data and is {} (threshold is {:6.3e})\n\n",
+                         referenceData.tag(), error, isnan(error) || error > testThreshold ? "NOT OK" : "OK", testThreshold);
+        if (isnan(error) || error > testThreshold)
+            return false;
+    }
+
+    // Loop over internal one-dimensional data tests
+    for (auto &[tag1, tag2] : internal1DData_)
+    {
+        // Locate the target reference datasets
+        auto optData1 = dissolve.processingModuleData().searchBase<Data1DBase, Data1D, SampledData1D>(tag1);
+        if (!optData1)
+            return Messenger::error("No data with tag '{}' exists.\n", tag1);
+        const Data1D data1 = optData1->get();
+        Messenger::print("Located reference data '{}'.\n", tag1);
+        auto optData2 = dissolve.processingModuleData().searchBase<Data1DBase, Data1D, SampledData1D>(tag2);
+        if (!optData2)
+            return Messenger::error("No data with tag '{}' exists.\n", tag2);
+        const Data1D data2 = optData2->get();
+        Messenger::print("Located reference data '{}'.\n", tag2);
+
+        // Generate the error estimate and compare against the threshold value
+        double error = Error::error(errorType, data1, data2, true);
+        Messenger::print("Internal data '{}' has error of {:7.3e} with data '{}' and is {} (threshold is {:6.3e})\n\n", tag1,
+                         error, tag2, isnan(error) || error > testThreshold ? "NOT OK" : "OK", testThreshold);
+        if (isnan(error) || error > testThreshold)
             return false;
     }
 
     // Loop over reference two-dimensional data supplied
-    ListIterator<Data2D> data2DIterator(test2DData_.data());
-    while (Data2D *testData2D = data2DIterator.iterate())
+    for (auto &[referenceData, format] : test2DData_.data())
     {
         // Locate the target reference data
-        auto found = false;
-        const auto &data = findReferenceData<Data2D>(testData2D->name(), targetModule, dissolve.processingModuleData(), found);
-
-        // Did we succeed?
-        if (!found)
-        {
-            if (targetModule)
-                return Messenger::error("No data named '{}_{}' or '{}', or tagged '{}', exists.\n", targetModule->uniqueName(),
-                                        testData2D->name(), testData2D->name(), testData2D->name());
-            else
-                return Messenger::error("No data with tag '{}' exists.\n", testData2D->name());
-        }
-        Messenger::print("Located reference data with tag '{}'.\n", data.objectTag());
+        auto optData = dissolve.processingModuleData().search<const Data2D>(referenceData.tag());
+        if (!optData)
+            return Messenger::error("No data with tag '{}' exists.\n", referenceData.tag());
+        const Data2D &data = *optData;
+        Messenger::print("Located reference data '{}'.\n", referenceData.tag());
 
         // Generate the error estimate and compare against the threshold value
         // 		double error = Error::error(errorType, data, *testData2D, true);
         // 		Messenger::print("Target data '{}' has error of {:7.3f} with calculated data and is {} (threshold
-        // is {:6.3e})\n\n", testData2D->name(), error, error <= testThreshold ? "OK" : "NOT OK", testThreshold); if
-        // (error > testThreshold) return false;
+        // is {:6.3e})\n\n", testData2D->name(), error, isnan(error) || error > testThreshold ? "NOT OK" : "OK", testThreshold);
+        // if (isnan(error) || error > testThreshold) return false;
 
         return Messenger::error("Error calculation between 2D datasets is not yet implemented.\n");
     }

@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "classes/energykernel.h"
-#include "base/processpool.h"
 #include "classes/box.h"
 #include "classes/cell.h"
 #include "classes/configuration.h"
 #include "classes/molecule.h"
 #include "classes/potentialmap.h"
 #include "classes/species.h"
+#include "templates/algorithms.h"
 #include <iterator>
 #include <numeric>
 
@@ -26,20 +26,20 @@ EnergyKernel::~EnergyKernel() {}
  */
 
 // Return PairPotential energy between atoms provided as pointers, at the distance specified
-double EnergyKernel::pairPotentialEnergy(const Atom *i, const Atom *j, double r) { return potentialMap_.energy(i, j, r); }
+double EnergyKernel::pairPotentialEnergy(const std::shared_ptr<Atom> i, const std::shared_ptr<Atom> j, double r)
+{
+    return potentialMap_.energy(i, j, r);
+}
 
 // Return PairPotential energy between atoms provided as pointers (no minimum image calculation)
-double EnergyKernel::energyWithoutMim(const Atom *i, const Atom *j)
+double EnergyKernel::energyWithoutMim(const std::shared_ptr<Atom> i, const std::shared_ptr<Atom> j)
 {
     return pairPotentialEnergy(i, j, (i->r() - j->r()).magnitude());
 }
 
 // Return PairPotential energy between atoms provided as pointers (minimum image calculation)
-double EnergyKernel::energyWithMim(const Atom *i, const Atom *j)
+double EnergyKernel::energyWithMim(const std::shared_ptr<Atom> i, const std::shared_ptr<Atom> j)
 {
-    // 	Messenger::print("EnergyKernel::atoms(*,*) - energy {}-{} is {} at {} mim\n",
-    // min(i->arrayIndex(),j->arrayIndex()), max(i->arrayIndex(),j->arrayIndex()), pairPotentialEnergy(i->masterTypeIndex(),
-    // j->masterTypeIndex(), box_->minimumDistance(j, i)), box_->minimumDistance(j, i));
     return pairPotentialEnergy(i, j, box_->minimumDistance(j, i));
 }
 
@@ -48,20 +48,10 @@ double EnergyKernel::energyWithMim(const Atom *i, const Atom *j)
  */
 
 // Return PairPotential energy between atoms (provided as pointers)
-double EnergyKernel::energy(const Atom *i, const Atom *j, bool applyMim, bool excludeIgeJ)
+double EnergyKernel::energy(const std::shared_ptr<Atom> i, const std::shared_ptr<Atom> j, bool applyMim, bool excludeIgeJ)
 {
-#ifdef CHECKS
-    if (i == nullptr)
-    {
-        Messenger::error("NULL_POINTER - nullptr (i) passed to EnergyKernel::energy(Atom,Atom,bool,bool).\n");
-        return 0.0;
-    }
-    if (j == nullptr)
-    {
-        Messenger::error("NULL_POINTER - nullptr (j) passed to EnergyKernel::energy(Atom,Atom,bool,bool).\n");
-        return 0.0;
-    }
-#endif
+    assert(i && j);
+
     // If Atoms are the same, we refuse to calculate
     if (i == j)
         return 0.0;
@@ -80,48 +70,38 @@ double EnergyKernel::energy(const Atom *i, const Atom *j, bool applyMim, bool ex
 double EnergyKernel::energy(Cell *centralCell, Cell *otherCell, bool applyMim, bool excludeIgeJ, bool interMolecular,
                             ProcessPool::DivisionStrategy strategy, bool performSum)
 {
-#ifdef CHECKS
-    if (centralCell == nullptr)
-    {
-        Messenger::error(
-            "NULL_POINTER - nullptr (central cell) pointer passed to EnergyKernel::energy(Cell,Cell,bool,bool).\n");
-        return 0.0;
-    }
-    if (otherCell == nullptr)
-    {
-        Messenger::error("NULL_POINTER - nullptr (other cell) pointer passed to EnergyKernel::energy(Cell,Cell,bool,bool).\n");
-        return 0.0;
-    }
-#endif
-    double totalEnergy = 0.0;
+    assert(centralCell && otherCell);
+
+    auto totalEnergy = 0.0;
     auto &centralAtoms = centralCell->atoms();
     auto &otherAtoms = otherCell->atoms();
-    Atom *ii;
+    std::shared_ptr<Atom> ii;
     Vec3<double> rI;
     std::shared_ptr<Molecule> molI;
     double rSq, scale;
 
     // Get start/stride for specified loop context
-    auto start = processPool_.interleavedLoopStart(strategy);
-    auto stride = processPool_.interleavedLoopStride(strategy);
+    auto offset = processPool_.interleavedLoopStart(strategy);
+    auto nChunks = processPool_.interleavedLoopStride(strategy);
 
     // Loop over central cell atoms
     if (applyMim)
     {
-        for (auto indexI = centralAtoms.begin() + start; indexI < centralAtoms.end(); indexI += stride)
+        auto [begin, end] = chop_range(centralAtoms.begin(), centralAtoms.end(), nChunks, offset);
+        for (auto indexI = begin; indexI < end; ++indexI)
         {
             ii = *indexI;
             molI = ii->molecule();
             rI = ii->r();
 
             // Straight loop over other cell atoms
-            for (auto *jj : otherAtoms)
+            for (auto jj : otherAtoms)
             {
                 // Check exclusion of I >= J
-                if (excludeIgeJ && (ii >= jj))
+                if (excludeIgeJ && (ii->arrayIndex() >= jj->arrayIndex()))
                     continue;
 
-                // Calculate rSquared distance betwenn atoms, and check it against the stored cutoff distance
+                // Calculate rSquared distance between atoms, and check it against the stored cutoff distance
                 rSq = box_->minimumDistanceSquared(rI, jj->r());
                 if (rSq > cutoffDistanceSquared_)
                     continue;
@@ -140,20 +120,21 @@ double EnergyKernel::energy(Cell *centralCell, Cell *otherCell, bool applyMim, b
     }
     else
     {
-        for (auto indexI = centralCell->atoms().begin() + start; indexI < centralCell->atoms().end(); indexI += stride)
+        auto [begin, end] = chop_range(centralCell->atoms().begin(), centralCell->atoms().end(), nChunks, offset);
+        for (auto indexI = begin; indexI < end; ++indexI)
         {
             ii = *indexI;
             molI = ii->molecule();
             rI = ii->r();
 
             // Straight loop over other cell atoms
-            for (auto *jj : otherAtoms)
+            for (auto jj : otherAtoms)
             {
                 // Check exclusion of I >= J
-                if (excludeIgeJ && (ii >= jj))
+                if (excludeIgeJ && (ii->arrayIndex() >= jj->arrayIndex()))
                     continue;
 
-                // Calculate rSquared distance betwenn atoms, and check it against the stored cutoff distance
+                // Calculate rSquared distance between atoms, and check it against the stored cutoff distance
                 rSq = (rI - jj->r()).magnitudeSq();
                 if (rSq > cutoffDistanceSquared_)
                     continue;
@@ -182,37 +163,38 @@ double EnergyKernel::energy(Cell *centralCell, Cell *otherCell, bool applyMim, b
 double EnergyKernel::energy(Cell *centralCell, bool excludeIgeJ, bool interMolecular, ProcessPool::DivisionStrategy strategy,
                             bool performSum)
 {
-    double totalEnergy = 0.0;
+    auto totalEnergy = 0.0;
     auto &centralAtoms = centralCell->atoms();
-    Atom *ii;
+    std::shared_ptr<Atom> ii;
     Vec3<double> rJ;
     std::shared_ptr<Molecule> molJ;
     double rSq, scale;
 
     // Get start/stride for specified loop context
-    auto start = processPool_.interleavedLoopStart(strategy);
-    auto stride = processPool_.interleavedLoopStride(strategy);
+    auto offset = processPool_.interleavedLoopStart(strategy);
+    auto nChunks = processPool_.interleavedLoopStride(strategy);
 
     // Straight loop over Cells *not* requiring mim
     for (auto *otherCell : centralCell->cellNeighbours())
     {
         auto &otherAtoms = otherCell->atoms();
 
-        for (auto *jj : otherAtoms)
+        for (auto jj : otherAtoms)
         {
             molJ = jj->molecule();
             rJ = jj->r();
 
             // Loop over central cell atoms
-            for (auto indexI = centralAtoms.begin() + start; indexI < centralAtoms.end(); indexI += stride)
+            auto [begin, end] = chop_range(centralAtoms.begin(), centralAtoms.end(), nChunks, offset);
+            for (auto indexI = begin; indexI < end; ++indexI)
             {
                 ii = *indexI;
 
-                // Check exclusion of I >= J (comparison by pointer)
-                if (excludeIgeJ && (ii >= jj))
+                // Check exclusion of I >= J
+                if (excludeIgeJ && (ii->arrayIndex() >= jj->arrayIndex()))
                     continue;
 
-                // Calculate rSquared distance betwenn atoms, and check it against the stored cutoff distance
+                // Calculate rSquared distance between atoms, and check it against the stored cutoff distance
                 rSq = (ii->r() - rJ).magnitudeSq();
                 if (rSq > cutoffDistanceSquared_)
                     continue;
@@ -235,21 +217,22 @@ double EnergyKernel::energy(Cell *centralCell, bool excludeIgeJ, bool interMolec
     {
         auto &otherAtoms = otherCell->atoms();
 
-        for (auto *jj : otherAtoms)
+        for (auto jj : otherAtoms)
         {
             molJ = jj->molecule();
             rJ = jj->r();
 
             // Loop over central cell atoms
-            for (auto indexI = centralAtoms.begin() + start; indexI < centralAtoms.end(); indexI += stride)
+            auto [begin, end] = chop_range(centralAtoms.begin(), centralAtoms.end(), nChunks, offset);
+            for (auto indexI = begin; indexI < end; ++indexI)
             {
                 ii = *indexI;
 
-                // Check exclusion of I >= J (comparison by pointer)
-                if (excludeIgeJ && (ii >= jj))
+                // Check exclusion of I >= J
+                if (excludeIgeJ && (ii->arrayIndex() >= jj->arrayIndex()))
                     continue;
 
-                // Calculate rSquared distance betwenn atoms, and check it against the stored cutoff distance
+                // Calculate rSquared distance between atoms, and check it against the stored cutoff distance
                 rSq = box_->minimumDistanceSquared(ii->r(), rJ);
                 if (rSq > cutoffDistanceSquared_)
                     continue;
@@ -275,38 +258,30 @@ double EnergyKernel::energy(Cell *centralCell, bool excludeIgeJ, bool interMolec
 }
 
 // Return PairPotential energy between Atom and Cell contents
-double EnergyKernel::energy(const Atom *i, const Cell *cell, int flags, ProcessPool::DivisionStrategy strategy, bool performSum)
+double EnergyKernel::energy(const std::shared_ptr<Atom> i, const Cell *cell, int flags, ProcessPool::DivisionStrategy strategy,
+                            bool performSum)
 {
-#ifdef CHECKS
-    if (i == nullptr)
-    {
-        Messenger::error("NULL_POINTER - NULL atom pointer passed to EnergyKernel::energy(Atom,Cell).\n");
-        return 0.0;
-    }
-    if (cell == nullptr)
-    {
-        Messenger::error("NULL_POINTER - nullptr passed to EnergyKernel::energy(Atom,Cell).\n");
-        return 0.0;
-    }
-#endif
-    double totalEnergy = 0.0;
-    Atom *jj;
+    assert(i && cell);
+
+    auto totalEnergy = 0.0;
+    std::shared_ptr<Atom> jj;
     double rSq, scale;
     auto &otherAtoms = cell->atoms();
 
     // Grab some information on the supplied Atom
-    std::shared_ptr<Molecule> moleculeI = i->molecule();
+    auto moleculeI = i->molecule();
     const auto rI = i->r();
 
     // Get start/stride for specified loop context
-    auto start = processPool_.interleavedLoopStart(strategy);
-    auto stride = processPool_.interleavedLoopStride(strategy);
+    auto offset = processPool_.interleavedLoopStart(strategy);
+    auto nChunks = processPool_.interleavedLoopStride(strategy);
 
     if (flags & KernelFlags::ApplyMinimumImageFlag)
     {
+        auto [begin, end] = chop_range(otherAtoms.begin(), otherAtoms.end(), nChunks, offset);
         // Loop over other Atoms
         if (flags & KernelFlags::ExcludeSelfFlag)
-            for (auto indexJ = otherAtoms.begin() + start; indexJ < otherAtoms.end(); indexJ += stride)
+            for (auto indexJ = begin; indexJ < end; ++indexJ)
             {
                 // Grab other Atom pointer
                 jj = *indexJ;
@@ -331,13 +306,13 @@ double EnergyKernel::energy(const Atom *i, const Cell *cell, int flags, ProcessP
                 }
             }
         else if (flags & KernelFlags::ExcludeIGEJFlag)
-            for (auto indexJ = otherAtoms.begin() + start; indexJ < otherAtoms.end(); indexJ += stride)
+            for (auto indexJ = begin; indexJ < end; ++indexJ)
             {
                 // Grab other Atom pointer
                 jj = *indexJ;
 
-                // Pointer comparison for i >= jj
-                if (i >= jj)
+                // Check for i >= jj
+                if (i->arrayIndex() >= jj->arrayIndex())
                     continue;
 
                 // Calculate rSquared distance between atoms, and check it against the stored cutoff distance
@@ -356,7 +331,7 @@ double EnergyKernel::energy(const Atom *i, const Cell *cell, int flags, ProcessP
                 }
             }
         else if (flags & KernelFlags::ExcludeIntraIGEJFlag)
-            for (auto indexJ = otherAtoms.begin() + start; indexJ < otherAtoms.end(); indexJ += stride)
+            for (auto indexJ = begin; indexJ < end; ++indexJ)
             {
                 // Grab other Atom pointer
                 jj = *indexJ;
@@ -371,8 +346,8 @@ double EnergyKernel::energy(const Atom *i, const Cell *cell, int flags, ProcessP
                     totalEnergy += pairPotentialEnergy(i, jj, sqrt(rSq));
                 else
                 {
-                    // Pointer comparison for i >= jj
-                    if (i >= jj)
+                    // Check for i >= jj
+                    if (i->arrayIndex() >= jj->arrayIndex())
                         continue;
 
                     scale = i->scaling(jj);
@@ -381,7 +356,7 @@ double EnergyKernel::energy(const Atom *i, const Cell *cell, int flags, ProcessP
                 }
             }
         else
-            for (auto indexJ = otherAtoms.begin() + start; indexJ < otherAtoms.end(); indexJ += stride)
+            for (auto indexJ = begin; indexJ < end; ++indexJ)
             {
                 // Grab other Atom pointer
                 jj = *indexJ;
@@ -405,8 +380,9 @@ double EnergyKernel::energy(const Atom *i, const Cell *cell, int flags, ProcessP
     else
     {
         // Loop over atom neighbours
+        auto [begin, end] = chop_range(otherAtoms.begin(), otherAtoms.end(), nChunks, offset);
         if (flags & KernelFlags::ExcludeSelfFlag)
-            for (auto indexJ = otherAtoms.begin() + start; indexJ < otherAtoms.end(); indexJ += stride)
+            for (auto indexJ = begin; indexJ < end; ++indexJ)
             {
                 // Grab other Atom pointer
                 jj = *indexJ;
@@ -431,13 +407,13 @@ double EnergyKernel::energy(const Atom *i, const Cell *cell, int flags, ProcessP
                 }
             }
         else if (flags & KernelFlags::ExcludeIGEJFlag)
-            for (auto indexJ = otherAtoms.begin() + start; indexJ < otherAtoms.end(); indexJ += stride)
+            for (auto indexJ = begin; indexJ < end; ++indexJ)
             {
                 // Grab other Atom pointer
                 jj = *indexJ;
 
-                // Pointer comparison for i >= jj
-                if (i >= jj)
+                // Check for i >= jj
+                if (i->arrayIndex() >= jj->arrayIndex())
                     continue;
 
                 // Calculate rSquared distance between atoms, and check it against the stored cutoff distance
@@ -456,7 +432,7 @@ double EnergyKernel::energy(const Atom *i, const Cell *cell, int flags, ProcessP
                 }
             }
         else if (flags & KernelFlags::ExcludeIntraIGEJFlag)
-            for (auto indexJ = otherAtoms.begin() + start; indexJ < otherAtoms.end(); indexJ += stride)
+            for (auto indexJ = begin; indexJ < end; ++indexJ)
             {
                 // Grab other Atom pointer
                 jj = *indexJ;
@@ -471,8 +447,8 @@ double EnergyKernel::energy(const Atom *i, const Cell *cell, int flags, ProcessP
                     totalEnergy += pairPotentialEnergy(i, jj, sqrt(rSq));
                 else
                 {
-                    // Pointer comparison for i >= jj
-                    if (i >= jj)
+                    // Check for i >= jj
+                    if (i->arrayIndex() >= jj->arrayIndex())
                         continue;
 
                     scale = i->scaling(jj);
@@ -481,7 +457,7 @@ double EnergyKernel::energy(const Atom *i, const Cell *cell, int flags, ProcessP
                 }
             }
         else
-            for (auto indexJ = otherAtoms.begin() + start; indexJ < otherAtoms.end(); indexJ += stride)
+            for (auto indexJ = begin; indexJ < end; ++indexJ)
             {
                 // Grab other Atom pointer
                 jj = *indexJ;
@@ -511,19 +487,14 @@ double EnergyKernel::energy(const Atom *i, const Cell *cell, int flags, ProcessP
 }
 
 // Return PairPotential energy of Atom with world
-double EnergyKernel::energy(const Atom *i, ProcessPool::DivisionStrategy strategy, bool performSum)
+double EnergyKernel::energy(const std::shared_ptr<Atom> i, ProcessPool::DivisionStrategy strategy, bool performSum)
 {
-#ifdef CHECKS
-    if (i == nullptr)
-    {
-        Messenger::error("NULL_POINTER - nullptr passed to EnergyKernel::energy(Atom,ParallelStyle).\n");
-        return 0.0;
-    }
-#endif
-    Cell *cellI = i->cell();
+    assert(i);
+
+    auto *cellI = i->cell();
 
     // This Atom with its own Cell
-    double totalEnergy = energy(i, cellI, KernelFlags::ExcludeSelfFlag, strategy, false);
+    auto totalEnergy = energy(i, cellI, KernelFlags::ExcludeSelfFlag, strategy, false);
 
     // Cell neighbours not requiring minimum image
     for (auto *neighbour : cellI->cellNeighbours())
@@ -543,9 +514,9 @@ double EnergyKernel::energy(const Atom *i, ProcessPool::DivisionStrategy strateg
 // Return PairPotential energy of Molecule with world
 double EnergyKernel::energy(std::shared_ptr<const Molecule> mol, ProcessPool::DivisionStrategy strategy, bool performSum)
 {
-    double totalEnergy = 0.0;
+    auto totalEnergy = 0.0;
 
-    for (auto *ii : mol->atoms())
+    for (auto ii : mol->atoms())
     {
         auto *cellI = ii->cell();
 
@@ -576,14 +547,14 @@ double EnergyKernel::energy(std::shared_ptr<const Molecule> mol, ProcessPool::Di
 }
 
 // Return molecular correction energy related to intramolecular terms involving supplied atom
-double EnergyKernel::correct(const Atom *i)
+double EnergyKernel::correct(const std::shared_ptr<Atom> i)
 {
     // Loop over atoms in molecule
-    std::vector<Atom *> atoms = i->molecule()->atoms();
+    auto &atoms = i->molecule()->atoms();
     double scale, r, correctionEnergy = 0.0;
     const auto rI = i->r();
 
-    correctionEnergy = std::accumulate(atoms.begin(), atoms.end(), 0.0, [&](const auto &acc, auto *j) {
+    correctionEnergy = std::accumulate(atoms.begin(), atoms.end(), 0.0, [&](const auto &acc, auto j) {
         if (i == j)
             return acc;
         scale = 1.0 - i->scaling(j);
@@ -604,12 +575,13 @@ double EnergyKernel::energy(const CellArray &cellArray, bool interMolecular, Pro
     ProcessPool::DivisionStrategy subStrategy = ProcessPool::subDivisionStrategy(strategy);
 
     // Set start/stride for parallel loop
-    auto start = processPool_.interleavedLoopStart(strategy);
-    auto stride = processPool_.interleavedLoopStride(strategy);
+    auto offset = processPool_.interleavedLoopStart(strategy);
+    auto nChunks = processPool_.interleavedLoopStride(strategy);
 
-    double totalEnergy = 0.0;
+    auto totalEnergy = 0.0;
     Cell *cell;
-    for (auto cellId = start; cellId < cellArray.nCells(); cellId += stride)
+    auto [begin, end] = chop_range(0, cellArray.nCells(), nChunks, offset);
+    for (auto cellId = begin; cellId < end; ++cellId)
     {
         cell = cellArray.cell(cellId);
 
@@ -628,14 +600,8 @@ double EnergyKernel::energy(const CellArray &cellArray, bool interMolecular, Pro
  */
 
 // Return SpeciesBond energy at Atoms specified
-double EnergyKernel::energy(const SpeciesBond &bond, const Atom *i, const Atom *j)
+double EnergyKernel::energy(const SpeciesBond &bond, const std::shared_ptr<Atom> i, const std::shared_ptr<Atom> j)
 {
-#ifdef CHECKS
-    // Check for spurious bond distances
-    double distance = i->cell()->mimRequired(j->cell()) ? box_->minimumDistance(i, j) : (i->r() - j->r()).magnitude();
-    if (distance > 5.0)
-        Messenger::print("!!! Long bond: {}-{} = {} Angstroms\n", i->arrayIndex(), j->arrayIndex(), distance);
-#endif
     // Determine whether we need to apply minimum image to the distance calculation
     if (i->cell()->mimRequired(j->cell()))
         return bond.energy(box_->minimumDistance(i, j));
@@ -647,7 +613,8 @@ double EnergyKernel::energy(const SpeciesBond &bond, const Atom *i, const Atom *
 double EnergyKernel::energy(const SpeciesBond &b) { return b.energy((b.j()->r() - b.i()->r()).magnitude()); }
 
 // Return SpeciesAngle energy at Atoms specified
-double EnergyKernel::energy(const SpeciesAngle &angle, const Atom *i, const Atom *j, const Atom *k)
+double EnergyKernel::energy(const SpeciesAngle &angle, const std::shared_ptr<Atom> i, const std::shared_ptr<Atom> j,
+                            const std::shared_ptr<Atom> k)
 {
     Vec3<double> vecji, vecjk;
 
@@ -672,7 +639,7 @@ double EnergyKernel::energy(const SpeciesAngle &angle, const Atom *i, const Atom
 // Return SpeciesAngle energy
 double EnergyKernel::energy(const SpeciesAngle &angle)
 {
-    Vec3<double> vecji = angle.i()->r() - angle.j()->r(), vecjk = angle.k()->r() - angle.j()->r();
+    auto vecji = angle.i()->r() - angle.j()->r(), vecjk = angle.k()->r() - angle.j()->r();
 
     // Normalise vectors
     vecji.normalise();
@@ -683,7 +650,8 @@ double EnergyKernel::energy(const SpeciesAngle &angle)
 }
 
 // Return SpeciesTorsion energy at Atoms specified
-double EnergyKernel::energy(const SpeciesTorsion &torsion, const Atom *i, const Atom *j, const Atom *k, const Atom *l)
+double EnergyKernel::energy(const SpeciesTorsion &torsion, const std::shared_ptr<Atom> i, const std::shared_ptr<Atom> j,
+                            const std::shared_ptr<Atom> k, const std::shared_ptr<Atom> l)
 {
     Vec3<double> vecji, vecjk, veckl;
 
@@ -711,8 +679,9 @@ double EnergyKernel::energy(const SpeciesTorsion &torsion)
                                                 torsion.l()->r() - torsion.k()->r()));
 }
 
-// Return SpeciesImproper energy
-double EnergyKernel::energy(const SpeciesImproper &imp, const Atom *i, const Atom *j, const Atom *k, const Atom *l)
+// Return SpeciesImproper energy at Atoms specified
+double EnergyKernel::energy(const SpeciesImproper &imp, const std::shared_ptr<Atom> i, const std::shared_ptr<Atom> j,
+                            const std::shared_ptr<Atom> k, const std::shared_ptr<Atom> l)
 {
     Vec3<double> vecji, vecjk, veckl;
 
@@ -733,23 +702,21 @@ double EnergyKernel::energy(const SpeciesImproper &imp, const Atom *i, const Ato
     return imp.energy(Box::torsionInDegrees(vecji, vecjk, veckl));
 }
 
-// Return intramolecular energy for the supplied Atom
-double EnergyKernel::intramolecularEnergy(std::shared_ptr<const Molecule> mol, const Atom *i)
+// Return SpeciesImproper energy
+double EnergyKernel::energy(const SpeciesImproper &imp)
 {
-#ifdef CHECKS
-    if (i == nullptr)
-    {
-        Messenger::error("NULL Atom given to EnergyKernel::intraEnergy().\n");
-        return 0.0;
-    }
-    if (i->speciesAtom() == nullptr)
-    {
-        Messenger::error("NULL SpeciesAtom in Atom given to EnergyKernel::intraEnergy().\n");
-        return 0.0;
-    }
-#endif
+    return imp.energy(
+        Box::torsionInDegrees(imp.i()->r() - imp.j()->r(), imp.k()->r() - imp.j()->r(), imp.l()->r() - imp.k()->r()));
+}
+
+// Return intramolecular energy for the supplied Atom
+double EnergyKernel::intramolecularEnergy(std::shared_ptr<const Molecule> mol, const std::shared_ptr<Atom> i)
+{
+    assert(i);
+
     // Get the SpeciesAtom
-    const SpeciesAtom *spAtom = i->speciesAtom();
+    const auto *spAtom = i->speciesAtom();
+    assert(spAtom);
 
     // If no terms are present, return zero
     if ((spAtom->nBonds() == 0) && (spAtom->nAngles() == 0) && (spAtom->nTorsions() == 0))
@@ -789,37 +756,31 @@ double EnergyKernel::intramolecularEnergy(std::shared_ptr<const Molecule> mol, c
 // Return intramolecular energy for the supplied Molecule
 double EnergyKernel::intramolecularEnergy(std::shared_ptr<const Molecule> mol)
 {
-#ifdef CHECKS
-    if (mol == nullptr)
-    {
-        Messenger::error("NULL Molecule pointer given to EnergyKernel::intramolecularEnergy.\n");
-        return 0.0;
-    }
-#endif
+    assert(mol);
 
     auto intraEnergy = 0.0;
 
     // Loop over Bonds
-    intraEnergy = std::accumulate(mol->species()->constBonds().begin(), mol->species()->constBonds().end(), intraEnergy,
+    intraEnergy = std::accumulate(mol->species()->bonds().begin(), mol->species()->bonds().end(), intraEnergy,
                                   [mol, this](const auto acc, const auto &bond) {
                                       return acc + energy(bond, mol->atom(bond.indexI()), mol->atom(bond.indexJ()));
                                   });
     // Loop over Angles
-    intraEnergy = std::accumulate(mol->species()->constAngles().begin(), mol->species()->constAngles().end(), intraEnergy,
+    intraEnergy = std::accumulate(mol->species()->angles().begin(), mol->species()->angles().end(), intraEnergy,
                                   [mol, this](const auto acc, const auto &angle) {
                                       return acc + energy(angle, mol->atom(angle.indexI()), mol->atom(angle.indexJ()),
                                                           mol->atom(angle.indexK()));
                                   });
 
     // Loop over Torsions
-    intraEnergy = std::accumulate(mol->species()->constTorsions().begin(), mol->species()->constTorsions().end(), intraEnergy,
+    intraEnergy = std::accumulate(mol->species()->torsions().begin(), mol->species()->torsions().end(), intraEnergy,
                                   [mol, this](const auto acc, const auto &torsion) {
                                       return acc + energy(torsion, mol->atom(torsion.indexI()), mol->atom(torsion.indexJ()),
                                                           mol->atom(torsion.indexK()), mol->atom(torsion.indexL()));
                                   });
 
     // Loop over Impropers
-    intraEnergy = std::accumulate(mol->species()->constImpropers().begin(), mol->species()->constImpropers().end(), intraEnergy,
+    intraEnergy = std::accumulate(mol->species()->impropers().begin(), mol->species()->impropers().end(), intraEnergy,
                                   [mol, this](const auto acc, const auto &improper) {
                                       return acc + energy(improper, mol->atom(improper.indexI()), mol->atom(improper.indexJ()),
                                                           mol->atom(improper.indexK()), mol->atom(improper.indexL()));

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "classes/atomtype.h"
 #include "gui/gui.h"
@@ -21,12 +21,12 @@ std::vector<std::string> SpeciesTab::validAtomTypeNames(const QModelIndex &index
     assert(index.column() == 1);
 
     // The row of the QModelIndex represents the SpecieAtom index in the Species
-    auto *i = species_->atom(index.row());
+    auto &i = species_->atom(index.row());
 
     // Construct valid names list
     std::vector<std::string> validNames;
     for (auto &at : dissolve_.atomTypes())
-        if (at->element() == i->element())
+        if (at->Z() == i.Z())
             validNames.emplace_back(at->name());
 
     return validNames;
@@ -41,20 +41,19 @@ void SpeciesTab::updateAtomTableRow(int row, SpeciesAtom *speciesAtom, bool crea
     if (createItems)
     {
         item = new QTableWidgetItem;
-        item->setData(Qt::UserRole, VariantPointer<SpeciesAtom>(speciesAtom));
+        item->setData(Qt::UserRole, QVariant::fromValue(speciesAtom));
         item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
         ui_.AtomTable->setItem(row, 0, item);
     }
     else
         item = ui_.AtomTable->item(row, 0);
-    item->setText(QString::fromStdString(std::string(speciesAtom->element()->name())));
+    item->setText(QString::fromStdString(std::string(Elements::name(speciesAtom->Z()))));
     item->setSelected(speciesAtom->isSelected());
 
     // AtomType
     if (createItems)
     {
         item = new QTableWidgetItem;
-        item->setData(Qt::UserRole, VariantPointer<SpeciesAtom>(speciesAtom));
         ui_.AtomTable->setItem(row, 1, item);
     }
     else
@@ -68,7 +67,6 @@ void SpeciesTab::updateAtomTableRow(int row, SpeciesAtom *speciesAtom, bool crea
         if (createItems)
         {
             item = new QTableWidgetItem;
-            item->setData(Qt::UserRole, VariantPointer<SpeciesAtom>(speciesAtom));
             ui_.AtomTable->setItem(row, n + 2, item);
         }
         else
@@ -81,7 +79,6 @@ void SpeciesTab::updateAtomTableRow(int row, SpeciesAtom *speciesAtom, bool crea
     if (createItems)
     {
         item = new QTableWidgetItem;
-        item->setData(Qt::UserRole, VariantPointer<SpeciesAtom>(speciesAtom));
         ui_.AtomTable->setItem(row, 5, item);
     }
     else
@@ -103,7 +100,7 @@ void SpeciesTab::updateBondTableRow(int row, SpeciesBond *speciesBond, bool crea
         if (createItems)
         {
             item = new QTableWidgetItem;
-            item->setData(Qt::UserRole, VariantPointer<SpeciesBond>(speciesBond));
+            item->setData(Qt::UserRole, QVariant::fromValue(speciesBond));
             item->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
             ui_.BondTable->setItem(row, n, item);
         }
@@ -117,7 +114,6 @@ void SpeciesTab::updateBondTableRow(int row, SpeciesBond *speciesBond, bool crea
     if (createItems)
     {
         item = new QTableWidgetItem;
-        item->setData(Qt::UserRole, VariantPointer<SpeciesBond>(speciesBond));
         ui_.BondTable->setItem(row, 2, item);
     }
     else
@@ -126,17 +122,15 @@ void SpeciesTab::updateBondTableRow(int row, SpeciesBond *speciesBond, bool crea
                       ? QString("@%1").arg(QString::fromStdString(std::string(speciesBond->masterParameters()->name())))
                       : QString::fromStdString(std::string(SpeciesBond::bondFunctions().keywordFromInt(speciesBond->form()))));
 
-    // Interaction Parameters
+    // Interaction Parameters - see if table items are there, and create if necessary
     for (auto n = 0; n < speciesBond->nParameters(); ++n)
     {
-        if (createItems)
+        item = ui_.BondTable->item(row, n + 3);
+        if (!item)
         {
             item = new QTableWidgetItem;
-            item->setData(Qt::UserRole, VariantPointer<SpeciesBond>(speciesBond));
             ui_.BondTable->setItem(row, n + 3, item);
         }
-        else
-            item = ui_.BondTable->item(row, n + 3);
 
         item->setText(QString::number(speciesBond->parameter(n)));
         item->setFlags(speciesBond->masterParameters() ? Qt::ItemIsEnabled | Qt::ItemIsSelectable
@@ -155,7 +149,7 @@ void SpeciesTab::updateAngleTableRow(int row, SpeciesAngle *speciesAngle, bool c
         if (createItems)
         {
             item = new QTableWidgetItem;
-            item->setData(Qt::UserRole, VariantPointer<SpeciesAngle>(speciesAngle));
+            item->setData(Qt::UserRole, QVariant::fromValue(speciesAngle));
             item->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
             ui_.AngleTable->setItem(row, n, item);
         }
@@ -169,7 +163,6 @@ void SpeciesTab::updateAngleTableRow(int row, SpeciesAngle *speciesAngle, bool c
     if (createItems)
     {
         item = new QTableWidgetItem;
-        item->setData(Qt::UserRole, VariantPointer<SpeciesAngle>(speciesAngle));
         ui_.AngleTable->setItem(row, 3, item);
     }
     else
@@ -180,17 +173,15 @@ void SpeciesTab::updateAngleTableRow(int row, SpeciesAngle *speciesAngle, bool c
             ? QString("@%1").arg(QString::fromStdString(std::string(speciesAngle->masterParameters()->name())))
             : QString::fromStdString(std::string(SpeciesAngle::angleFunctions().keywordFromInt(speciesAngle->form()))));
 
-    // Interaction Parameters
+    // Interaction Parameters - see if table items are there, and create if necessary
     for (auto n = 0; n < speciesAngle->nParameters(); ++n)
     {
-        if (createItems)
+        item = ui_.AngleTable->item(row, n + 4);
+        if (!item)
         {
             item = new QTableWidgetItem;
-            item->setData(Qt::UserRole, VariantPointer<SpeciesAngle>(speciesAngle));
             ui_.AngleTable->setItem(row, n + 4, item);
         }
-        else
-            item = ui_.AngleTable->item(row, n + 4);
 
         item->setText(QString::number(speciesAngle->parameter(n)));
         item->setFlags(speciesAngle->masterParameters() ? Qt::ItemIsEnabled | Qt::ItemIsSelectable
@@ -209,7 +200,7 @@ void SpeciesTab::updateTorsionTableRow(int row, SpeciesTorsion *speciesTorsion, 
         if (createItems)
         {
             item = new QTableWidgetItem;
-            item->setData(Qt::UserRole, VariantPointer<SpeciesTorsion>(speciesTorsion));
+            item->setData(Qt::UserRole, QVariant::fromValue(speciesTorsion));
             item->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
             ui_.TorsionTable->setItem(row, n, item);
         }
@@ -223,7 +214,6 @@ void SpeciesTab::updateTorsionTableRow(int row, SpeciesTorsion *speciesTorsion, 
     if (createItems)
     {
         item = new QTableWidgetItem;
-        item->setData(Qt::UserRole, VariantPointer<SpeciesTorsion>(speciesTorsion));
         ui_.TorsionTable->setItem(row, 4, item);
     }
     else
@@ -233,19 +223,16 @@ void SpeciesTab::updateTorsionTableRow(int row, SpeciesTorsion *speciesTorsion, 
             ? QString("@%1").arg(QString::fromStdString(std::string(speciesTorsion->masterParameters()->name())))
             : QString::fromStdString(std::string(SpeciesTorsion::torsionFunctions().keywordFromInt(speciesTorsion->form()))));
 
-    // Interaction Parameters
+    // Interaction Parameters - see if table items are there, and create if necessary
     for (auto n = 0; n < speciesTorsion->nParameters(); ++n)
     {
-        if (createItems)
+        item = ui_.TorsionTable->item(row, n + 5);
+        if (!item)
         {
             item = new QTableWidgetItem;
-            item->setData(Qt::UserRole, VariantPointer<SpeciesTorsion>(speciesTorsion));
             item->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
             ui_.TorsionTable->setItem(row, n + 5, item);
         }
-        else
-            item = ui_.TorsionTable->item(row, n + 5);
-
         item->setText(QString::number(speciesTorsion->parameter(n)));
     }
 }
@@ -261,7 +248,7 @@ void SpeciesTab::updateImproperTableRow(int row, SpeciesImproper *speciesImprope
         if (createItems)
         {
             item = new QTableWidgetItem;
-            item->setData(Qt::UserRole, VariantPointer<SpeciesImproper>(speciesImproper));
+            item->setData(Qt::UserRole, QVariant::fromValue(speciesImproper));
             item->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
             ui_.ImproperTable->setItem(row, n, item);
         }
@@ -274,28 +261,25 @@ void SpeciesTab::updateImproperTableRow(int row, SpeciesImproper *speciesImprope
     if (createItems)
     {
         item = new QTableWidgetItem;
-        item->setData(Qt::UserRole, VariantPointer<SpeciesImproper>(speciesImproper));
         ui_.ImproperTable->setItem(row, 4, item);
     }
     else
         item = ui_.ImproperTable->item(row, 4);
 
-    item->setText(speciesImproper->masterParameters()
-                      ? QString("@%1").arg(QString::fromStdString(std::string(speciesImproper->masterParameters()->name())))
-                      : QString::fromStdString(
-                            std::string(SpeciesImproper::improperFunctions().keywordFromInt(speciesImproper->form()))));
+    item->setText(
+        speciesImproper->masterParameters()
+            ? QString("@%1").arg(QString::fromStdString(std::string(speciesImproper->masterParameters()->name())))
+            : QString::fromStdString(std::string(SpeciesTorsion::torsionFunctions().keywordFromInt(speciesImproper->form()))));
 
-    // Interaction Parameters
+    // Interaction Parameters - see if table items are there, and create if necessary
     for (auto n = 0; n < speciesImproper->nParameters(); ++n)
     {
-        if (createItems)
+        item = ui_.ImproperTable->item(row, n + 5);
+        if (!item)
         {
             item = new QTableWidgetItem;
-            item->setData(Qt::UserRole, VariantPointer<SpeciesImproper>(speciesImproper));
             ui_.ImproperTable->setItem(row, n + 5, item);
         }
-        else
-            item = ui_.ImproperTable->item(row, n + 5);
 
         item->setText(QString::number(speciesImproper->parameter(n)));
         item->setFlags(speciesImproper->masterParameters() ? Qt::ItemIsEnabled | Qt::ItemIsSelectable
@@ -319,8 +303,7 @@ void SpeciesTab::updateAtomTableSelection()
     for (auto n = 0; n < ui_.AtomTable->rowCount(); ++n)
     {
         item = ui_.AtomTable->item(n, 0);
-        i = VariantPointer<SpeciesAtom>(item->data(Qt::UserRole));
-
+        i = item->data(Qt::UserRole).value<SpeciesAtom *>();
         if (i->isSelected())
             for (auto m = 0; m < 6; ++m)
                 ui_.AtomTable->item(n, m)->setSelected(true);
@@ -336,7 +319,7 @@ void SpeciesTab::on_AtomTable_itemChanged(QTableWidgetItem *w)
         return;
 
     // Get target SpeciesAtom from the passed widget
-    SpeciesAtom *speciesAtom = w ? VariantPointer<SpeciesAtom>(w->data(Qt::UserRole)) : nullptr;
+    SpeciesAtom *speciesAtom = w ? ui_.AtomTable->item(w->row(), 0)->data(Qt::UserRole).value<SpeciesAtom *>() : nullptr;
     if (!speciesAtom)
         return;
     Vec3<double> r = speciesAtom->r();
@@ -354,7 +337,7 @@ void SpeciesTab::on_AtomTable_itemChanged(QTableWidgetItem *w)
             atomType = dissolve_.findAtomType(qPrintable(w->text()));
             if (!atomType)
             {
-                atomType = dissolve_.addAtomType(speciesAtom->element());
+                atomType = dissolve_.addAtomType(speciesAtom->Z());
                 atomType->setName(qPrintable(w->text()));
             }
             speciesAtom->setAtomType(atomType);
@@ -383,7 +366,6 @@ void SpeciesTab::on_AtomTable_itemChanged(QTableWidgetItem *w)
         // Charge
         case (5):
             speciesAtom->setCharge(w->text().toDouble());
-            // TODO This change needs to be propagated to all Configurations->Molecules based on this Species
             dissolveWindow_->setModified();
             break;
         default:
@@ -404,7 +386,7 @@ void SpeciesTab::on_AtomTable_itemSelectionChanged()
     for (auto n = 0; n < ui_.AtomTable->rowCount(); ++n)
     {
         item = ui_.AtomTable->item(n, 0);
-        i = VariantPointer<SpeciesAtom>(item->data(Qt::UserRole));
+        i = item->data(Qt::UserRole).value<SpeciesAtom *>();
 
         if (item->isSelected())
             species_->selectAtom(i);
@@ -423,7 +405,7 @@ void SpeciesTab::on_BondTable_itemChanged(QTableWidgetItem *w)
         return;
 
     // Get target SpeciesBond from the passed widget
-    SpeciesBond *speciesBond = w ? VariantPointer<SpeciesBond>(w->data(Qt::UserRole)) : nullptr;
+    SpeciesBond *speciesBond = w ? w->data(Qt::UserRole).value<SpeciesBond *>() : nullptr;
     if (!speciesBond)
         return;
 
@@ -441,8 +423,8 @@ void SpeciesTab::on_BondTable_itemChanged(QTableWidgetItem *w)
             // If the text starts with an '@' then its a reference to a master term
             if (w->text().at(0) == '@')
             {
-                MasterIntra *master = dissolve_.coreData().hasMasterBond(qPrintable(w->text()));
-                speciesBond->setMasterParameters(master);
+                auto master = dissolve_.coreData().getMasterBond(qPrintable(w->text()));
+                speciesBond->setMasterParameters(&master->get());
             }
             else
             {
@@ -482,7 +464,7 @@ void SpeciesTab::on_AngleTable_itemChanged(QTableWidgetItem *w)
         return;
 
     // Get target SpeciesAngle from the passed widget
-    SpeciesAngle *speciesAngle = w ? VariantPointer<SpeciesAngle>(w->data(Qt::UserRole)) : nullptr;
+    SpeciesAngle *speciesAngle = w ? w->data(Qt::UserRole).value<SpeciesAngle *>() : nullptr;
     if (!speciesAngle)
         return;
 
@@ -501,8 +483,8 @@ void SpeciesTab::on_AngleTable_itemChanged(QTableWidgetItem *w)
             // If the text starts with an '@' then its a reference to a master term
             if (w->text().at(0) == '@')
             {
-                MasterIntra *master = dissolve_.coreData().hasMasterAngle(qPrintable(w->text()));
-                speciesAngle->setMasterParameters(master);
+                auto master = dissolve_.coreData().getMasterAngle(qPrintable(w->text()));
+                speciesAngle->setMasterParameters(&master->get());
             }
             else
             {
@@ -542,7 +524,7 @@ void SpeciesTab::on_TorsionTable_itemChanged(QTableWidgetItem *w)
         return;
 
     // Get target SpeciesTorsion from the passed widget
-    SpeciesTorsion *speciesTorsion = w ? VariantPointer<SpeciesTorsion>(w->data(Qt::UserRole)) : nullptr;
+    SpeciesTorsion *speciesTorsion = w ? w->data(Qt::UserRole).value<SpeciesTorsion *>() : nullptr;
     if (!speciesTorsion)
         return;
 
@@ -562,8 +544,8 @@ void SpeciesTab::on_TorsionTable_itemChanged(QTableWidgetItem *w)
             // If the text starts with an '@' then its a reference to a master term
             if (w->text().at(0) == '@')
             {
-                MasterIntra *master = dissolve_.coreData().hasMasterTorsion(qPrintable(w->text()));
-                speciesTorsion->setMasterParameters(master);
+                auto master = dissolve_.coreData().getMasterTorsion(qPrintable(w->text()));
+                speciesTorsion->setMasterParameters(&master->get());
             }
             else
             {
@@ -603,7 +585,7 @@ void SpeciesTab::on_ImproperTable_itemChanged(QTableWidgetItem *w)
         return;
 
     // Get target SpeciesImproper from the passed widget
-    SpeciesImproper *speciesImproper = w ? VariantPointer<SpeciesImproper>(w->data(Qt::UserRole)) : nullptr;
+    SpeciesImproper *speciesImproper = w ? w->data(Qt::UserRole).value<SpeciesImproper *>() : nullptr;
     if (!speciesImproper)
         return;
 
@@ -623,12 +605,12 @@ void SpeciesTab::on_ImproperTable_itemChanged(QTableWidgetItem *w)
             // If the text starts with an '@' then its a reference to a master term
             if (w->text().at(0) == '@')
             {
-                MasterIntra *master = dissolve_.coreData().hasMasterImproper(qPrintable(w->text()));
-                speciesImproper->setMasterParameters(master);
+                auto master = dissolve_.coreData().getMasterImproper(qPrintable(w->text()));
+                speciesImproper->setMasterParameters(&master->get());
             }
             else
             {
-                SpeciesImproper::ImproperFunction tf = SpeciesImproper::improperFunctions().enumeration(qPrintable(w->text()));
+                SpeciesTorsion::TorsionFunction tf = SpeciesTorsion::torsionFunctions().enumeration(qPrintable(w->text()));
                 speciesImproper->setMasterParameters(nullptr);
                 speciesImproper->setForm(tf);
             }
@@ -667,9 +649,6 @@ void SpeciesTab::updateGeometryTab()
 {
     Locker refreshLocker(refreshLock_);
 
-    // -- SpeciesAtom Table
-    // 	if (dissolve_.pairPotentialsIncludeCoulomb()) ui_.AtomTable->showColumn(5);
-    // 	else ui_.AtomTable->hideColumn(5);
     if (!species_)
         ui_.AtomTable->clearContents();
     else

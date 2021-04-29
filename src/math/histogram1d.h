@@ -1,22 +1,17 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
-#include "genericitems/base.h"
 #include "math/data1d.h"
 #include "math/sampleddouble.h"
-#include "templates/objectstore.h"
-
-// Forward Declarations
-class ProcessPool;
 
 // One-Dimensional Histogram
-class Histogram1D : public ListItem<Histogram1D>, public ObjectStore<Histogram1D>, public GenericItemBase
+class Histogram1D
 {
     public:
     Histogram1D();
-    ~Histogram1D();
+    ~Histogram1D() = default;
     Histogram1D(const Histogram1D &source);
     // Clear data
     void clear();
@@ -85,17 +80,16 @@ class Histogram1D : public ListItem<Histogram1D>, public ObjectStore<Histogram1D
      */
     public:
     void operator=(const Histogram1D &source);
+    Histogram1D operator+(const Histogram1D &other) const;
 
     /*
-     * GenericItemBase Implementations
+     * Serialisation
      */
     public:
-    // Return class name
-    static std::string_view itemClassName();
     // Read data through specified LineParser
-    bool read(LineParser &parser, CoreData &coreData);
+    bool deserialise(LineParser &parser);
     // Write data through specified LineParser
-    bool write(LineParser &parser);
+    bool serialise(LineParser &parser) const;
 
     /*
      * Parallel Comms
@@ -103,8 +97,4 @@ class Histogram1D : public ListItem<Histogram1D>, public ObjectStore<Histogram1D
     public:
     // Sum histogram data onto all processes
     bool allSum(ProcessPool &procPool);
-    // Broadcast data
-    bool broadcast(ProcessPool &procPool, const int root, const CoreData &coreData);
-    // Check item equality
-    bool equality(ProcessPool &procPool);
 };

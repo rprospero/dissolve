@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -91,13 +91,4 @@ class MainTab
     virtual void disableSensitiveControls() = 0;
     // Enable sensitive controls within the tab
     virtual void enableSensitiveControls() = 0;
-
-    /*
-     * State
-     */
-    public:
-    // Write widget state through specified LineParser
-    virtual bool writeState(LineParser &parser) const = 0;
-    // Read widget state through specified LineParser
-    virtual bool readState(LineParser &parser, const CoreData &coreData) = 0;
 };

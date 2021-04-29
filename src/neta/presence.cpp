@@ -1,36 +1,34 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "neta/presence.h"
 #include "classes/speciesatom.h"
-#include "data/ffatomtype.h"
+#include "data/ff/atomtype.h"
 #include <algorithm>
 
-NETAPresenceNode::NETAPresenceNode(NETADefinition *parent, std::vector<std::reference_wrapper<const Element>> targetElements,
+NETAPresenceNode::NETAPresenceNode(NETADefinition *parent, std::vector<Elements::Element> targetElements,
                                    std::vector<std::reference_wrapper<const ForcefieldAtomType>> targetAtomTypes)
-    : NETANode(parent, NETANode::PresenceNode)
+    : NETANode(parent, NETANode::NodeType::Presence)
 {
     allowedElements_ = targetElements;
     allowedAtomTypes_ = targetAtomTypes;
 
     repeatCount_ = 1;
-    repeatCountOperator_ = NETANode::EqualTo;
+    repeatCountOperator_ = NETANode::ComparisonOperator::EqualTo;
     nBondsValue_ = -1;
-    nBondsValueOperator_ = NETANode::EqualTo;
+    nBondsValueOperator_ = NETANode::ComparisonOperator::EqualTo;
     nHydrogensValue_ = -1;
-    nHydrogensValueOperator_ = NETANode::EqualTo;
+    nHydrogensValueOperator_ = NETANode::ComparisonOperator::EqualTo;
 }
-
-NETAPresenceNode::~NETAPresenceNode() {}
 
 /*
  * Atom Targets
  */
 
 // Add element target to node
-bool NETAPresenceNode::addElementTarget(const Element &el)
+bool NETAPresenceNode::addElementTarget(Elements::Element Z)
 {
-    allowedElements_.push_back(el);
+    allowedElements_.push_back(Z);
 
     return true;
 }
@@ -50,13 +48,9 @@ bool NETAPresenceNode::addFFTypeTarget(const ForcefieldAtomType &ffType)
 // Return enum options for NETACharacterModifiers
 EnumOptions<NETAPresenceNode::NETACharacterModifier> NETAPresenceNode::modifiers()
 {
-    static EnumOptionsList ModifierOptions = EnumOptionsList()
-                                             << EnumOption(NBondsModifier, "nbonds") << EnumOption(NHydrogensModifier, "nh")
-                                             << EnumOption(RepeatCharacterModifier, "n");
-
-    static EnumOptions<NETAPresenceNode::NETACharacterModifier> options("CharacterModifier", ModifierOptions);
-
-    return options;
+    return EnumOptions<NETAPresenceNode::NETACharacterModifier>("CharacterModifier", {{NETACharacterModifier::NBonds, "nbonds"},
+                                                                                      {NETACharacterModifier::NHydrogens, "nh"},
+                                                                                      {NETACharacterModifier::Repeat, "n"}});
 }
 
 // Return whether the specified modifier is valid for this node
@@ -71,15 +65,15 @@ bool NETAPresenceNode::setModifier(std::string_view modifier, ComparisonOperator
 
     switch (modifiers().enumeration(modifier))
     {
-        case (NETAPresenceNode::NBondsModifier):
+        case (NETAPresenceNode::NETACharacterModifier::NBonds):
             nBondsValue_ = value;
             nBondsValueOperator_ = op;
             break;
-        case (NETAPresenceNode::NHydrogensModifier):
+        case (NETAPresenceNode::NETACharacterModifier::NHydrogens):
             nHydrogensValue_ = value;
             nHydrogensValueOperator_ = op;
             break;
-        case (NETAPresenceNode::RepeatCharacterModifier):
+        case (NETAPresenceNode::NETACharacterModifier::Repeat):
             repeatCount_ = value;
             repeatCountOperator_ = op;
             break;
@@ -109,9 +103,9 @@ int NETAPresenceNode::score(const SpeciesAtom *i, std::vector<const SpeciesAtom 
     {
         // Evaluate the atom against our elements
         int atomScore = NETANode::NoMatch;
-        for (const auto &element : allowedElements_)
+        for (const auto Z : allowedElements_)
         {
-            if (j->element() != &element.get())
+            if (j->Z() != Z)
                 continue;
 
             // Process branch definition via the base class, using a fresh path
@@ -163,7 +157,7 @@ int NETAPresenceNode::score(const SpeciesAtom *i, std::vector<const SpeciesAtom 
         {
             // Count number of hydrogens attached to this atom
             auto nH = std::count_if(j->bonds().begin(), j->bonds().end(),
-                                    [j](const SpeciesBond &bond) { return bond.partner(j)->element()->Z() == ELEMENT_H; });
+                                    [j](const SpeciesBond &bond) { return bond.partner(j)->Z() == Elements::H; });
             if (!compareValues(nH, nHydrogensValueOperator_, nHydrogensValue_))
                 continue;
 
@@ -187,7 +181,8 @@ int NETAPresenceNode::score(const SpeciesAtom *i, std::vector<const SpeciesAtom 
     // Remove any matched atoms from the original list
     for (auto j : matches)
         availableAtoms.erase(std::remove_if(availableAtoms.begin(), availableAtoms.end(),
-                                            [&j](const auto &matchedAtom) { return matchedAtom == j; }));
+                                            [&j](const auto &matchedAtom) { return matchedAtom == j; }),
+                             availableAtoms.end());
 
     return reverseLogic_ ? NETANode::NoMatch : totalScore;
 }

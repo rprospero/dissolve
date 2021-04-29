@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "keywords/linkto.h"
 
@@ -35,14 +35,14 @@ int LinkToKeyword::maxArguments() const
 }
 
 // Parse arguments from supplied LineParser, starting at given argument offset
-bool LinkToKeyword::read(LineParser &parser, int startArg, CoreData &coreData)
+bool LinkToKeyword::read(LineParser &parser, int startArg, const CoreData &coreData)
 {
     Messenger::warn("Don't call LinkToKeyword::read() - go through base().\n");
     return data_->read(parser, startArg, coreData);
 }
 
 // Write keyword data to specified LineParser
-bool LinkToKeyword::write(LineParser &parser, std::string_view keywordName, std::string_view prefix)
+bool LinkToKeyword::write(LineParser &parser, std::string_view keywordName, std::string_view prefix) const
 {
     Messenger::warn("Don't call LinkToKeyword::write() - go through base().\n");
     return data_->write(parser, data_->name(), prefix);

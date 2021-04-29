@@ -1,19 +1,22 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
+#include "base/lineparser.h"
+#include "base/processpool.h"
 #include "base/version.h"
-#include "math/plottable.h"
-#include "templates/objectstore.h"
+#include "math/data1dbase.h"
+#include <string>
 
 // One-Dimensional Data
-class Data1D : public PlottableData, public ListItem<Data1D>, public ObjectStore<Data1D>, public GenericItemBase
+class Data1D : public Data1DBase
 {
     public:
     Data1D();
-    virtual ~Data1D();
+    virtual ~Data1D() = default;
     Data1D(const Data1D &source);
+    Data1D(const Data1DBase &source);
     // Clear data
     void clear();
 
@@ -21,6 +24,8 @@ class Data1D : public PlottableData, public ListItem<Data1D>, public ObjectStore
      * Data
      */
     private:
+    // Tag for data (optional)
+    std::string tag_;
     // X array
     std::vector<double> x_;
     // Values at each x
@@ -33,6 +38,10 @@ class Data1D : public PlottableData, public ListItem<Data1D>, public ObjectStore
     VersionCounter version_;
 
     public:
+    // Set tag
+    void setTag(std::string_view tag);
+    // Return tag
+    std::string_view tag() const;
     // Initialise arrays to specified size
     void initialise(int size, bool withError = false);
     // Initialise to be consistent in size and x axis with supplied object
@@ -53,19 +62,15 @@ class Data1D : public PlottableData, public ListItem<Data1D>, public ObjectStore
     void removeLastPoint();
     // Return x axis value specified
     double &xAxis(int index);
-    // Return x axis value specified (const)
-    double constXAxis(int index) const;
-    // Return x axis Array
+    const double &xAxis(int index) const;
+    // Return x axis vector
     std::vector<double> &xAxis();
-    // Return x axis Array (const)
     const std::vector<double> &xAxis() const;
     // Return value specified
     double &value(int index);
-    // Return value value specified (const)
-    double constValue(int index) const;
+    const double &value(int index) const;
     // Return value Array
     std::vector<double> &values();
-    // Return values Array
     const std::vector<double> &values() const;
     // Return number of values present in whole dataset
     int nValues() const;
@@ -79,8 +84,7 @@ class Data1D : public PlottableData, public ListItem<Data1D>, public ObjectStore
     bool valuesHaveErrors() const;
     // Return error value specified
     double &error(int index);
-    // Return error value specified (const)
-    double error(int index) const;
+    const double &error(int index) const;
     // Return error Array
     std::vector<double> &errors();
     // Return errors Array
@@ -100,22 +104,11 @@ class Data1D : public PlottableData, public ListItem<Data1D>, public ObjectStore
     void operator/=(const double factor);
 
     /*
-     * GenericItemBase Implementations
+     * Serialisation
      */
     public:
-    // Return class name
-    static std::string_view itemClassName();
     // Read data through specified LineParser
-    bool read(LineParser &parser, CoreData &coreData);
+    bool deserialise(LineParser &parser);
     // Write data through specified LineParser
-    bool write(LineParser &parser);
-
-    /*
-     * Parallel Comms
-     */
-    public:
-    // Broadcast data
-    bool broadcast(ProcessPool &procPool, const int root, const CoreData &coreData);
-    // Check item equality
-    bool equality(ProcessPool &procPool);
+    bool serialise(LineParser &parser) const;
 };

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -52,9 +52,10 @@ class DataWidget : public QWidget
      */
     private:
     // Data tree top-level item update function
-    void dataTreeTopLevelUpdateFunction(QTreeWidget *treeWidget, int topLevelItemIndex, RenderableGroup *data, bool createItem);
+    void dataTreeTopLevelUpdateFunction(QTreeWidget *treeWidget, int topLevelItemIndex, RenderableGroup &data, bool createItem);
     // Data tree item update function
-    void dataTreeItemUpdateFunction(QTreeWidgetItem *parentItem, int childIndex, Renderable *data, bool createItem);
+    void dataTreeItemUpdateFunction(QTreeWidgetItem *parentItem, int childIndex, std::shared_ptr<Renderable> &data,
+                                    bool createItem);
 
     private slots:
     // Data tree item changed

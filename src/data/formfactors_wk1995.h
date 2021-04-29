@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -10,8 +10,8 @@
 class FormFactorData_WK1995 : public FormFactorData
 {
     public:
-    FormFactorData_WK1995(int z = 0, int formalCharge = 0, std::vector<double> a = {}, std::vector<double> b = {},
-                          double c = 0.0);
+    FormFactorData_WK1995(Elements::Element Z = Elements::Unknown, int formalCharge = 0, std::vector<double> a = {},
+                          std::vector<double> b = {}, double c = 0.0);
     FormFactorData_WK1995 &operator=(const FormFactorData_WK1995 &source);
 
     /*

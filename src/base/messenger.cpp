@@ -1,13 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "base/messenger.h"
 #include "base/lineparser.h"
-#include "base/processpool.h"
 #include "base/sysfunc.h"
-#include <stdarg.h>
-#include <stdio.h>
-#include <string.h>
 
 // Static Members
 bool Messenger::quiet_ = false;

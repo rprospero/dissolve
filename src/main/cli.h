@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -20,7 +20,7 @@ class CLIOptions
     // Input file to load
     std::optional<std::string> inputFile_;
     // Number of iterations to perform
-    std::optional<int> nIterations_;
+    int nIterations_;
     // Frequency at which to write restart file
     int restartFileFrequency_;
     // Redirection basename (for per-process output)
@@ -47,7 +47,7 @@ class CLIOptions
     // Return input file to load
     std::optional<std::string> inputFile() const;
     // Return number of iterations to perform
-    std::optional<int> nIterations() const;
+    int nIterations() const;
     // Return frequency at which to write restart file
     int restartFileFrequency() const;
     // Return redirection basename (for per-process output)

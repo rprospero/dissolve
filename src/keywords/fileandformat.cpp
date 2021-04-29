@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "keywords/fileandformat.h"
 #include "base/lineparser.h"
@@ -38,7 +38,7 @@ int FileAndFormatKeyword::maxArguments() const
 }
 
 // Parse arguments from supplied LineParser, starting at given argument offset
-bool FileAndFormatKeyword::read(LineParser &parser, int startArg, CoreData &coreData)
+bool FileAndFormatKeyword::read(LineParser &parser, int startArg, const CoreData &coreData)
 {
     if (!data_.read(parser, startArg, endKeyword_, coreData))
         return Messenger::error("Failed to read file/format.\n");
@@ -49,7 +49,7 @@ bool FileAndFormatKeyword::read(LineParser &parser, int startArg, CoreData &core
 }
 
 // Write keyword data to specified LineParser
-bool FileAndFormatKeyword::write(LineParser &parser, std::string_view keywordName, std::string_view prefix)
+bool FileAndFormatKeyword::write(LineParser &parser, std::string_view keywordName, std::string_view prefix) const
 {
     if (!data_.writeFilenameAndFormat(parser, fmt::format("{}{}  ", prefix, keywordName)))
         return false;

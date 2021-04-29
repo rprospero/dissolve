@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "classes/coredata.h"
 #include "classes/species.h"
-#include "genericitems/listhelper.h"
 #include "gui/helpers/listwidgetupdater.h"
 #include "gui/keywordwidgets/speciesreflist.h"
 #include <QComboBox>

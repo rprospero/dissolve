@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "base/sysfunc.h"
 #include "base/messenger.h"
@@ -157,6 +157,15 @@ std::string_view DissolveSys::afterLastChar(const std::string_view s, char c)
     return s.substr(pos + 1);
 }
 
+// Return if the target string starts with the specified characters
+bool DissolveSys::startsWith(std::string_view target, std::string_view beginning)
+{
+    if (beginning.size() > target.size())
+        return false;
+
+    return std::equal(beginning.begin(), beginning.end(), target.begin());
+}
+
 // Return if the target string ends with the specified characters
 bool DissolveSys::endsWith(std::string_view target, std::string_view ending)
 {
@@ -231,9 +240,9 @@ bool DissolveSys::isNumber(std::string_view text, bool &isFloatingPoint)
     std::optional<int> exponentIndex;
 
     const auto length = text.size();
-    for (int n = 0; n < length; ++n)
+    for (auto n = 0; n < length; ++n)
     {
-        char c = text[n];
+        auto c = text[n];
         switch (text[n])
         {
             // Decimal point
@@ -246,6 +255,9 @@ bool DissolveSys::isNumber(std::string_view text, bool &isFloatingPoint)
                 // Only allow as first character or immediately following an exponent
                 if (n != (exponentIndex.value_or(-1) + 1))
                     return false;
+                // If the exponent power is negative, assume floating point
+                if ((c == '-') && exponentIndex && (exponentIndex.value() == (n - 1)))
+                    isFloatingPoint = true;
                 break;
             // Exponentiation
             case ('e'):

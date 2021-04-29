@@ -1,32 +1,53 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "classes/atomtype.h"
-#include "genericitems/listhelper.h"
 #include "main/dissolve.h"
 #include "math/gaussfit.h"
 #include "math/poissonfit.h"
 #include "modules/epsr/epsr.h"
 #include "templates/algorithms.h"
 
-// Return list of target Modules / data for refeinement
-const RefList<Module> &EPSRModule::targets() const { return targets_; }
-
-// Add target Modules
-void EPSRModule::addTargets(RefList<Module> targets)
+// Create / update delta S(Q) information
+void EPSRModule::updateDeltaSQ(GenericList &processingData, OptionalReferenceWrapper<const Array2D<Data1D>> optCalculatedSQ,
+                               OptionalReferenceWrapper<const Array2D<Data1D>> optEstimatedSQ)
 {
-    targets_ += targets;
+    // Find the relevant data if we were not provided them
+    if (!optCalculatedSQ)
+        optCalculatedSQ = processingData.valueIf<Array2D<Data1D>>("UnweightedSQ", uniqueName_);
+    if (!optCalculatedSQ)
+        return;
+    if (!optEstimatedSQ)
+        optEstimatedSQ = processingData.valueIf<Array2D<Data1D>>("EstimatedSQ", uniqueName_);
+    if (!optEstimatedSQ)
+        return;
 
-    // Must flag that the associated keyword has been set by other means
-    if (targets.nItems() > 0)
-        keywords_.hasBeenSet("Target");
+    const auto &calculatedSQ = optCalculatedSQ->get();
+    const auto &estimatedSQ = optEstimatedSQ->get();
+    assert(calculatedSQ.nRows() == estimatedSQ.nRows() && calculatedSQ.nColumns() == estimatedSQ.nColumns());
+
+    // Realise the DeltaSQ array
+    auto [deltaSQ, status] = processingData.realiseIf<Array2D<Data1D>>("DeltaSQ", uniqueName_, GenericItem::ItemFlag::NoFlags);
+    if (status == GenericItem::ItemStatus::Created)
+        deltaSQ.initialise(calculatedSQ.nRows(), calculatedSQ.nRows(), true);
+
+    // Copy the tags from the calculated data (so we avoid requiring the source AtomTypeList) and create the data
+    for (auto &&[delta, calc, est] : zip(deltaSQ, calculatedSQ, estimatedSQ))
+    {
+        delta.setTag(calc.tag());
+        delta = est;
+        Interpolator::addInterpolated(delta, calc, -1.0);
+    }
 }
+
+// Return list of target Modules / data for refinement
+const std::vector<Module *> &EPSRModule::targets() const { return keywords_.retrieve<std::vector<Module *>>("Target"); }
 
 // Create / retrieve arrays for storage of empirical potential coefficients
 Array2D<std::vector<double>> &EPSRModule::potentialCoefficients(Dissolve &dissolve, const int nAtomTypes, const int ncoeffp)
 {
-    auto &coefficients = GenericListHelper<Array2D<std::vector<double>>>::realise(
-        dissolve.processingModuleData(), "PotentialCoefficients", uniqueName_, GenericItem::InRestartFileFlag);
+    auto &coefficients = dissolve.processingModuleData().realise<Array2D<std::vector<double>>>(
+        "PotentialCoefficients", uniqueName_, GenericItem::InRestartFileFlag);
 
     auto arrayNCoeffP = (coefficients.nRows() && coefficients.nColumns() ? coefficients[{0, 0}].size() : 0);
     if ((coefficients.nRows() != nAtomTypes) || (coefficients.nColumns() != nAtomTypes) ||
@@ -82,15 +103,15 @@ bool EPSRModule::generateEmpiricalPotentials(Dissolve &dissolve, EPSRModule::Exp
             // Multiply by truncation function
             truncate(ep, rminpt, rmaxpt);
 
-            // Grab pointer to the relevant pair potential
-            PairPotential *pp = dissolve.pairPotential(at1, at2);
-            if (!pp)
-            {
-                Messenger::error("Failed to find PairPotential for AtomTypes '{}' and '{}'.\n", at1->name(), at2->name());
-                return false;
-            }
+            // Set the additional potential in the main processing data
+            dissolve.processingModuleData().realise<Data1D>(fmt::format("Potential_{}-{}_Additional", at1->name(), at2->name()),
+                                                            "Dissolve", GenericItem::InRestartFileFlag) = ep;
 
-            pp->setUAdditional(ep);
+            // Grab pointer to the relevant pair potential (if it exists)
+            auto *pp = dissolve.pairPotential(at1, at2);
+            if (pp)
+                pp->setUAdditional(ep);
+
             return EarlyReturn<bool>::Continue;
         });
 
@@ -196,7 +217,6 @@ void EPSRModule::truncate(Data1D &data, double rMin, double rMax)
 
         if (x >= rMax)
             y[n] = 0.0;
-        // 		else if (x <= rMin) y[n] = y[n];
         else if (x > rMin)
             y[n] *= 0.5 * (1.0 + cos(((x - rMin) * PI) / decay));
     }

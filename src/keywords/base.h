@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -18,7 +18,6 @@ class Module;
 class ProcedureNode;
 class Species;
 class SpeciesSite;
-class ProcessPool;
 
 // Keyword Base Class
 class KeywordBase : public ListItem<KeywordBase>
@@ -37,10 +36,10 @@ class KeywordBase : public ListItem<KeywordBase>
         Data3DStoreData,
         DoubleData,
         DynamicSiteNodesData,
-        ElementRefListData,
+        ElementVectorData,
         EnumOptionsData,
         ExpressionData,
-        ExpressionVariableListData,
+        ExpressionVariableVectorData,
         FileAndFormatData,
         GeometryListData,
         IntegerData,
@@ -70,7 +69,7 @@ class KeywordBase : public ListItem<KeywordBase>
         Vec3NodeValueData,
         VectorIntegerDoubleData,
         VectorIntegerStringData,
-        WindowFunctionData
+        VectorStringPairData
     };
     KeywordBase(KeywordDataType type);
     virtual ~KeywordBase();
@@ -148,9 +147,9 @@ class KeywordBase : public ListItem<KeywordBase>
     // Check number of arguments provided to keyword
     bool validNArgs(int nArgsProvided) const;
     // Parse arguments from supplied LineParser, starting at given argument offset
-    virtual bool read(LineParser &parser, int startArg, CoreData &coreData) = 0;
+    virtual bool read(LineParser &parser, int startArg, const CoreData &coreData) = 0;
     // Write keyword data to specified LineParser
-    virtual bool write(LineParser &parser, std::string_view keywordName, std::string_view prefix = "") = 0;
+    virtual bool write(LineParser &parser, std::string_view keywordName, std::string_view prefix = "") const = 0;
 
     /*
      * Parse Result

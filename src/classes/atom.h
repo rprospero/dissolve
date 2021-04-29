@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
 #include "templates/dynamicarrayobject.h"
-#include "templates/orderedpointerdataarray.h"
 #include "templates/reflist.h"
 #include "templates/vector3.h"
 #include <memory>
@@ -13,7 +12,6 @@
 // Forward Declarations
 class Cell;
 class Molecule;
-class ProcessPool;
 class SpeciesAtom;
 
 // Atom Definition
@@ -106,5 +104,5 @@ class Atom : public DynamicArrayObject<Atom>
      */
     public:
     // Return scaling factor to employ with specified Atom
-    double scaling(Atom *j) const;
+    double scaling(std::shared_ptr<Atom> j) const;
 };

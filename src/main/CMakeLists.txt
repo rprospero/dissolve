@@ -1,4 +1,5 @@
-add_library(main
+add_library(
+  main
   atomtypes.cpp
   comms.cpp
   configurations.cpp
@@ -20,16 +21,11 @@ add_library(main
   simulation.cpp
   species.cpp
   version.cpp
-
   cli.h
   dissolve.h
   keywords.h
   version.h
 )
 
-include_directories(
-  ../
-  ${CMAKE_SOURCE_DIR}
-  ${CMAKE_BINARY_DIR}
-  ${CMAKE_BINARY_DIR}/src
-)
+include_directories(main PRIVATE ${PROJECT_SOURCE_DIR}/src)
+target_link_libraries(main PRIVATE CONAN_PKG::fmt CONAN_PKG::CLI11)

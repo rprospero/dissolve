@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "classes/configuration.h"
 #include "classes/species.h"
@@ -21,13 +21,9 @@ QWidget *UsedSpeciesComboDelegate::createEditor(QWidget *parent, const QStyleOpt
     // Get the model UserData for the current index - it should be a Configuration
     Configuration *cfg = VariantPointer<Configuration>(index.data(Qt::UserRole));
     if (cfg)
-    {
-        for (auto *spInfo = cfg->usedSpecies().first(); spInfo != nullptr; spInfo = spInfo->next())
-        {
-            editor->addItem(QString::fromStdString(std::string(spInfo->species()->name())),
-                            VariantPointer<Species>(spInfo->species()));
-        }
-    }
+        for (auto &spInfo : cfg->usedSpecies())
+            editor->addItem(QString::fromStdString(std::string(spInfo.species()->name())),
+                            VariantPointer<Species>(spInfo.species()));
     else
         Messenger::error("Underlying model did not contain a Configuration*, so UsedSpeciesCombo cannot provide options.\n");
 

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -7,8 +7,6 @@
 #include "gui/render/renderable.h"
 #include "gui/render/renderablegroup.h"
 #include "math/matrix4.h"
-#include "templates/list.h"
-#include "templates/reflist.h"
 
 // Forward Declarations
 class FontInstance;
@@ -20,10 +18,10 @@ class View
     // Associated FontInstance from parent viewer
     FontInstance &fontInstance_;
     // List of Renderables that we are to display
-    const List<Renderable> &renderables_;
+    const std::vector<std::shared_ptr<Renderable>> &renderables_;
 
     public:
-    View(const List<Renderable> &renderables, FontInstance &fontInstance);
+    View(const std::vector<std::shared_ptr<Renderable>> &renderables, FontInstance &fontInstance);
     ~View();
     // Clear view, resetting to defaults
     void clear();
@@ -68,7 +66,7 @@ class View
         nViewTypes
     };
     // Return enum options for ViewType
-    static EnumOptions<View::ViewType> &viewTypes();
+    static EnumOptions<View::ViewType> viewTypes();
     // AutoFollow type
     enum AutoFollowType
     {
@@ -78,7 +76,7 @@ class View
         nAutoFollowTypes
     };
     // Return enum options for AutoFollowType
-    static EnumOptions<View::AutoFollowType> &autoFollowTypes();
+    static EnumOptions<View::AutoFollowType> autoFollowTypes();
 
     private:
     // Type of view to use
@@ -114,7 +112,7 @@ class View
     // Auto-follow type in effect
     AutoFollowType autoFollowType_;
     // Transformed data versions at last auto-follow
-    RefDataList<Renderable, int> autoFollowTransformVersions_;
+    std::vector<std::pair<std::shared_ptr<Renderable>, int>> autoFollowTransformVersions_;
     // Length of X region to follow, if autoFollowType_ == XFollow
     double autoFollowXLength_;
 
@@ -225,8 +223,7 @@ class View
     void shiftFlatAxisLimitsFractional(double fracH, double fracV);
     // Return axes for the view
     Axes &axes();
-    // Return axes for the view (const)
-    const Axes &constAxes() const;
+    const Axes &axes() const;
 
     /*
      * Style

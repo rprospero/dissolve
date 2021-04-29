@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -80,13 +80,4 @@ class ModuleControlWidget : public QWidget
     signals:
     // Notify that the Module's data has been modified in some way
     void dataModified();
-
-    /*
-     * State I/O
-     */
-    public:
-    // Read widget state through specified LineParser
-    bool readState(LineParser &parser);
-    // Write widget state through specified LineParser
-    bool writeState(LineParser &parser) const;
 };

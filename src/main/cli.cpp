@@ -1,17 +1,15 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "main/cli.h"
 #include "base/messenger.h"
-#include "base/processpool.h"
 #include "main/version.h"
 #include <CLI/App.hpp>
 #include <CLI/Config.hpp>
 #include <CLI/Formatter.hpp>
 
 CLIOptions::CLIOptions()
-    : nIterations_(std::nullopt), restartFileFrequency_(10), ignoreRestartFile_(false), ignoreStateFile_(false),
-      writeNoFiles_(false)
+    : nIterations_(0), restartFileFrequency_(10), ignoreRestartFile_(false), ignoreStateFile_(false), writeNoFiles_(false)
 {
 }
 
@@ -20,16 +18,16 @@ int CLIOptions::parse(const int args, char **argv, bool isGUI, bool isParallel)
 {
     // Create CLI object
 #ifdef PARALLEL
-    CLI::App app{fmt::format("Dissolve PARALLEL version {}, 2020 Team Dissolve and contributors.", Version::info())};
+    CLI::App app{fmt::format("Dissolve PARALLEL version {}, 2021 Team Dissolve and contributors.", Version::info())};
 #else
-    CLI::App app{fmt::format("Dissolve SERIAL version {}, 2020 Team Dissolve and contributors.", Version::info())};
+    CLI::App app{fmt::format("Dissolve SERIAL version {}, 2021 Team Dissolve and contributors.", Version::info())};
 #endif
 
     // Add positionals
     auto inputFileOption = app.add_option("inputFile", inputFile_, "Input file to load");
 
     // Basic Control
-    app.add_option("-n,--iterations", nIterations_, "Number of iterations to run (default = 5)")->group("Basic Control");
+    app.add_option("-n,--iterations", nIterations_, "Number of iterations to run (default = 0)")->group("Basic Control");
     app.add_flag_callback("-q,--quiet", []() { Messenger::setQuiet(true); },
                           "Be quiet - don't output any messages whatsoever (output files are still written)")
         ->group("Basic Control");
@@ -86,7 +84,7 @@ int CLIOptions::parse(const int args, char **argv, bool isGUI, bool isParallel)
 std::optional<std::string> CLIOptions::inputFile() const { return inputFile_; }
 
 // Return number of iterations to perform
-std::optional<int> CLIOptions::nIterations() const { return nIterations_; }
+int CLIOptions::nIterations() const { return nIterations_; }
 
 // Return frequency at which to write restart file
 int CLIOptions::restartFileFrequency() const { return restartFileFrequency_; }

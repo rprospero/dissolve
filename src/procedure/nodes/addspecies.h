@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -16,14 +16,14 @@ class AddSpeciesProcedureNode : public ProcedureNode
     public:
     AddSpeciesProcedureNode(Species *sp = nullptr, NodeValue population = 0, NodeValue density = 0.1,
                             Units::DensityUnits densityUnits = Units::AtomsPerAngstromUnits);
-    ~AddSpeciesProcedureNode();
+    ~AddSpeciesProcedureNode() override = default;
 
     /*
      * Identity
      */
     public:
     // Return whether specified context is relevant for this node type
-    bool isContextRelevant(ProcedureNode::NodeContext context);
+    bool isContextRelevant(ProcedureNode::NodeContext context) override;
     // Return whether a name for the node must be provided
     bool mustBeNamed() const;
 
@@ -57,8 +57,7 @@ class AddSpeciesProcedureNode : public ProcedureNode
      */
     public:
     // Prepare any necessary data, ready for execution
-    bool prepare(Configuration *cfg, std::string_view prefix, GenericList &targetList);
+    bool prepare(Configuration *cfg, std::string_view prefix, GenericList &targetList) override;
     // Execute node, targetting the supplied Configuration
-    ProcedureNode::NodeExecutionResult execute(ProcessPool &procPool, Configuration *cfg, std::string_view prefix,
-                                               GenericList &targetList);
+    bool execute(ProcessPool &procPool, Configuration *cfg, std::string_view prefix, GenericList &targetList) override;
 };

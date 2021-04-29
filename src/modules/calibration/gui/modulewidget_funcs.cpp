@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "classes/atomtype.h"
-#include "genericitems/listhelper.h"
 #include "gui/dataviewer.hui"
 #include "gui/widgets/mimetreewidgetitem.h"
 #include "main/dissolve.h"
@@ -10,8 +9,8 @@
 #include "modules/calibration/gui/modulewidget.h"
 #include "templates/variantpointer.h"
 
-CalibrationModuleWidget::CalibrationModuleWidget(QWidget *parent, CalibrationModule *module)
-    : ModuleWidget(parent), module_(module)
+CalibrationModuleWidget::CalibrationModuleWidget(QWidget *parent, const GenericList &processingData, CalibrationModule *module)
+    : ModuleWidget(parent, processingData), module_(module)
 {
     // Set up user interface
     ui_.setupUi(this);
@@ -38,28 +37,4 @@ CalibrationModuleWidget::~CalibrationModuleWidget() {}
  */
 
 // Update controls within widget
-void CalibrationModuleWidget::updateControls(int flags) { dataView_->postRedisplay(); }
-
-/*
- * State I/O
- */
-
-// Write widget state through specified LineParser
-bool CalibrationModuleWidget::writeState(LineParser &parser) const
-{
-    // Write DataViewer session
-    if (!dataView_->writeSession(parser))
-        return false;
-
-    return true;
-}
-
-// Read widget state through specified LineParser
-bool CalibrationModuleWidget::readState(LineParser &parser)
-{
-    // Read DataViewer session
-    if (!dataView_->readSession(parser))
-        return false;
-
-    return true;
-}
+void CalibrationModuleWidget::updateControls(ModuleWidget::UpdateType updateType) { dataView_->postRedisplay(); }

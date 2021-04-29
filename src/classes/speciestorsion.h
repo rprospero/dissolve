@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -10,7 +10,6 @@
 // Forward Declarations
 class SpeciesAtom;
 class Species;
-class ProcessPool;
 
 // SpeciesTorsion Definition
 class SpeciesTorsion : public SpeciesIntra
@@ -24,13 +23,6 @@ class SpeciesTorsion : public SpeciesIntra
     SpeciesTorsion &operator=(SpeciesTorsion &&source);
 
     /*
-     * DynamicArrayObject Virtuals
-     */
-    public:
-    // Clear object, ready for re-use
-    void clear();
-
-    /*
      * Atom Information
      */
     private:
@@ -42,12 +34,14 @@ class SpeciesTorsion : public SpeciesIntra
     SpeciesAtom *k_;
     // Fourth SpeciesAtom in interaction
     SpeciesAtom *l_;
+
+    private:
+    // Set Atoms involved in Torsion
+    void assign(SpeciesAtom *i, SpeciesAtom *j, SpeciesAtom *k, SpeciesAtom *l);
     // Detach from current atoms
     void detach();
 
     public:
-    // Set Atoms involved in Torsion
-    void assign(SpeciesAtom *i, SpeciesAtom *j, SpeciesAtom *k, SpeciesAtom *l);
     // Return first SpeciesAtom
     SpeciesAtom *i() const;
     // Return second SpeciesAtom
@@ -85,7 +79,8 @@ class SpeciesTorsion : public SpeciesIntra
         Cos4Form,
         CosNForm,
         CosNCForm,
-        UFFCosineForm
+        UFFCosineForm,
+        FourierNForm
     };
     // Return enum options for TorsionFunction
     static EnumOptions<TorsionFunction> torsionFunctions();

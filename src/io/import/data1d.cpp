@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "io/import/data1d.h"
 #include "base/lineparser.h"
@@ -41,30 +41,23 @@ void Data1DImportFileFormat::setUpKeywords()
  */
 
 // Return enum options for Data1DImportFormat
-EnumOptions<Data1DImportFileFormat::Data1DImportFormat> &Data1DImportFileFormat::data1DImportFormats()
+EnumOptions<Data1DImportFileFormat::Data1DImportFormat> Data1DImportFileFormat::data1DImportFormats()
 {
-    static EnumOptionsList Data1DImportFormats =
-        EnumOptionsList() << EnumOption(Data1DImportFileFormat::XYData1D, "xy", "Simple XY data (x = bin centres)")
-                          << EnumOption(Data1DImportFileFormat::HistogramData1D, "histogram",
-                                        "Histogrammed Data (x = bin left-boundaries)")
-                          << EnumOption(Data1DImportFileFormat::GudrunMintData1D, "mint", "Gudrun output (mint01)");
-
-    static EnumOptions<Data1DImportFileFormat::Data1DImportFormat> options("Data1DImportFileFormat", Data1DImportFormats);
-
-    return options;
+    return EnumOptions<Data1DImportFileFormat::Data1DImportFormat>(
+        "Data1DImportFileFormat",
+        {{Data1DImportFileFormat::XYData1D, "xy", "Simple XY data (x = bin centres)"},
+         {Data1DImportFileFormat::HistogramData1D, "histogram", "Histogrammed Data (x = bin left-boundaries)"},
+         {Data1DImportFileFormat::GudrunMintData1D, "mint", "Gudrun output (mint01)"}});
 }
 
 // Return number of available formats
 int Data1DImportFileFormat::nFormats() const { return Data1DImportFileFormat::nData1DImportFormats; }
 
 // Return format keyword for supplied index
-std::string_view Data1DImportFileFormat::formatKeyword(int id) const { return data1DImportFormats().keywordByIndex(id); }
+std::string Data1DImportFileFormat::formatKeyword(int id) const { return data1DImportFormats().keywordByIndex(id); }
 
 // Return description string for supplied index
-std::string_view Data1DImportFileFormat::formatDescription(int id) const
-{
-    return data1DImportFormats().descriptionByIndex(id);
-}
+std::string Data1DImportFileFormat::formatDescription(int id) const { return data1DImportFormats().descriptionByIndex(id); }
 
 // Return current format as Data1DImportFormat
 Data1DImportFileFormat::Data1DImportFormat Data1DImportFileFormat::data1DFormat() const

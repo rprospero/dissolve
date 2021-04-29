@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "io/import/data2d.h"
 #include "base/lineparser.h"
@@ -36,27 +36,20 @@ void Data2DImportFileFormat::setUpKeywords()
  */
 
 // Return enum options for Data2DImportFormat
-EnumOptions<Data2DImportFileFormat::Data2DImportFormat> &Data2DImportFileFormat::data2DImportFormats()
+EnumOptions<Data2DImportFileFormat::Data2DImportFormat> Data2DImportFileFormat::data2DImportFormats()
 {
-    static EnumOptionsList Data2DImportFormats =
-        EnumOptionsList() << EnumOption(Data2DImportFileFormat::CartesianData2D, "cartesian", "Cartesian X,Y,f(X,Y) data");
-
-    static EnumOptions<Data2DImportFileFormat::Data2DImportFormat> options("Data2DImportFileFormat", Data2DImportFormats);
-
-    return options;
+    return EnumOptions<Data2DImportFileFormat::Data2DImportFormat>(
+        "Data2DImportFileFormat", {{Data2DImportFileFormat::CartesianData2D, "cartesian", "Cartesian X,Y,f(X,Y) data"}});
 }
 
 // Return number of available formats
 int Data2DImportFileFormat::nFormats() const { return Data2DImportFileFormat::nData2DImportFormats; }
 
 // Return format keyword for supplied index
-std::string_view Data2DImportFileFormat::formatKeyword(int id) const { return data2DImportFormats().keywordByIndex(id); }
+std::string Data2DImportFileFormat::formatKeyword(int id) const { return data2DImportFormats().keywordByIndex(id); }
 
 // Return description string for supplied index
-std::string_view Data2DImportFileFormat::formatDescription(int id) const
-{
-    return data2DImportFormats().descriptionByIndex(id);
-}
+std::string Data2DImportFileFormat::formatDescription(int id) const { return data2DImportFormats().descriptionByIndex(id); }
 
 // Return current format as Data2DImportFormat
 Data2DImportFileFormat::Data2DImportFormat Data2DImportFileFormat::data2DFormat() const

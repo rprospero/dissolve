@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "keywords/types.h"
 #include "modules/calculate_dangle/dangle.h"
@@ -194,15 +194,13 @@ void CalculateDAngleModule::initialise()
         "Control",
         new Vec3DoubleKeyword(Vec3<double>(0.0, 180.0, 1.0), Vec3<double>(0.0, 0.0, 1.0e-5), Vec3Labels::MinMaxBinwidthlabels),
         "AngleRange", "Range (min, max, binwidth) of angle axis", "<min> <max> <binwidth> (degrees)");
-
-    // Sites
-    keywords_.link("Sites", selectA_->keywords().find("Site"), "SiteA",
+    keywords_.link("Control", selectA_->keywords().find("Site"), "SiteA",
                    "Add site(s) which represent 'A' in the interaction A-B...C", "<Species> <Site> [<Species> <Site> ... ]");
-    keywords_.link("Sites", selectB_->keywords().find("Site"), "SiteB",
+    keywords_.link("Control", selectB_->keywords().find("Site"), "SiteB",
                    "Add site(s) which represent 'B' in the interaction A-B...C", "<Species> <Site> [<Species> <Site> ... ]");
-    keywords_.link("Sites", selectC_->keywords().find("Site"), "SiteC",
+    keywords_.link("Control", selectC_->keywords().find("Site"), "SiteC",
                    "Add site(s) which represent 'C' in the interaction A-B...C", "<Species> <Site> [<Species> <Site> ... ]");
-    keywords_.add("Sites", new BoolKeyword(false), "ExcludeSameMolecule",
+    keywords_.add("Control", new BoolKeyword(false), "ExcludeSameMolecule",
                   "Whether to exclude correlations between B and C sites on the same molecule", "<True|False>");
 
     // Export

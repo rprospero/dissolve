@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "procedure/nodes/calculateaxisangle.h"
 #include "base/lineparser.h"
@@ -13,20 +13,18 @@
 
 CalculateAxisAngleProcedureNode::CalculateAxisAngleProcedureNode(SelectProcedureNode *site0, OrientedSite::SiteAxis axis0,
                                                                  SelectProcedureNode *site1, OrientedSite::SiteAxis axis1)
-    : CalculateProcedureNodeBase(ProcedureNode::CalculateAxisAngleNode, site0, site1)
+    : CalculateProcedureNodeBase(ProcedureNode::NodeType::CalculateAxisAngle, site0, site1)
 {
     // Create keywords - store the pointers to the superclasses for later use
-    siteKeywords_[0] = new NodeKeyword<SelectProcedureNode>(this, ProcedureNode::SelectNode, true, site0);
-    keywords_.add("Sites", siteKeywords_[0], "I", "Site that contains the first set of axes");
-    keywords_.add("Sites", new EnumOptionsKeyword<OrientedSite::SiteAxis>(OrientedSite::siteAxis() = axis0), "AxisI",
+    siteKeywords_[0] = new NodeKeyword<SelectProcedureNode>(this, ProcedureNode::NodeType::Select, true, site0);
+    keywords_.add("Control", siteKeywords_[0], "I", "Site that contains the first set of axes");
+    keywords_.add("Control", new EnumOptionsKeyword<OrientedSite::SiteAxis>(OrientedSite::siteAxis() = axis0), "AxisI",
                   "Axis to use from site I");
-    siteKeywords_[1] = new NodeKeyword<SelectProcedureNode>(this, ProcedureNode::SelectNode, true, site1);
-    keywords_.add("Sites", siteKeywords_[1], "J", "Site that contains the second set of axes");
-    keywords_.add("Sites", new EnumOptionsKeyword<OrientedSite::SiteAxis>(OrientedSite::siteAxis() = axis1), "AxisJ",
+    siteKeywords_[1] = new NodeKeyword<SelectProcedureNode>(this, ProcedureNode::NodeType::Select, true, site1);
+    keywords_.add("Control", siteKeywords_[1], "J", "Site that contains the second set of axes");
+    keywords_.add("Control", new EnumOptionsKeyword<OrientedSite::SiteAxis>(OrientedSite::siteAxis() = axis1), "AxisJ",
                   "Axis to use from site J");
 }
-
-CalculateAxisAngleProcedureNode::~CalculateAxisAngleProcedureNode() {}
 
 /*
  * Observable Target
@@ -57,21 +55,14 @@ bool CalculateAxisAngleProcedureNode::prepare(Configuration *cfg, std::string_vi
 }
 
 // Execute node, targetting the supplied Configuration
-ProcedureNode::NodeExecutionResult CalculateAxisAngleProcedureNode::execute(ProcessPool &procPool, Configuration *cfg,
-                                                                            std::string_view prefix, GenericList &targetList)
+bool CalculateAxisAngleProcedureNode::execute(ProcessPool &procPool, Configuration *cfg, std::string_view prefix,
+                                              GenericList &targetList)
 {
-#ifdef CHECKS
-    for (auto n = 0; n < nSitesRequired(); ++n)
-    {
-        if (sites_[n]->currentSite() == nullptr)
-        {
-            Messenger::error("Observable {} has no current site.\n", n);
-            return ProcedureNode::Failure;
-        }
-    }
-#endif
+    assert(sites_[0] && sites_[0]->currentSite());
+    assert(sites_[1] && sites_[1]->currentSite());
+
     value_ = Box::angleInDegrees(sites_[0]->currentSite()->axes().columnAsVec3(axisI_),
                                  sites_[1]->currentSite()->axes().columnAsVec3(axisJ_));
 
-    return ProcedureNode::Success;
+    return true;
 }

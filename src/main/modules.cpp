@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "main/dissolve.h"
+#include "modules/accumulate/accumulate.h"
 #include "modules/analyse/analyse.h"
 #include "modules/atomshake/atomshake.h"
 #include "modules/benchmark/benchmark.h"
@@ -24,13 +25,12 @@
 #include "modules/export_trajectory/exporttraj.h"
 #include "modules/forces/forces.h"
 #include "modules/geomopt/geomopt.h"
-#include "modules/import/import.h"
+#include "modules/import_trajectory/importtraj.h"
 #include "modules/intrashake/intrashake.h"
 #include "modules/md/md.h"
 #include "modules/molshake/molshake.h"
 #include "modules/neutronsq/neutronsq.h"
 #include "modules/rdf/rdf.h"
-#include "modules/sanitycheck/sanitycheck.h"
 #include "modules/sq/sq.h"
 #include "modules/test/test.h"
 #include "modules/xraysq/xraysq.h"
@@ -67,6 +67,8 @@ bool Dissolve::registerMasterModule(Module *masterInstance)
 // Register master instances for all Modules
 bool Dissolve::registerMasterModules()
 {
+    if (!registerMasterModule(new AccumulateModule))
+        return false;
     if (!registerMasterModule(new AnalyseModule))
         return false;
     if (!registerMasterModule(new AtomShakeModule))
@@ -111,7 +113,7 @@ bool Dissolve::registerMasterModules()
         return false;
     if (!registerMasterModule(new GeometryOptimisationModule))
         return false;
-    if (!registerMasterModule(new ImportModule))
+    if (!registerMasterModule(new ImportTrajectoryModule))
         return false;
     if (!registerMasterModule(new IntraShakeModule))
         return false;
@@ -122,8 +124,6 @@ bool Dissolve::registerMasterModules()
     if (!registerMasterModule(new NeutronSQModule))
         return false;
     if (!registerMasterModule(new RDFModule))
-        return false;
-    if (!registerMasterModule(new SanityCheckModule))
         return false;
     if (!registerMasterModule(new SQModule))
         return false;
@@ -211,13 +211,13 @@ Module *Dissolve::findModuleInstance(std::string_view uniqueName)
 }
 
 // Search for any instance of any Module with the specified Module type
-RefList<Module> Dissolve::findModuleInstances(std::string_view moduleType)
+std::vector<Module *> Dissolve::findModuleInstances(std::string_view moduleType)
 {
-    RefList<Module> instances;
+    std::vector<Module *> instances;
 
     for (auto *module : moduleInstances_)
         if (DissolveSys::sameString(module->type(), moduleType))
-            instances.append(module);
+            instances.emplace_back(module);
 
     return instances;
 }
@@ -251,6 +251,9 @@ bool Dissolve::deleteModuleInstance(Module *instance)
 
     // Remove the reference from our list
     moduleInstances_.remove(instance);
+
+    // Invalidate any references to the module in keywords
+    KeywordBase::objectNoLongerValid(instance);
 
     // Delete the actual Module - we assume that it has been removed from any ModuleList
     delete instance;

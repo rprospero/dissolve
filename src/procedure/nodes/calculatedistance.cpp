@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "procedure/nodes/calculatedistance.h"
 #include "base/lineparser.h"
@@ -10,16 +10,14 @@
 #include "procedure/nodes/select.h"
 
 CalculateDistanceProcedureNode::CalculateDistanceProcedureNode(SelectProcedureNode *site0, SelectProcedureNode *site1)
-    : CalculateProcedureNodeBase(ProcedureNode::CalculateDistanceNode, site0, site1)
+    : CalculateProcedureNodeBase(ProcedureNode::NodeType::CalculateDistance, site0, site1)
 {
     // Create keywords - store the pointers to the superclasses for later use
-    siteKeywords_[0] = new NodeKeyword<SelectProcedureNode>(this, ProcedureNode::SelectNode, true, site0);
-    keywords_.add("Sites", siteKeywords_[0], "I", "Site that represents 'i' in the distance i-j");
-    siteKeywords_[1] = new NodeKeyword<SelectProcedureNode>(this, ProcedureNode::SelectNode, true, site1);
-    keywords_.add("Sites", siteKeywords_[1], "J", "Site that represents 'j' in the distance i-j");
+    siteKeywords_[0] = new NodeKeyword<SelectProcedureNode>(this, ProcedureNode::NodeType::Select, true, site0);
+    keywords_.add("Control", siteKeywords_[0], "I", "Site that represents 'i' in the distance i-j");
+    siteKeywords_[1] = new NodeKeyword<SelectProcedureNode>(this, ProcedureNode::NodeType::Select, true, site1);
+    keywords_.add("Control", siteKeywords_[1], "J", "Site that represents 'j' in the distance i-j");
 }
-
-CalculateDistanceProcedureNode::~CalculateDistanceProcedureNode() {}
 
 /*
  * Observable Target
@@ -36,21 +34,15 @@ int CalculateDistanceProcedureNode::dimensionality() const { return 1; }
  */
 
 // Execute node, targetting the supplied Configuration
-ProcedureNode::NodeExecutionResult CalculateDistanceProcedureNode::execute(ProcessPool &procPool, Configuration *cfg,
-                                                                           std::string_view prefix, GenericList &targetList)
+bool CalculateDistanceProcedureNode::execute(ProcessPool &procPool, Configuration *cfg, std::string_view prefix,
+                                             GenericList &targetList)
 {
-#ifdef CHECKS
-    for (auto n = 0; n < nSitesRequired(); ++n)
-    {
-        if (sites_[n]->currentSite() == nullptr)
-        {
-            Messenger::error("Observable {} has no current site.\n", n);
-            return ProcedureNode::Failure;
-        }
-    }
-#endif
+
+    assert(sites_[0] && sites_[0]->currentSite());
+    assert(sites_[1] && sites_[1]->currentSite());
+
     // Determine the value of the observable
     value_.x = cfg->box()->minimumDistance(sites_[0]->currentSite()->origin(), sites_[1]->currentSite()->origin());
 
-    return ProcedureNode::Success;
+    return true;
 }

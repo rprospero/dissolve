@@ -27,6 +27,7 @@ src/dissolve
 *.kdev4
 build/
 nix/result
+cmake-build-*/
 *.exe
 
 # Miscellaneous

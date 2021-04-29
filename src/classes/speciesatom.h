@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
+#include "base/enumoptions.h"
+#include "data/elements.h"
 #include "templates/list.h"
 #include "templates/listitem.h"
 #include "templates/optionalref.h"
-#include "templates/orderedpointerdataarray.h"
 #include "templates/reflist.h"
 #include "templates/vector3.h"
 #include <memory>
@@ -14,20 +15,18 @@
 
 // Forward Declarations
 class AtomType;
-class Element;
 class Species;
 class SpeciesAngle;
 class SpeciesBond;
 class SpeciesImproper;
 class SpeciesTorsion;
-class ProcessPool;
 
 // SpeciesAtom Definition
-class SpeciesAtom : public ListItem<SpeciesAtom>
+class SpeciesAtom
 {
     public:
     SpeciesAtom();
-    ~SpeciesAtom();
+    ~SpeciesAtom() = default;
 
     /*
      * Properties
@@ -35,8 +34,8 @@ class SpeciesAtom : public ListItem<SpeciesAtom>
     private:
     // Parent Species
     Species *parent_;
-    // Atomic Element
-    Element *element_;
+    // Atomic element
+    Elements::Element Z_;
     // Coordinates
     Vec3<double> r_;
     // Charge (if contained in file)
@@ -54,13 +53,13 @@ class SpeciesAtom : public ListItem<SpeciesAtom>
     // Return species parent
     const Species *species() const;
     // Set basic atom properties
-    void set(Element *element, double rx, double ry, double rz, double q = 0.0);
+    void set(Elements::Element Z, double rx, double ry, double rz, double q = 0.0);
     // Set basic atom properties
-    void set(Element *element, const Vec3<double> r, double q = 0.0);
+    void set(Elements::Element Z, const Vec3<double> r, double q = 0.0);
     // Set atomic element
-    void setElement(Element *el);
+    void setZ(Elements::Element Z);
     // Return atomic element
-    Element *element() const;
+    Elements::Element Z() const;
     // Return coordinates (read-only)
     const Vec3<double> &r() const;
     // Set charge of Atom
@@ -71,9 +70,9 @@ class SpeciesAtom : public ListItem<SpeciesAtom>
     void setAtomType(std::shared_ptr<AtomType> at);
     // Return AtomType of Atom
     std::shared_ptr<AtomType> atomType() const;
-    // Set List index (0->[N-1])
+    // Set index (0->[N-1])
     void setIndex(int id);
-    // Return List index (0->[N-1])
+    // Return index (0->[N-1])
     int index() const;
     // Return 'user' index (1->N)
     int userIndex() const;
@@ -96,8 +95,8 @@ class SpeciesAtom : public ListItem<SpeciesAtom>
     std::vector<std::reference_wrapper<SpeciesTorsion>> torsions_;
     // List of torsions which this atom participates in
     std::vector<std::reference_wrapper<SpeciesImproper>> impropers_;
-    // Ordered list of Atoms with scaled or excluded interactions
-    OrderedPointerDataArray<SpeciesAtom, double> exclusions_;
+    // Vector of Atoms with scaled or excluded interactions
+    std::vector<std::pair<SpeciesAtom *, double>> exclusions_;
 
     public:
     // Add bond reference
@@ -159,4 +158,35 @@ class SpeciesAtom : public ListItem<SpeciesAtom>
     void setCoordinates(const Vec3<double> &newr);
     // Translate coordinates
     void translateCoordinates(const Vec3<double> &delta);
+
+    /*
+     * Atom Environment Helpers
+     */
+    public:
+    // Atom Geometry enum
+    enum class AtomGeometry
+    {
+        Unknown,
+        Unbound,
+        Terminal,
+        Linear,
+        TShape,
+        TrigonalPlanar,
+        Tetrahedral,
+        SquarePlanar,
+        TrigonalBipyramidal,
+        Octahedral
+    };
+    // Return EnumOptions for AtomGeometry
+    static EnumOptions<AtomGeometry> geometries();
+    // Calculate and return the geometry of this atom
+    AtomGeometry geometry() const;
+    // Return whether the geometry of this atom matches that specified
+    bool isGeometry(AtomGeometry geom) const;
+    // Calculate and return the geometry of the specified SpeciesAtom
+    static AtomGeometry geometry(const SpeciesAtom *i);
+    // Return whether the specified SpeciesAtom exists in the specified geometry
+    static bool isGeometry(const SpeciesAtom *i, AtomGeometry geom);
+    // Guess and return oxidation state for the specified SpeciesAtom
+    static int guessOxidationState(const SpeciesAtom *i);
 };

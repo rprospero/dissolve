@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "module/module.h"
 #include "base/lineparser.h"
@@ -300,11 +300,7 @@ bool Module::executeProcessing(Dissolve &dissolve, ProcessPool &procPool)
 SampledDouble Module::processTimes() const { return processTimes_; }
 
 // Read timing information through specified parser
-bool Module::readProcessTimes(LineParser &parser)
-{
-    static CoreData dummyData;
-    return processTimes_.read(parser, dummyData);
-}
+bool Module::readProcessTimes(LineParser &parser) { return processTimes_.deserialise(parser); }
 
 /*
  * GUI Widget

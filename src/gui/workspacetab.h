@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -72,13 +72,4 @@ class WorkspaceTab : public QWidget, public ListItem<WorkspaceTab>, public MainT
     public slots:
     // Custom context menu requested
     void showContextMenu(const QPoint &pos);
-
-    /*
-     * State
-     */
-    public:
-    // Read widget state through specified LineParser
-    bool readState(LineParser &parser, const CoreData &coreData);
-    // Write widget state through specified LineParser
-    bool writeState(LineParser &parser) const;
 };

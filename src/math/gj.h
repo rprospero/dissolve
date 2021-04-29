@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -7,9 +7,8 @@
 template <class A> class Array2D;
 
 // Gauss-Jordan Inversion
-class GaussJordan
+namespace GaussJordan
 {
-    public:
-    // Perform Gauss-Jordan inversion of the supplied Array2D<double>
-    static bool invert(Array2D<double> &A);
-};
+// Perform Gauss-Jordan inversion of the supplied Array2D<double>
+bool invert(Array2D<double> &A);
+}; // namespace GaussJordan

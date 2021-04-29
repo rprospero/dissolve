@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "base/lineparser.h"
 #include "classes/box.h"
@@ -33,11 +33,6 @@ void Dissolve::removeConfiguration(Configuration *cfg)
     if (!cfg)
         return;
 
-    // Remove any references to the Modules in the Configuration's local processing layer before we delete it
-    ListIterator<Module> moduleIterator(cfg->modules());
-    while (Module *module = moduleIterator.iterate())
-        removeReferencesTo(module);
-
     // Remove references to the Configuration itself
     removeReferencesTo(cfg);
 
@@ -51,8 +46,7 @@ int Dissolve::nConfigurations() const { return coreData_.nConfigurations(); }
 // Return Configuration list
 List<Configuration> &Dissolve::configurations() { return coreData_.configurations(); }
 
-// Return Configuration list (const)
-const List<Configuration> &Dissolve::constConfigurations() const { return coreData_.configurations(); }
+const List<Configuration> &Dissolve::configurations() const { return coreData_.configurations(); }
 
 // Find configuration by name
 Configuration *Dissolve::findConfiguration(std::string_view name) const { return coreData_.findConfiguration(name); }
@@ -60,7 +54,7 @@ Configuration *Dissolve::findConfiguration(std::string_view name) const { return
 // Find configuration by 'nice' name
 Configuration *Dissolve::findConfigurationByNiceName(std::string_view name) const
 {
-    for (auto *cfg = constConfigurations().first(); cfg != nullptr; cfg = cfg->next())
+    for (auto *cfg = configurations().first(); cfg != nullptr; cfg = cfg->next())
         if (DissolveSys::sameString(name, cfg->niceName()))
             return cfg;
 

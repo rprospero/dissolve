@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "classes/speciesring.h"
 #include "classes/speciesatom.h"
@@ -7,7 +7,7 @@
 
 SpeciesRing::SpeciesRing(const std::vector<const SpeciesAtom *> atoms) : atoms_(atoms){};
 
-bool SpeciesRing::operator==(const SpeciesRing &other)
+bool SpeciesRing::operator==(const SpeciesRing &other) const
 {
     // Check ring size first
     const auto nAtoms = atoms_.size();
@@ -57,6 +57,6 @@ void SpeciesRing::print() const
 {
     std::string s = fmt::format("Ring({}) :", atoms_.size());
     for (const auto *atom : atoms_)
-        s += fmt::format(" {}({})", atom->userIndex(), atom->element()->symbol());
+        s += fmt::format(" {}({})", atom->userIndex(), Elements::symbol(atom->Z()));
     Messenger::print(s);
 }

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "gui/gui.h"
 #include "gui/selectsystemtemplatedialog.h"
@@ -197,5 +197,5 @@ void DissolveWindow::on_FileQuitAction_triggered(bool checked)
     if (!checkSaveCurrentInput())
         return;
 
-    QCoreApplication::quit();
+    close();
 }

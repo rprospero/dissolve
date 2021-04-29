@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "io/export/trajectory.h"
 #include "base/lineparser.h"
@@ -18,28 +18,20 @@ TrajectoryExportFileFormat::TrajectoryExportFileFormat(std::string_view filename
  */
 
 // Return enum options for TrajectoryExportFormat
-EnumOptions<TrajectoryExportFileFormat::TrajectoryExportFormat> &TrajectoryExportFileFormat::trajectoryExportFormats()
+EnumOptions<TrajectoryExportFileFormat::TrajectoryExportFormat> TrajectoryExportFileFormat::trajectoryExportFormats()
 {
-    static EnumOptionsList TrajectoryExportFormats =
-        EnumOptionsList() << EnumOption(TrajectoryExportFileFormat::XYZTrajectory, "xyz", "XYZ Trajectory");
-
-    static EnumOptions<TrajectoryExportFileFormat::TrajectoryExportFormat> options("TrajectoryExportFileFormat",
-                                                                                   TrajectoryExportFormats);
-
-    return options;
+    return EnumOptions<TrajectoryExportFileFormat::TrajectoryExportFormat>(
+        "TrajectoryExportFileFormat", {{TrajectoryExportFileFormat::XYZTrajectory, "xyz", "XYZ Trajectory"}});
 }
 
 // Return number of available formats
 int TrajectoryExportFileFormat::nFormats() const { return TrajectoryExportFileFormat::nTrajectoryExportFormats; }
 
 // Return format keyword for supplied index
-std::string_view TrajectoryExportFileFormat::formatKeyword(int id) const
-{
-    return trajectoryExportFormats().keywordByIndex(id);
-}
+std::string TrajectoryExportFileFormat::formatKeyword(int id) const { return trajectoryExportFormats().keywordByIndex(id); }
 
 // Return description string for supplied index
-std::string_view TrajectoryExportFileFormat::formatDescription(int id) const
+std::string TrajectoryExportFileFormat::formatDescription(int id) const
 {
     return trajectoryExportFormats().descriptionByIndex(id);
 }
@@ -64,13 +56,10 @@ bool TrajectoryExportFileFormat::exportXYZ(LineParser &parser, Configuration *cf
         return false;
 
     // Write Atoms
-    for (auto n = 0; n < cfg->nAtoms(); ++n)
-    {
-        Atom *i = cfg->atom(n);
-        if (!parser.writeLineF("{:<3}   {:15.9f}  {:15.9f}  {:15.9f}\n", i->speciesAtom()->element()->symbol(), i->r().x,
+    for (auto i : cfg->atoms())
+        if (!parser.writeLineF("{:<3}   {:15.9f}  {:15.9f}  {:15.9f}\n", Elements::symbol(i->speciesAtom()->Z()), i->r().x,
                                i->r().y, i->r().z))
             return false;
-    }
 
     return true;
 }
@@ -96,7 +85,6 @@ bool TrajectoryExportFileFormat::exportData(Configuration *cfg)
 
         if (format_ == XYZTrajectory)
             headerResult = true;
-        // 		else if (format_ == OneThatNeedsAHeaderTrajectory) headerResult = writeAHeader(parser, cfg);
         else
             headerResult = Messenger::error("Unrecognised trajectory format so can't write header.\nKnown formats are:\n");
         printAvailableFormats();

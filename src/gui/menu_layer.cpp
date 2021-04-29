@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "gui/gui.h"
 #include "gui/layertab.h"
@@ -137,8 +137,7 @@ void DissolveWindow::on_LayerCreateRefineEPSRAction_triggered(bool checked)
     EPSRModule *epsr = dynamic_cast<EPSRModule *>(dissolve_.createModuleInstance("EPSR", newLayer));
 
     // Set any suitable module targets
-    RefList<Module> neutronSQ = dissolve_.findModuleInstances("NeutronSQ");
-    epsr->addTargets(neutronSQ);
+    epsr->keywords().set<std::vector<Module *>>("Target", dissolve_.findModuleInstances("NeutronSQ"));
 
     // Run set-up stages for modules
     newLayer->setUpAll(dissolve_, dissolve_.worldPool());

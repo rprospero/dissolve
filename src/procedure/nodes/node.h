@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
 #include "base/enumoptions.h"
 #include "keywords/list.h"
 #include "templates/listitem.h"
+#include "templates/optionalref.h"
 
 // Forward Declarations
 class Configuration;
@@ -24,43 +25,41 @@ class ProcedureNode : public ListItem<ProcedureNode>
 {
     public:
     // Node Types
-    enum NodeType
+    enum class NodeType
     {
-        AddSpeciesNode,
-        BoxNode,
-        BEGIN_CalculateNodes,
-        CalculateAngleNode,
-        CalculateAxisAngleNode,
-        CalculateDistanceNode,
-        CalculateBaseNode,
-        CalculateVectorNode,
-        Collect1DNode,
-        Collect2DNode,
-        Collect3DNode,
-        END_CalculateNodes,
-        DynamicSiteNode,
-        ExcludeNode,
-        Fit1DNode,
-        Integrate1DNode,
-        BEGIN_OperateNodes,
-        OperateBaseNode,
-        OperateDivideNode,
-        OperateExpressionNode,
-        OperateGridNormaliseNode,
-        OperateMultiplyNode,
-        OperateNormaliseNode,
-        OperateNumberDensityNormaliseNode,
-        OperateSitePopulationNormaliseNode,
-        OperateSphericalShellNormaliseNode,
-        END_OperateNodes,
-        ParametersNode,
-        Process1DNode,
-        Process2DNode,
-        Process3DNode,
-        SelectNode,
-        SequenceNode,
-        Sum1DNode,
-        nNodeTypes
+        AddSpecies,
+        Box,
+        BEGINCalculateNodes,
+        CalculateAngle,
+        CalculateAxisAngle,
+        CalculateDistance,
+        CalculateBase,
+        CalculateVector,
+        Collect1D,
+        Collect2D,
+        Collect3D,
+        ENDCalculateNodes,
+        DynamicSite,
+        Fit1D,
+        Integrate1D,
+        BEGINOperateNodes,
+        OperateBase,
+        OperateDivide,
+        OperateExpression,
+        OperateGridNormalise,
+        OperateMultiply,
+        OperateNormalise,
+        OperateNumberDensityNormalise,
+        OperateSitePopulationNormalise,
+        OperateSphericalShellNormalise,
+        ENDOperateNodes,
+        Parameters,
+        Process1D,
+        Process2D,
+        Process3D,
+        Select,
+        Sequence,
+        Sum1D
     };
     // Return enum option info for NodeType
     static EnumOptions<NodeType> nodeTypes();
@@ -75,7 +74,7 @@ class ProcedureNode : public ListItem<ProcedureNode>
     // Return enum option info for NodeContext
     static EnumOptions<NodeContext> nodeContexts();
     ProcedureNode(NodeType nodeType);
-    virtual ~ProcedureNode();
+    virtual ~ProcedureNode() = default;
 
     /*
      * Identity
@@ -135,24 +134,26 @@ class ProcedureNode : public ListItem<ProcedureNode>
     // Return scope (SequenceNode) in which this node exists
     SequenceProcedureNode *scope() const;
     // Return Procedure in which this node exists
-    const Procedure *procedure() const;
+    virtual const Procedure *procedure() const;
     // Return context of scope in which this node exists
     ProcedureNode::NodeContext scopeContext() const;
     // Return named node if it is currently in scope, and optionally matches the type given
-    ProcedureNode *nodeInScope(std::string_view name, ProcedureNode::NodeType nt = ProcedureNode::nNodeTypes);
-    // Return list of nodes of specified type present in this node's scope
-    RefList<ProcedureNode> nodesInScope(ProcedureNode::NodeType nt);
+    ProcedureNode *nodeInScope(std::string_view name, std::optional<ProcedureNode::NodeType> optNodeType = std::nullopt);
+    // Return list of nodes of optional specified type present in this node's scope
+    RefList<ProcedureNode> nodesInScope(std::optional<ProcedureNode::NodeType> optNodeType = std::nullopt);
     // Return named node if it exists anywhere in the same Procedure, and optionally matches the type given
     ProcedureNode *nodeExists(std::string_view name, ProcedureNode *excludeNode = nullptr,
-                              ProcedureNode::NodeType nt = ProcedureNode::nNodeTypes) const;
+                              std::optional<ProcedureNode::NodeType> optNodeType = std::nullopt) const;
     // Return list of nodes of specified type present in the Procedure
     RefList<ProcedureNode> nodes(ProcedureNode::NodeType nt);
-    // Return whether the named parameter is currently in scope
-    ExpressionVariable *parameterInScope(std::string_view name, ExpressionVariable *excludeParameter = nullptr);
-    // Return whether the named parameter exists anywhere in the same Procedure
-    ExpressionVariable *parameterExists(std::string_view name, ExpressionVariable *excludeParameter = nullptr) const;
+    // Return the named parameter if it is currently in scope
+    std::shared_ptr<ExpressionVariable> parameterInScope(std::string_view name,
+                                                         std::shared_ptr<ExpressionVariable> excludeParameter = nullptr);
+    // Return the named parameter if it exists anywhere in the same Procedure
+    std::shared_ptr<ExpressionVariable> parameterExists(std::string_view name,
+                                                        std::shared_ptr<ExpressionVariable> excludeParameter = nullptr) const;
     // Create and return reference list of parameters in scope
-    RefList<ExpressionVariable> parametersInScope();
+    std::vector<std::shared_ptr<ExpressionVariable>> parametersInScope();
 
     /*
      * Branch
@@ -168,26 +169,19 @@ class ProcedureNode : public ListItem<ProcedureNode>
      */
     public:
     // Return whether this node has the named parameter specified
-    virtual ExpressionVariable *hasParameter(std::string_view name, ExpressionVariable *excludeParameter = nullptr);
+    virtual std::shared_ptr<ExpressionVariable> hasParameter(std::string_view name,
+                                                             std::shared_ptr<ExpressionVariable> excludeParameter = nullptr);
     // Return references to all parameters for this node
-    virtual RefList<ExpressionVariable> parameterReferences() const;
+    virtual OptionalReferenceWrapper<const std::vector<std::shared_ptr<ExpressionVariable>>> parameters() const;
 
     /*
      * Execution
      */
     public:
-    // Node execution result
-    enum NodeExecutionResult
-    {
-        Failure,
-        Success,
-        SomethingElse
-    };
     // Prepare any necessary data, ready for execution
     virtual bool prepare(Configuration *cfg, std::string_view prefix, GenericList &targetList);
     // Execute node, targetting the supplied Configuration
-    virtual NodeExecutionResult execute(ProcessPool &procPool, Configuration *cfg, std::string_view prefix,
-                                        GenericList &targetList) = 0;
+    virtual bool execute(ProcessPool &procPool, Configuration *cfg, std::string_view prefix, GenericList &targetList);
     // Finalise any necessary data after execution
     virtual bool finalise(ProcessPool &procPool, Configuration *cfg, std::string_view prefix, GenericList &targetList);
 
@@ -196,7 +190,7 @@ class ProcedureNode : public ListItem<ProcedureNode>
      */
     public:
     // Read node data from specified LineParser
-    virtual bool read(LineParser &parser, CoreData &coreData);
+    virtual bool deserialise(LineParser &parser, const CoreData &coreData);
     // Write node data to specified LineParser
     virtual bool write(LineParser &parser, std::string_view prefix);
 };

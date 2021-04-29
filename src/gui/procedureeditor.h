@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -60,18 +60,6 @@ class ProcedureEditor : public QWidget
     Ui::ProcedureEditor ui_;
     // Pointer to created ProcedureChart
     ProcedureChart *chart_;
-
-    private slots:
-    // 	void on_AvailableModulesTree_itemDoubleClicked(QTreeWidgetItem* item);
-
-    /*
-     * State
-     */
-    public:
-    // Write widget state through specified LineParser
-    bool writeState(LineParser &parser) const;
-    // Read widget state through specified LineParser
-    bool readState(LineParser &parser);
 
     /*
      * Signals / Slots

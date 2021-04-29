@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "gui/render/linestipple.h"
 #include "base/sysfunc.h"
@@ -62,14 +62,11 @@ QVector<qreal> &LineStipple::dashPattern()
     pattern.clear();
 
     // Look at each of the first 16 bits of the stipple in turn...
-    // 	char test[17];
-    // 	test[16] = '\0';
     auto consecutive = 0, last = -1, nEntries = 0;
     int bit;
     for (auto n = 15; n >= 0; --n)
     {
         bit = (stipplePattern & (1 << n) ? 1 : 0);
-        // 		test[15-n] = (bit ? '1' : '0');
 
         // If this bit is the same as the last, then increase the 'run'
         if (bit == last)

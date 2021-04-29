@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -85,13 +85,4 @@ class ConfigurationTab : public QWidget, public ListItem<ConfigurationTab>, publ
     void on_CoordinatesFileSelectButton_clicked(bool checked);
     // Size Factor Scaling
     void on_RequestedSizeFactorSpin_valueChanged(double value);
-
-    /*
-     * State
-     */
-    public:
-    // Read widget state through specified LineParser
-    bool readState(LineParser &parser, const CoreData &coreData);
-    // Write widget state through specified LineParser
-    bool writeState(LineParser &parser) const;
 };

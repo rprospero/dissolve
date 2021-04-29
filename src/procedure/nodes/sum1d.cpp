@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "procedure/nodes/sum1d.h"
 #include "base/lineparser.h"
 #include "base/sysfunc.h"
 #include "classes/box.h"
 #include "classes/configuration.h"
-#include "genericitems/listhelper.h"
 #include "io/export/data1d.h"
 #include "keywords/types.h"
 #include "math/integrator.h"
@@ -15,21 +14,20 @@
 #include "procedure/nodes/process1d.h"
 #include "procedure/nodes/select.h"
 
-Sum1DProcedureNode::Sum1DProcedureNode(const Process1DProcedureNode *target) : ProcedureNode(ProcedureNode::Sum1DNode)
+Sum1DProcedureNode::Sum1DProcedureNode(const Process1DProcedureNode *target) : ProcedureNode(ProcedureNode::NodeType::Sum1D)
 {
-    keywords_.add("Target", new NodeKeyword<const Process1DProcedureNode>(this, ProcedureNode::Process1DNode, false, target),
+    keywords_.add("Control",
+                  new NodeKeyword<const Process1DProcedureNode>(this, ProcedureNode::NodeType::Process1D, false, target),
                   "SourceData", "Process1D node containing the data to sum");
-    keywords_.add("Ranges", new RangeKeyword(Range(0.0, 3.0), Vec3Labels::MinMaxDeltaLabels), "RangeA",
+    keywords_.add("Control", new RangeKeyword(Range(0.0, 3.0), Vec3Labels::MinMaxDeltaLabels), "RangeA",
                   "X range for first summation region");
-    keywords_.add("Ranges", new BoolKeyword(false), "RangeBEnabled", "Whether the second summation region is enabled");
-    keywords_.add("Ranges", new RangeKeyword(Range(3.0, 6.0), Vec3Labels::MinMaxDeltaLabels), "RangeB",
+    keywords_.add("Control", new BoolKeyword(false), "RangeBEnabled", "Whether the second summation region is enabled");
+    keywords_.add("Control", new RangeKeyword(Range(3.0, 6.0), Vec3Labels::MinMaxDeltaLabels), "RangeB",
                   "X range for second summation region");
-    keywords_.add("Ranges", new BoolKeyword(false), "RangeCEnabled", "Whether the second summation region is enabled");
-    keywords_.add("Ranges", new RangeKeyword(Range(6.0, 9.0), Vec3Labels::MinMaxDeltaLabels), "RangeC",
+    keywords_.add("Control", new BoolKeyword(false), "RangeCEnabled", "Whether the second summation region is enabled");
+    keywords_.add("Control", new RangeKeyword(Range(6.0, 9.0), Vec3Labels::MinMaxDeltaLabels), "RangeC",
                   "X range for third summation region");
 }
-
-Sum1DProcedureNode::~Sum1DProcedureNode() {}
 
 /*
  * Identity
@@ -76,9 +74,8 @@ bool Sum1DProcedureNode::prepare(Configuration *cfg, std::string_view prefix, Ge
     return true;
 }
 
-// Execute node, targetting the supplied Configuration
-ProcedureNode::NodeExecutionResult Sum1DProcedureNode::execute(ProcessPool &procPool, Configuration *cfg,
-                                                               std::string_view prefix, GenericList &targetList)
+// Finalise any necessary data after execution
+bool Sum1DProcedureNode::finalise(ProcessPool &procPool, Configuration *cfg, std::string_view prefix, GenericList &targetList)
 {
     // Calculate integrals
     sum_[0] += Integrator::sum(processNode_->processedData(), rangeA_);
@@ -88,20 +85,14 @@ ProcedureNode::NodeExecutionResult Sum1DProcedureNode::execute(ProcessPool &proc
         sum_[2] += Integrator::sum(processNode_->processedData(), rangeC_);
 
     // Print info
-    Messenger::print("Sum1D - Range A: {:e} +/- {:e} over {:e} < x < {:e}.\n", sum_[0].mean(), sum_[0].stDev(),
+    Messenger::print("Sum1D - Range A: {:e} +/- {:e} over {:e} < x < {:e}.\n", sum_[0].value(), sum_[0].stDev(),
                      rangeA_.minimum(), rangeA_.maximum());
     if (rangeBEnabled_)
-        Messenger::print("Sum1D - Range B: {:e} +/- {:e} over {:e} < x < {:e}.\n", sum_[1].mean(), sum_[1].stDev(),
+        Messenger::print("Sum1D - Range B: {:e} +/- {:e} over {:e} < x < {:e}.\n", sum_[1].value(), sum_[1].stDev(),
                          rangeB_.minimum(), rangeB_.maximum());
     if (rangeCEnabled_)
-        Messenger::print("Sum1D - Range C: {:e} +/- {:e} over {:e} < x < {:e}.\n", sum_[2].mean(), sum_[2].stDev(),
+        Messenger::print("Sum1D - Range C: {:e} +/- {:e} over {:e} < x < {:e}.\n", sum_[2].value(), sum_[2].stDev(),
                          rangeC_.minimum(), rangeC_.maximum());
 
-    return ProcedureNode::Success;
-}
-
-// Finalise any necessary data after execution
-bool Sum1DProcedureNode::finalise(ProcessPool &procPool, Configuration *cfg, std::string_view prefix, GenericList &targetList)
-{
     return true;
 }

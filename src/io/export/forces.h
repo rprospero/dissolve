@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -29,9 +29,9 @@ class ForceExportFileFormat : public FileAndFormat
     // Return number of available formats
     int nFormats() const;
     // Return format keyword for supplied index
-    std::string_view formatKeyword(int id) const;
+    std::string formatKeyword(int id) const;
     // Return description string for supplied index
-    std::string_view formatDescription(int id) const;
+    std::string formatDescription(int id) const;
     // Return current format as ForceExportFormat
     ForceExportFormat forceFormat() const;
 
@@ -47,9 +47,9 @@ class ForceExportFileFormat : public FileAndFormat
      */
     private:
     // Export supplied forces in simple format
-    bool exportSimple(LineParser &parser, const Array<double> &fx, const Array<double> &fy, const Array<double> &fz);
+    bool exportSimple(LineParser &parser, const std::vector<Vec3<double>> &f);
 
     public:
     // Export supplied forces using current filename and format
-    bool exportData(const Array<double> &fx, const Array<double> &fy, const Array<double> &fz);
+    bool exportData(const std::vector<Vec3<double>> &f);
 };

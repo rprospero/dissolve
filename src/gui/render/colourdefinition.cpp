@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "gui/render/colourdefinition.h"
 #include "base/sysfunc.h"
@@ -43,17 +43,13 @@ void ColourDefinition::operator=(const ColourDefinition &source)
  */
 
 // Return enum options for ColourStyle
-EnumOptions<ColourDefinition::ColourStyle> &ColourDefinition::colourStyles()
+EnumOptions<ColourDefinition::ColourStyle> ColourDefinition::colourStyles()
 {
-    static EnumOptionsList ColourStyleOptions = EnumOptionsList()
-                                                << EnumOption(ColourDefinition::SingleColourStyle, "SingleColour")
-                                                << EnumOption(ColourDefinition::RGBGradientStyle, "RGBGradient")
-                                                << EnumOption(ColourDefinition::HSVGradientStyle, "HSVGradient")
-                                                << EnumOption(ColourDefinition::CustomGradientStyle, "CustomGradient");
-
-    static EnumOptions<ColourDefinition::ColourStyle> options("AutoScaleMethod", ColourStyleOptions);
-
-    return options;
+    return EnumOptions<ColourDefinition::ColourStyle>("AutoScaleMethod",
+                                                      {{ColourDefinition::SingleColourStyle, "SingleColour"},
+                                                       {ColourDefinition::RGBGradientStyle, "RGBGradient"},
+                                                       {ColourDefinition::HSVGradientStyle, "HSVGradient"},
+                                                       {ColourDefinition::CustomGradientStyle, "CustomGradient"}});
 }
 
 /*

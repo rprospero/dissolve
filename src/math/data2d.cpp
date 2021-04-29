@@ -1,32 +1,17 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "math/data2d.h"
 #include "base/lineparser.h"
 #include "base/messenger.h"
+#include "base/sysfunc.h"
 #include "math/data1d.h"
 #include "math/histogram2d.h"
 #include <algorithm>
 
-// Static Members (ObjectStore)
-template <class Data2D> RefDataList<Data2D, int> ObjectStore<Data2D>::objects_;
-template <class Data2D> int ObjectStore<Data2D>::objectCount_ = 0;
-template <class Data2D> int ObjectStore<Data2D>::objectType_ = ObjectInfo::Data2DObject;
-template <class Data2D> std::string_view ObjectStore<Data2D>::objectTypeName_ = "Data2D";
+Data2D::Data2D() : hasError_(false) {}
 
-Data2D::Data2D() : PlottableData(PlottableData::TwoAxisPlottable), ListItem<Data2D>(), ObjectStore<Data2D>(this)
-{
-    hasError_ = false;
-
-    clear();
-}
-
-Data2D::~Data2D() {}
-
-Data2D::Data2D(const Data2D &source) : PlottableData(PlottableData::TwoAxisPlottable), ObjectStore<Data2D>(this)
-{
-    (*this) = source;
-}
+Data2D::Data2D(const Data2D &source) { (*this) = source; }
 
 // Clear Data
 void Data2D::clear()
@@ -42,6 +27,12 @@ void Data2D::clear()
 /*
  * Data
  */
+
+// Set tag
+void Data2D::setTag(std::string_view tag) { tag_ = tag; }
+
+// Return tag
+std::string_view Data2D::tag() const { return tag_; }
 
 // Initialise arrays to specified size
 void Data2D::initialise(int xSize, int ySize, bool withError)
@@ -144,34 +135,14 @@ int Data2D::version() const { return version_; }
 // Return x value specified
 double &Data2D::xAxis(int index)
 {
-#ifdef CHECKS
-    if ((index < 0) || (index >= x_.size()))
-    {
-        static double dummy;
-        Messenger::error("OUT_OF_RANGE - Index {} is out of range for x_ array in Data2D::xAxis().\n", index);
-        return dummy;
-    }
-#endif
-
     ++version_;
 
     return x_[index];
 }
 
-// Return x value specified (const)
-double Data2D::constXAxis(int index) const
-{
-#ifdef CHECKS
-    if ((index < 0) || (index >= x_.size()))
-    {
-        Messenger::error("OUT_OF_RANGE - Index {} is out of range for x_ array in Data2D::constXAxis().\n", index);
-        return 0.0;
-    }
-#endif
-    return x_[index];
-}
+const double &Data2D::xAxis(int index) const { return x_[index]; }
 
-// Return x axis Array
+// Return x axis vector
 std::vector<double> &Data2D::xAxis()
 {
     ++version_;
@@ -179,37 +150,17 @@ std::vector<double> &Data2D::xAxis()
     return x_;
 }
 
-// Return x axis Array (const)
 const std::vector<double> &Data2D::xAxis() const { return x_; }
 
 // Return y value specified
 double &Data2D::yAxis(int index)
 {
-#ifdef CHECKS
-    if ((index < 0) || (index >= y_.size()))
-    {
-        static double dummy;
-        Messenger::error("OUT_OF_RANGE - Index {} is out of range for y_ array in Data2D::yAxis().\n", index);
-        return dummy;
-    }
-#endif
     ++version_;
 
     return y_[index];
 }
 
-// Return y value specified (const)
-double Data2D::constYAxis(int index) const
-{
-#ifdef CHECKS
-    if ((index < 0) || (index >= y_.size()))
-    {
-        Messenger::error("OUT_OF_RANGE - Index {} is out of range for y_ array in Data2D::constYAxis().\n", index);
-        return 0.0;
-    }
-#endif
-    return y_[index];
-}
+const double &Data2D::yAxis(int index) const { return y_[index]; }
 
 // Return y Array
 std::vector<double> &Data2D::yAxis()
@@ -219,50 +170,19 @@ std::vector<double> &Data2D::yAxis()
     return y_;
 }
 
-// Return y axis Array (const)
 const std::vector<double> &Data2D::yAxis() const { return y_; }
 
 // Return value specified
 double &Data2D::value(int xIndex, int yIndex)
 {
-#ifdef CHECKS
-    if ((xIndex < 0) || (xIndex >= x_.size()))
-    {
-        static double dummy;
-        Messenger::error("OUT_OF_RANGE - Index {} is out of range for x axis in Data2D::value().\n", xIndex);
-        return dummy;
-    }
-    if ((yIndex < 0) || (yIndex >= y_.size()))
-    {
-        static double dummy;
-        Messenger::error("OUT_OF_RANGE - Index {} is out of range for y axis in Data2D::value().\n", yIndex);
-        return dummy;
-    }
-#endif
     ++version_;
 
     return values_[{xIndex, yIndex}];
 }
 
-// Return value specified (const)
-double Data2D::constValue(int xIndex, int yIndex) const
-{
-#ifdef CHECKS
-    if ((xIndex < 0) || (xIndex >= x_.size()))
-    {
-        Messenger::error("OUT_OF_RANGE - Index {} is out of range for x axis in Data2D::constValue().\n", xIndex);
-        return 0.0;
-    }
-    if ((yIndex < 0) || (yIndex >= y_.size()))
-    {
-        Messenger::error("OUT_OF_RANGE - Index {} is out of range for y axis in Data2D::constValue().\n", yIndex);
-        return 0.0;
-    }
-#endif
-    return values_[{xIndex, yIndex}];
-}
+const double &Data2D::value(int xIndex, int yIndex) const { return values_[{xIndex, yIndex}]; }
 
-// Return values Array
+// Return two-dimensional values Array
 Array2D<double> &Data2D::values()
 {
     ++version_;
@@ -270,8 +190,7 @@ Array2D<double> &Data2D::values()
     return values_;
 }
 
-// Return values Array (const)
-const Array2D<double> &Data2D::constValues2D() const { return values_; }
+const Array2D<double> &Data2D::values() const { return values_; }
 
 // Return value specified from linear array
 double Data2D::value(int index) { return values_[index]; }
@@ -316,76 +235,33 @@ bool Data2D::valuesHaveErrors() const { return hasError_; }
 // Return error value specified
 double &Data2D::error(int xIndex, int yIndex)
 {
-    if (!hasError_)
-    {
-        static double dummy;
-        Messenger::warn("This Data2D (name='{}', tag='{}') has no errors to return, but error(int) was requested.\n", name(),
-                        objectTag());
-        return dummy;
-    }
-#ifdef CHECKS
-    if ((xIndex < 0) || (xIndex >= x_.size()))
-    {
-        static double dummy;
-        Messenger::error("OUT_OF_RANGE - Index {} is out of range for x axis in Data2D::error().\n", xIndex);
-        return dummy;
-    }
-    if ((yIndex < 0) || (yIndex >= y_.size()))
-    {
-        static double dummy;
-        Messenger::error("OUT_OF_RANGE - Index {} is out of range for y axis in Data2D::error().\n", yIndex);
-        return dummy;
-    }
-#endif
+    assert(hasError_);
 
     ++version_;
 
     return errors_[{xIndex, yIndex}];
 }
 
-// Return error value specified (const)
-double Data2D::constError(int xIndex, int yIndex) const
+const double &Data2D::error(int xIndex, int yIndex) const
 {
-    if (!hasError_)
-    {
-        Messenger::warn("This Data2D (name='{}', tag='{}') has no errors to return, but constError(int,int) was requested.\n",
-                        name(), objectTag());
-        return 0.0;
-    }
-#ifdef CHECKS
-    if ((xIndex < 0) || (xIndex >= x_.size()))
-    {
-        Messenger::error("OUT_OF_RANGE - Index {} is out of range for x axis in Data2D::constError().\n", xIndex);
-        return 0.0;
-    }
-    if ((yIndex < 0) || (yIndex >= y_.size()))
-    {
-        Messenger::error("OUT_OF_RANGE - Index {} is out of range for y axis in Data2D::constError().\n", yIndex);
-        return 0.0;
-    }
-#endif
+    assert(hasError_);
 
     return errors_[{xIndex, yIndex}];
 }
 
-// Return error Array
+// Return two-dimensional errors array
 Array2D<double> &Data2D::errors()
 {
-    if (!hasError_)
-        Messenger::warn("This Data2D (name='{}', tag='{}') has no errors to return, but errors() was requested.\n", name(),
-                        objectTag());
+    assert(hasError_);
 
     ++version_;
 
     return errors_;
 }
 
-// Return error Array (const)
-const Array2D<double> &Data2D::constErrors2D() const
+const Array2D<double> &Data2D::errors() const
 {
-    if (!hasError_)
-        Messenger::warn("This Data2D (name='{}', tag='{}') has no errors to return, but constErrors2D() was requested.\n",
-                        name(), objectTag());
+    assert(hasError_);
 
     return errors_;
 }
@@ -396,7 +272,7 @@ const Array2D<double> &Data2D::constErrors2D() const
 
 void Data2D::operator=(const Data2D &source)
 {
-    name_ = source.name_;
+    tag_ = source.tag_;
     x_ = source.x_;
     y_ = source.y_;
     values_ = source.values_;
@@ -439,26 +315,18 @@ void Data2D::operator/=(const double factor)
 }
 
 /*
- * GenericItemBase Implementations
+ * Serialisation
  */
 
-// Return class name
-std::string_view Data2D::itemClassName() { return "Data2D"; }
-
 // Read data through specified LineParser
-bool Data2D::read(LineParser &parser, CoreData &coreData)
+bool Data2D::deserialise(LineParser &parser)
 {
     clear();
 
     // Read object tag
-    if (parser.readNextLine(LineParser::Defaults) != LineParser::Success)
-        return false;
-    setObjectTag(parser.line());
-
-    // Read object name
     if (parser.readNextLine(LineParser::KeepBlanks) != LineParser::Success)
         return false;
-    name_ = parser.line();
+    tag_ = parser.line();
 
     // Read axis sizes and initialise arrays
     if (parser.getArgsDelim(LineParser::Defaults) != LineParser::Success)
@@ -515,12 +383,10 @@ bool Data2D::read(LineParser &parser, CoreData &coreData)
 }
 
 // Write data through specified LineParser
-bool Data2D::write(LineParser &parser)
+bool Data2D::serialise(LineParser &parser) const
 {
-    // Write object tag and name
-    if (!parser.writeLineF("{}\n", objectTag()))
-        return false;
-    if (!parser.writeLineF("{}\n", name()))
+    // Write object tag
+    if (!parser.writeLineF("{}\n", tag_))
         return false;
 
     // Write axis sizes and errors flag
@@ -557,45 +423,5 @@ bool Data2D::write(LineParser &parser)
         }
     }
 
-    return true;
-}
-
-/*
- * Parallel Comms
- */
-
-// Broadcast data
-bool Data2D::broadcast(ProcessPool &procPool, const int root, const CoreData &coreData)
-{
-#ifdef PARALLEL
-    if (!procPool.broadcast(x_, root))
-        return false;
-    if (!procPool.broadcast(y_, root))
-        return false;
-    if (!procPool.broadcast(values_, root))
-        return false;
-    if (!procPool.broadcast(hasError_, root))
-        return false;
-    if (!procPool.broadcast(errors_, root))
-        return false;
-#endif
-    return true;
-}
-
-// Check item equality
-bool Data2D::equality(ProcessPool &procPool)
-{
-#ifdef PARALLEL
-    if (!procPool.equality(x_))
-        return Messenger::error("Data2D x axis values not equivalent.\n");
-    if (!procPool.equality(y_))
-        return Messenger::error("Data2D y axis values not equivalent.\n");
-    if (!procPool.equality(values_))
-        return Messenger::error("Data2D values not equivalent.\n");
-    if (!procPool.equality(hasError_))
-        return Messenger::error("Data2D error flag not equivalent.\n");
-    if (!procPool.equality(errors_))
-        return Messenger::error("Data2D error values not equivalent.\n");
-#endif
     return true;
 }

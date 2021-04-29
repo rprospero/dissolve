@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "gui/charts/modulelist.h"
 #include "gui/charts/moduleblock.h"
@@ -368,6 +368,7 @@ void ModuleListChart::blockRemovalRequested(const QString &blockIdentifier)
         dissolve_.deleteModuleInstance(module);
 
         emit(dataModified());
+        emit(fullUpdate());
 
         updateControls();
     }
@@ -476,8 +477,7 @@ QSize ModuleListChart::calculateNewWidgetGeometry(QSize currentSize)
     hotSpot = hotSpot->next();
 
     // Set the correct heights for all hotspots up to the current one - any after that are not required and will have zero
-    // height 	for (ChartHotSpot* spot = hotSpots_.first(); spot != hotSpot; spot = spot->next())
-    // spot->setWidth(maxWidth);
+    // height
     for (auto *spot = hotSpot; spot != nullptr; spot = spot->next())
         spot->setHeight(0);
 
@@ -494,13 +494,3 @@ QSize ModuleListChart::calculateNewWidgetGeometry(QSize currentSize)
     // Return required size
     return requiredSize;
 }
-
-/*
- * State I/O
- */
-
-// Write widget state through specified LineParser
-bool ModuleListChart::writeState(LineParser &parser) const { return true; }
-
-// Read widget state through specified LineParser
-bool ModuleListChart::readState(LineParser &parser) { return true; }

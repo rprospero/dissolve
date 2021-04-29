@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "base/messenger.h"
 #include "gui/dataviewer.hui"
@@ -7,7 +7,8 @@
 DataViewer::DataViewer(QWidget *parent) : BaseViewer(parent)
 {
     // Interaction
-    setInteractionMode(DataViewer::DefaultInteraction);
+    setInteractionMode(DataViewer::InteractionMode::Default);
+    transientInteractionMode_ = TransientInteractionMode::None;
 
     // Set up the view
     view_.setViewType(View::FlatXYView);

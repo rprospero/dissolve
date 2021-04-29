@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -16,7 +16,6 @@
 #include "procedure/nodes/collect2d.h"
 #include "procedure/nodes/collect3d.h"
 #include "procedure/nodes/dynamicsite.h"
-#include "procedure/nodes/exclude.h"
 #include "procedure/nodes/fit1d.h"
 #include "procedure/nodes/integrate1d.h"
 #include "procedure/nodes/operatedivide.h"

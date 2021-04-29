@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -11,7 +11,6 @@ class AtomType;
 class CoreData;
 class IsotopeData;
 class Isotope;
-class ProcessPool;
 
 /*
  * AtomTypeData Definition
@@ -87,14 +86,5 @@ class AtomTypeData
      */
     public:
     // Write data through specified LineParser
-    bool write(LineParser &parser);
-
-    /*
-     * Parallel Comms
-     */
-    public:
-    // Broadcast data from Master to all Slaves
-    bool broadcast(ProcessPool &procPool, const int root, const CoreData &coreData);
-    // Check item equality
-    bool equality(ProcessPool &procPool);
+    bool serialise(LineParser &parser) const;
 };

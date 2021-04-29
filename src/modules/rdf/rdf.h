@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -18,34 +18,34 @@ class RDFModule : public Module
 {
     public:
     RDFModule();
-    ~RDFModule();
+    ~RDFModule() override = default;
 
     /*
      * Instances
      */
     public:
     // Create instance of this module
-    Module *createInstance() const;
+    Module *createInstance() const override;
 
     /*
      * Definition
      */
     public:
     // Return type of module
-    std::string_view type() const;
+    std::string_view type() const override;
     // Return category for module
-    std::string_view category() const;
+    std::string_view category() const override;
     // Return brief description of module
-    std::string_view brief() const;
+    std::string_view brief() const override;
     // Return the number of Configuration targets this Module requires
-    int nRequiredTargets() const;
+    int nRequiredTargets() const override;
 
     /*
      * Initialisation
      */
     protected:
     // Perform any necessary initialisation for the Module
-    void initialise();
+    void initialise() override;
 
     public:
     // Partial Calculation Method enum
@@ -65,7 +65,7 @@ class RDFModule : public Module
      */
     private:
     // Run main processing
-    bool process(Dissolve &dissolve, ProcessPool &procPool);
+    bool process(Dissolve &dissolve, ProcessPool &procPool) override;
 
     /*
      * Members / Functions
@@ -81,22 +81,26 @@ class RDFModule : public Module
     bool calculateGRSimple(ProcessPool &procPool, Configuration *cfg, PartialSet &partialSet, const double rdfRange);
     // Calculate partial g(r) utilising Cell neighbour lists
     bool calculateGRCells(ProcessPool &procPool, Configuration *cfg, PartialSet &partialSet, const double binWidth);
+    bool calculateGRCellsParallelImpl(ProcessPool &procPool, Configuration *cfg, PartialSet &partialSet, const double binWidth);
+    bool calculateGRCellsSingleImpl(ProcessPool &procPool, Configuration *cfg, PartialSet &partialSet, const double binWidth);
 
     public:
+    // Calculate and return effective density for based on the target Configurations
+    double effectiveDensity() const;
+    // Calculate and return used species populations based on target Configurations
+    std::vector<std::pair<const Species *, double>> speciesPopulations() const;
     // (Re)calculate partial g(r) for the specified Configuration
-    bool calculateGR(ProcessPool &procPool, Configuration *cfg, RDFModule::PartialsMethod method, const double rdfRange,
-                     const double rdfBinWidth, bool &alreadyUpToDate);
+    bool calculateGR(GenericList &processingData, ProcessPool &procPool, Configuration *cfg, RDFModule::PartialsMethod method,
+                     const double rdfRange, const double rdfBinWidth, bool &alreadyUpToDate);
     // Calculate smoothed/broadened partial g(r) from supplied partials
     static bool calculateUnweightedGR(ProcessPool &procPool, Configuration *cfg, const PartialSet &originalgr,
                                       PartialSet &weightedgr, PairBroadeningFunction &intraBroadening, int smoothing);
-    // Return effective density for specified Module's target Configurations
-    static double summedRho(Module *module, GenericList &processingModuleData);
     // Sum unweighted g(r) over the supplied Module's target Configurations
-    static bool sumUnweightedGR(ProcessPool &procPool, Module *parentModule, const RDFModule *rdfModule,
-                                GenericList &processingModuleData, PartialSet &summedUnweightedGR);
+    static bool sumUnweightedGR(GenericList &processingData, ProcessPool &procPool, Module *parentModule,
+                                const RDFModule *rdfModule, PartialSet &summedUnweightedGR);
     // Sum unweighted g(r) over all Configurations targeted by the specified ModuleGroup
-    static bool sumUnweightedGR(ProcessPool &procPool, Module *parentModule, ModuleGroup *moduleGroup,
-                                GenericList &processingModuleData, PartialSet &summedUnweightedGR);
+    static bool sumUnweightedGR(GenericList &processingData, ProcessPool &procPool, Module *parentModule,
+                                ModuleGroup *moduleGroup, PartialSet &summedUnweightedGR);
     // Test supplied PartialSets against each other
     static bool testReferencePartials(PartialSet &setA, PartialSet &setB, double testThreshold);
     // Test calculated partial against supplied reference data
@@ -114,5 +118,5 @@ class RDFModule : public Module
      */
     public:
     // Return a new widget controlling this Module
-    ModuleWidget *createWidget(QWidget *parent, Dissolve &dissolve);
+    ModuleWidget *createWidget(QWidget *parent, Dissolve &dissolve) override;
 };

@@ -14,9 +14,9 @@ This overview provides architecture and implementation details for modules withi
 
 ### Brief
 
-The critical (read 'interesting') functionality of Dissolve is contained within independent modules. This functionality tends to focus on modifying the contents of, or calculating properties from, one or more configurations. In the latter case, this data may be consumed primarily by either the code itself (i.e. used by other modules) or the user (i.e. graphed to illustrate calculated quantities of interest). Because Dissolve aims to be flexible in its approach, writing specific functionality into independent objects aids in designing and constructing simulations to achieve specific tasks. For more information on Dissolve's main workflow in this regard, see the [architecture](../../architecture.md) document.
+The critical (read 'interesting') functionality of Dissolve is contained within independent modules. This functionality tends to focus on modifying the contents of, or calculating properties from, one or more configurations. In the latter case, this data may be consumed primarily by either the code itself (i.e. used by other modules) or the user (i.e. graphed to illustrate calculated quantities of interest). Because Dissolve aims to be flexible in its approach, writing specific functionality into independent objects aids in designing and constructing simulations to achieve specific tasks. For more information on Dissolve's main workflow in this regard, see the [architecture]({{< ref "architecture" >}}) document.
 
-A module can be used multiple times within the same simulation, typically targetting different configurations or utilising different sets of control variables / options. Modules can store and retrieve data they create or need from a suitable `GenericList` (see the [data management](../datamanagement) document) but otherwise have no context of other modules, their position in a `ModuleLayer`, or the overall purpose of the simulation. In this sense they operate as independent processing steps or operations in a linear analysis pipeline.
+A module can be used multiple times within the same simulation, typically targetting different configurations or utilising different sets of control variables / options. Modules can store and retrieve data they create or need from a suitable `GenericList` (see the [data management]({{< ref "datamanagement" >}}) document) but otherwise have no context of other modules, their position in a `ModuleLayer`, or the overall purpose of the simulation. In this sense they operate as independent processing steps or operations in a linear analysis pipeline.
 
 ### What Should a Module Do?
 
@@ -50,8 +50,8 @@ It is strongly recommended to maintain this file structure as far as is possible
 
 ### Relevant Classes
 
-- [Module](https://github.com/projectdissolve/dissolve/tree/develop/src/module/module.h)
-- [ModuleLayer](https://github.com/projectdissolve/dissolve/tree/develop/src/module/layer.h)
+- [Module](https://github.com/disorderedmaterials/dissolve/tree/develop/src/module/module.h)
+- [ModuleLayer](https://github.com/disorderedmaterials/dissolve/tree/develop/src/module/layer.h)
 
 ### Class Diagram
 
@@ -88,13 +88,13 @@ Implements functions returning the type (i.e. general name) of the module (`cons
 
 ### Initialisation (`init.cpp`)
 
-The `Module::initialise()` function is used to set up any complex data within the Module and, critically, any keywords that control the behaviour of the module. These keywords are given a name by which they are referenced, a type with a default value, and a description. Each POD as well as a multitude of compound objects useful to Dissolve are represented by classes derived from `ModuleKeyword`, which take care of the storage, reading, writing, and limit / validation checking. In addition, each has its own associated UI representation class which is generated automatically when required, meaning that no additional effort is required to provide controls for modules within the GUI. See the document on [keyword options](../keywordoptions.md) for a more in-depth discussion and a list of available keyword classes.
+The `Module::initialise()` function is used to set up any complex data within the Module and, critically, any keywords that control the behaviour of the module. These keywords are given a name by which they are referenced, a type with a default value, and a description. Each POD as well as a multitude of compound objects useful to Dissolve are represented by classes derived from `ModuleKeyword`, which take care of the storage, reading, writing, and limit / validation checking. In addition, each has its own associated UI representation class which is generated automatically when required, meaning that no additional effort is required to provide controls for modules within the GUI. See the document on [keyword options]({{< ref "keywordoptions" >}}) for a more in-depth discussion and a list of available keyword classes.
 
 Note that keywords are constructed for each instance of the module, and so are independent between modules of the same type.
 
 ### Set-Up and Processing (`process.cpp`)
 
-Each module has the opportunity to set-up any necessary data prior to it being run through the `Module::setUp(Dissolve &dissolve, ProcessPool &procPool)` virtual. For each module instance the function is called only once as one of the final acts of [`Dissolve::setUpSimulation()`](https://github.com/projectdissolve/dissolve/tree/develop/src/main/dissolve.cpp#L276). References to the master `Dissolve` and current `ProcessPool` are provided to permit full access to necessary data and allow master-only processing and/or distribution of any data.
+Each module has the opportunity to set-up any necessary data prior to it being run through the `Module::setUp(Dissolve &dissolve, ProcessPool &procPool)` virtual. For each module instance the function is called only once as one of the final acts of [`Dissolve::setUpSimulation()`](https://github.com/disorderedmaterials/dissolve/tree/develop/src/main/dissolve.cpp#L276). References to the master `Dissolve` and current `ProcessPool` are provided to permit full access to necessary data and allow master-only processing and/or distribution of any data.
 
 Useful work is performed by `Module::process(Dissolve &dissolve, ProcessPool &procPool)` and which should contain the implementation of the desired algorithm, calculation, or processing to be performed. The function itself is private and only called by the public `Module::executeProcessing()` method, which also obtains and stores suitable timing information. Often it is not practical to perform the whole processing in one linear function call, and so any required additional functions may be implemented in `functions.cpp`.
 
@@ -120,7 +120,7 @@ XXX TODO
 
 ### 1) Copy Module Template
 
-Create a copy of an existing module and rename its classes accordingly to avoid clashes. A [`SkeletonModule`](https://github.com/projectdissolve/dissolve/tree/develop/src/modules/skeleton) providing the basic file structure and build files is included in the source, and may be used as a fresh starting point. On Linux a [shell script](https://github.com/projectdissolve/dissolve/tree/develop/src/modules/skeleton/renamemodule) is available to rename the class, files, and header blocks of `SkeletonModule`.
+Create a copy of an existing module and rename its classes accordingly to avoid clashes. A [`SkeletonModule`](https://github.com/disorderedmaterials/dissolve/tree/develop/src/modules/skeleton) providing the basic file structure and build files is included in the source, and may be used as a fresh starting point. On Linux a [shell script](https://github.com/disorderedmaterials/dissolve/tree/develop/src/modules/skeleton/renamemodule) is available to rename the class, files, and header blocks of `SkeletonModule`.
 
 `SkeletonModule` contains files for an associated GUI. If this is **not** required, remove the `gui` subdirectory, delete the `SUBDIRS` target and `libmodulewidget_la_SOURCES += nogui.cpp` line from the module's `Makefile.am`, and remove the 'add_subdirectory(gui)` line from the module's `CMakeLists.txt`. The `nogui.cpp` source file can also be safely deleted.
 

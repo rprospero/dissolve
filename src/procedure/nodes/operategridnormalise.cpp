@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "procedure/nodes/operategridnormalise.h"
 #include "base/lineparser.h"
@@ -11,11 +11,9 @@
 #include "procedure/nodes/select.h"
 
 OperateGridNormaliseProcedureNode::OperateGridNormaliseProcedureNode()
-    : OperateProcedureNodeBase(ProcedureNode::OperateGridNormaliseNode)
+    : OperateProcedureNodeBase(ProcedureNode::NodeType::OperateGridNormalise)
 {
 }
-
-OperateGridNormaliseProcedureNode::~OperateGridNormaliseProcedureNode() {}
 
 /*
  * Data Target (implements virtuals in OperateProcedureNodeBase)

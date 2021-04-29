@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -20,7 +20,7 @@ class BenchmarkModuleWidget : public ModuleWidget
     BenchmarkModule *module_;
 
     public:
-    BenchmarkModuleWidget(QWidget *parent, BenchmarkModule *module);
+    BenchmarkModuleWidget(QWidget *parent, const GenericList &processingData, BenchmarkModule *module);
 
     /*
      * UI

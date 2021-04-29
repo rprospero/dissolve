@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "keywords/configurationreflist.h"
 #include "base/lineparser.h"
@@ -12,7 +12,6 @@ ConfigurationRefListKeyword::ConfigurationRefListKeyword(RefList<Configuration> 
     maxListSize_ = maxListSize;
 }
 
-// Destructor
 ConfigurationRefListKeyword::~ConfigurationRefListKeyword() {}
 
 /*
@@ -36,7 +35,7 @@ int ConfigurationRefListKeyword::minArguments() const { return 1; }
 int ConfigurationRefListKeyword::maxArguments() const { return 99; }
 
 // Parse arguments from supplied LineParser, starting at given argument offset
-bool ConfigurationRefListKeyword::read(LineParser &parser, int startArg, CoreData &coreData)
+bool ConfigurationRefListKeyword::read(LineParser &parser, int startArg, const CoreData &coreData)
 {
     // Each argument is the name of a Configuration that we will add to our list
     for (auto n = startArg; n < parser.nArgs(); ++n)
@@ -62,13 +61,13 @@ bool ConfigurationRefListKeyword::read(LineParser &parser, int startArg, CoreDat
     return true;
 }
 
-// Write keyword data to cfgecified LineParser
-bool ConfigurationRefListKeyword::write(LineParser &parser, std::string_view keywordName, std::string_view prefix)
+// Write keyword data to specified LineParser
+bool ConfigurationRefListKeyword::write(LineParser &parser, std::string_view keywordName, std::string_view prefix) const
 {
     // Loop over list of Configuration
     std::string configurationString;
     for (Configuration *cfg : data_)
-        configurationString += fmt::format("  '{}'", cfg->name());
+        configurationString += fmt::format("{}'{}'", configurationString.empty() ? "" : "  ", cfg->name());
 
     if (!parser.writeLineF("{}{}  {}\n", prefix, keywordName, configurationString))
         return false;

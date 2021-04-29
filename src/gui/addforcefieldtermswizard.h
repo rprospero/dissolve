@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -132,7 +132,7 @@ class AddForcefieldTermsWizard : public WizardWidget
 
     private:
     // Row update function for MasterTermsTree
-    void updateMasterTermsTreeChild(QTreeWidgetItem *parent, int childIndex, MasterIntra *masterIntra, bool createItem);
+    void updateMasterTermsTreeChild(QTreeWidgetItem *parent, int childIndex, const MasterIntra *masterIntra, bool createItem);
     void updateMasterTermsPage();
 
     private slots:

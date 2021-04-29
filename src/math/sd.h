@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -95,19 +95,9 @@ template <class T> class SteepestDescentMinimiser : public MinimiserBase<T>
 
             currentError = trialError;
 
-            // Complex method begins here
-            // 			else currentError = lineMinimise(sourceModel);
-
             // Copy alpha and calculate gradient ready for next cycle
             values_ = trialAlpha;
             grad = gradient(values_);
-
-            // Check convergence criteria
-            // 			if (fabs(deltaEnergy) < eConverge)
-            // 			{
-            // 				converged = true;
-            // 				break;
-            // 			}
 
             if (lineDone || converged)
                 break;

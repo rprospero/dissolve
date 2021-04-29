@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "base/lineparser.h"
 #include "base/sysfunc.h"
@@ -10,15 +10,11 @@
 // Return enum option info for LayerKeyword
 EnumOptions<LayerBlock::LayerKeyword> LayerBlock::keywords()
 {
-    static EnumOptionsList LayerKeywords =
-        EnumOptionsList() << EnumOption(LayerBlock::DisabledKeyword, "Disabled")
-                          << EnumOption(LayerBlock::EndLayerKeyword, "EndLayer")
-                          << EnumOption(LayerBlock::FrequencyKeyword, "Frequency", 1)
-                          << EnumOption(LayerBlock::ModuleKeyword, "Module", EnumOption::OptionalSecondArgument);
-
-    static EnumOptions<LayerBlock::LayerKeyword> options("LayerKeyword", LayerKeywords);
-
-    return options;
+    return EnumOptions<LayerBlock::LayerKeyword>("LayerKeyword",
+                                                 {{LayerBlock::DisabledKeyword, "Disabled"},
+                                                  {LayerBlock::EndLayerKeyword, "EndLayer"},
+                                                  {LayerBlock::FrequencyKeyword, "Frequency", 1},
+                                                  {LayerBlock::ModuleKeyword, "Module", OptionArguments::OptionalSecond}});
 }
 
 // Parse Layer block

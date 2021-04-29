@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "gui/viewer.hui"
 #include <QMenu>
@@ -36,9 +36,6 @@ void BaseViewer::mouseReleaseEvent(QMouseEvent *event)
     if (buttonState_.testFlag(Qt::RightButton) &&
         (((rMouseLast_ - rMouseDown_).magnitude() <= 1) || mouseReleaseTimer_.isActive()))
     {
-        // Reset to default interaction
-        setInteractionMode(0);
-
         contextMenuRequested(event->pos());
     }
     else

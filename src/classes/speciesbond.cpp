@@ -1,12 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "classes/speciesbond.h"
-#include "base/processpool.h"
 #include "base/sysfunc.h"
 #include "classes/speciesatom.h"
-#include "data/atomicmass.h"
-#include "templates/enumhelpers.h"
+#include "data/atomicmasses.h"
 
 SpeciesBond::SpeciesBond(SpeciesAtom *i, SpeciesAtom *j) : SpeciesIntra()
 {
@@ -16,19 +14,6 @@ SpeciesBond::SpeciesBond(SpeciesAtom *i, SpeciesAtom *j) : SpeciesIntra()
 }
 
 SpeciesBond::SpeciesBond(SpeciesBond &source) : SpeciesIntra(source) { this->operator=(source); }
-
-void SpeciesBond::assign(SpeciesAtom *i, SpeciesAtom *j)
-{
-    i_ = i;
-    j_ = j;
-
-    // Add ourself to the list of bonds on each atom
-    if (i_ && j_)
-    {
-        i_->addBond(*this);
-        j_->addBond(*this);
-    }
-}
 
 SpeciesBond::SpeciesBond(SpeciesBond &&source) : SpeciesIntra(source)
 {
@@ -52,13 +37,7 @@ SpeciesBond::SpeciesBond(SpeciesBond &&source) : SpeciesIntra(source)
 SpeciesBond &SpeciesBond::operator=(const SpeciesBond &source)
 {
     // Copy data
-    i_ = source.i_;
-    j_ = source.j_;
-    if (i_ && j_)
-    {
-        i_->addBond(*this);
-        j_->addBond(*this);
-    }
+    assign(source.i_, source.j_);
     bondType_ = source.bondType_;
     form_ = source.form_;
     SpeciesIntra::operator=(source);
@@ -88,6 +67,18 @@ SpeciesBond &SpeciesBond::operator=(SpeciesBond &&source)
  * SpeciesAtom Information
  */
 
+// Assign the two atoms in the bond
+void SpeciesBond::assign(SpeciesAtom *i, SpeciesAtom *j)
+{
+    i_ = i;
+    j_ = j;
+    assert(i_ && j_);
+
+    // Add ourself to the list of bonds on each atom
+    i_->addBond(*this);
+    j_->addBond(*this);
+}
+
 // Return first SpeciesAtom involved in interaction
 SpeciesAtom *SpeciesBond::i() const { return i_; }
 
@@ -100,26 +91,14 @@ SpeciesAtom *SpeciesBond::partner(const SpeciesAtom *i) const { return (i == i_ 
 // Return index (in parent Species) of first SpeciesAtom
 int SpeciesBond::indexI() const
 {
-#ifdef CHECKS
-    if (i_ == nullptr)
-    {
-        Messenger::error("NULL_POINTER - NULL SpeciesAtom pointer 'i' found in SpeciesBond::indexI(). Returning 0...\n");
-        return 0;
-    }
-#endif
+    assert(i_);
     return i_->index();
 }
 
 // Return index (in parent Species) of second SpeciesAtom
 int SpeciesBond::indexJ() const
 {
-#ifdef CHECKS
-    if (j_ == nullptr)
-    {
-        Messenger::error("NULL_POINTER - NULL SpeciesAtom pointer 'j' found in SpeciesBond::indexJ(). Returning 0...\n");
-        return 0;
-    }
-#endif
+    assert(j_);
     return j_->index();
 }
 
@@ -148,13 +127,7 @@ bool SpeciesBond::matches(const SpeciesAtom *i, const SpeciesAtom *j) const
 // Return whether all atoms in the interaction are currently selected
 bool SpeciesBond::isSelected() const
 {
-#ifdef CHECKS
-    if (i_ == nullptr || j_ == nullptr)
-    {
-        Messenger::error("NULL_POINTER - NULL SpeciesAtom pointer found in SpeciesBond::isSelected(). Returning false...\n");
-        return false;
-    }
-#endif
+    assert(i_ && j_);
     return (i_->isSelected() && j_->isSelected());
 }
 
@@ -209,13 +182,9 @@ double SpeciesBond::bondOrder() const { return SpeciesBond::bondOrder(bondType_)
 // Return enum options for BondFunction
 EnumOptions<SpeciesBond::BondFunction> SpeciesBond::bondFunctions()
 {
-    static EnumOptionsList BondFunctionOptions = EnumOptionsList() << EnumOption(SpeciesBond::NoForm, "None", 0, 0)
-                                                                   << EnumOption(SpeciesBond::HarmonicForm, "Harmonic", 2, 2)
-                                                                   << EnumOption(SpeciesBond::EPSRForm, "EPSR", 2, 2);
-
-    static EnumOptions<SpeciesBond::BondFunction> options("BondFunction", BondFunctionOptions);
-
-    return options;
+    return EnumOptions<SpeciesBond::BondFunction>(
+        "BondFunction",
+        {{SpeciesBond::NoForm, "None"}, {SpeciesBond::HarmonicForm, "Harmonic", 2}, {SpeciesBond::EPSRForm, "EPSR", 2}});
 }
 
 // Set up any necessary parameters
@@ -233,8 +202,8 @@ void SpeciesBond::setUp()
     if (form() == SpeciesBond::EPSRForm)
     {
         // Work out omega-squared(ab) from mass of natural isotopes
-        double massI = AtomicMass::mass(i_->element());
-        double massJ = AtomicMass::mass(j_->element());
+        double massI = AtomicMass::mass(i_->Z());
+        double massJ = AtomicMass::mass(j_->Z());
         parameters_[2] = params[1] / sqrt((massI + massJ) / (massI * massJ));
     }
 }
@@ -270,7 +239,7 @@ double SpeciesBond::fundamentalFrequency(double reducedMass) const
 }
 
 // Return type of this interaction
-SpeciesIntra::InteractionType SpeciesBond::type() const { return SpeciesIntra::BondInteraction; }
+SpeciesIntra::InteractionType SpeciesBond::type() const { return SpeciesIntra::InteractionType::Bond; }
 
 // Return energy for specified distance
 double SpeciesBond::energy(double distance) const
@@ -319,6 +288,8 @@ double SpeciesBond::force(double distance) const
     else if (form() == SpeciesBond::HarmonicForm)
     {
         /*
+         * V = -k * (r - eq)
+         *
          * Parameters:
          * 0 : force constant
          * 1 : equilibrium distance
@@ -335,7 +306,7 @@ double SpeciesBond::force(double distance) const
          * 1 : equilibrium distance
          * 2 : omega squared (LOCAL parameter)
          */
-        return -2.0 * params[0] * (distance - params[1]);
+        return -2.0 * params[0] * (distance - params[1]) / params[2];
     }
 
     Messenger::error("Functional form of SpeciesBond term not accounted for, so can't calculate force.\n");

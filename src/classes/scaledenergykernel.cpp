@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "classes/scaledenergykernel.h"
 #include "classes/atom.h"
@@ -22,7 +22,7 @@ ScaledEnergyKernel::~ScaledEnergyKernel() {}
  */
 
 // Return PairPotential energy between atoms provided as pointers, at the distance specified
-double ScaledEnergyKernel::pairPotentialEnergy(const Atom *i, const Atom *j, double r)
+double ScaledEnergyKernel::pairPotentialEnergy(const std::shared_ptr<Atom> i, const std::shared_ptr<Atom> j, double r)
 {
     /*
      * Check the Molecules of the supplied Atoms - if they exist within different Molecules we scale the distance

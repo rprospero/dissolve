@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
-#include "base/processpool.h"
 #include "base/version.h"
 #include "classes/atom.h"
 #include "classes/atomtypelist.h"
@@ -19,9 +18,6 @@
 #include "module/layer.h"
 #include "procedure/procedure.h"
 #include "templates/array.h"
-#include "templates/dynamicarray.h"
-#include "templates/objectstore.h"
-#include "templates/orderedlist.h"
 #include "templates/vector3.h"
 #include <deque>
 #include <memory>
@@ -31,10 +27,11 @@ class Box;
 class Cell;
 class CoordinateSet;
 class PotentialMap;
+class ProcessPool;
 class Species;
 
 // Configuration
-class Configuration : public ListItem<Configuration>, public ObjectStore<Configuration>
+class Configuration : public ListItem<Configuration>
 {
     public:
     Configuration();
@@ -85,7 +82,7 @@ class Configuration : public ListItem<Configuration>, public ObjectStore<Configu
      */
     private:
     // List of Species used by the Configuration and their populations
-    List<SpeciesInfo> usedSpecies_;
+    std::vector<SpeciesInfo> usedSpecies_;
     // AtomType list, containing unique (non-isotopic) atom types over all Species used in this configuration
     AtomTypeList usedAtomTypes_;
     // Contents version, incremented whenever Configuration content or Atom positions change
@@ -93,7 +90,7 @@ class Configuration : public ListItem<Configuration>, public ObjectStore<Configu
     // Array of Molecules
     std::deque<std::shared_ptr<Molecule>> molecules_;
     // Array of Atoms
-    DynamicArray<Atom> atoms_;
+    std::vector<std::shared_ptr<Atom>> atoms_;
 
     public:
     // Empty contents of Configuration, leaving core definitions intact
@@ -111,9 +108,9 @@ class Configuration : public ListItem<Configuration>, public ObjectStore<Configu
     // Add Species to list of those used by the Configuration, setting/adding the population specified
     SpeciesInfo *addUsedSpecies(Species *sp, int population);
     // Return SpeciesInfo for specified Species
-    SpeciesInfo *usedSpeciesInfo(Species *sp);
+    OptionalReferenceWrapper<SpeciesInfo> usedSpeciesInfo(Species *sp);
     // Return list of SpeciesInfo for the Configuration
-    List<SpeciesInfo> &usedSpecies();
+    std::vector<SpeciesInfo> &usedSpecies();
     // Return if the specified Species is present in the usedSpecies list
     bool hasUsedSpecies(Species *sp);
     // Return the total atomic mass present in the Configuration
@@ -135,15 +132,15 @@ class Configuration : public ListItem<Configuration>, public ObjectStore<Configu
     // Return nth Molecule
     std::shared_ptr<Molecule> molecule(int n);
     // Add new Atom to Configuration
-    Atom *addAtom(const SpeciesAtom *sourceAtom, std::shared_ptr<Molecule> molecule, Vec3<double> r = Vec3<double>());
+    std::shared_ptr<Atom> addAtom(const SpeciesAtom *sourceAtom, std::shared_ptr<Molecule> molecule,
+                                  Vec3<double> r = Vec3<double>());
     // Return number of Atoms in Configuration
     int nAtoms() const;
     // Return Atom array
-    DynamicArray<Atom> &atoms();
-    // Return Atom array (const)
-    const DynamicArray<Atom> &constAtoms() const;
+    std::vector<std::shared_ptr<Atom>> &atoms();
+    const std::vector<std::shared_ptr<Atom>> &atoms() const;
     // Return nth Atom
-    Atom *atom(int n);
+    std::shared_ptr<Atom> atom(int n);
     // Scale geometric centres of molecules within box
     void scaleMoleculeCentres(double factor);
 
@@ -172,17 +169,16 @@ class Configuration : public ListItem<Configuration>, public ObjectStore<Configu
     // Set requested size factor for Box
     void setRequestedSizeFactor(double factor);
     // Return requested size factor for Box
-    double requestedSizeFactor();
+    double requestedSizeFactor() const;
     // Return last size factor applied to Box / Cells
-    double appliedSizeFactor();
+    double appliedSizeFactor() const;
     // Set requested side length for individual Cell
     void setRequestedCellDivisionLength(double a);
     // Return requested side length for individual Cell
     double requestedCellDivisionLength() const;
     // Return cell array
     CellArray &cells();
-    // Return cell array
-    const CellArray &constCells() const;
+    const CellArray &cells() const;
     // Scale Box, Cells, and Molecule geometric centres according to current size factor
     void applySizeFactor(const PotentialMap &potentialMap);
 
@@ -193,32 +189,11 @@ class Configuration : public ListItem<Configuration>, public ObjectStore<Configu
     // Update Cell contents
     void updateCellContents();
     // Update Cell location of specified Atom
-    void updateCellLocation(Atom *i);
+    void updateCellLocation(std::shared_ptr<Atom> i);
     // Update Cell location of specified Molecule
     void updateCellLocation(std::shared_ptr<Molecule> mol);
     // Update Cell location of specified Atom indices
     void updateCellLocation(const std::vector<int> &targetAtoms, int indexOffset);
-
-    /*
-     * Modules
-     */
-    private:
-    // Module layer associated to this Configuration
-    ModuleLayer moduleLayer_;
-    // Variables set by Modules
-    GenericList moduleData_;
-
-    public:
-    // Associate Module to the Configuration
-    bool ownModule(Module *module);
-    // Return number of Modules associated to this Configuration
-    int nModules() const;
-    // Return Module layer for this Configuration
-    ModuleLayer &moduleLayer();
-    // Return list of Modules associated to this Configuration
-    ModuleList &modules();
-    // Return list of variables set by Modules
-    GenericList &moduleData();
 
     /*
      * Site Stacks
@@ -236,9 +211,9 @@ class Configuration : public ListItem<Configuration>, public ObjectStore<Configu
      */
     public:
     // Write through specified LineParser
-    bool write(LineParser &parser) const;
+    bool serialise(LineParser &parser) const;
     // Read through specified LineParser
-    bool read(LineParser &parser, const List<Species> &availableSpecies, double pairPotentialRange);
+    bool read(LineParser &parser, const std::vector<std::unique_ptr<Species>> &availableSpecies, double pairPotentialRange);
 
     /*
      * Parallel Comms
@@ -249,9 +224,7 @@ class Configuration : public ListItem<Configuration>, public ObjectStore<Configu
 
     public:
     // Set up process pool for this Configuration
-    bool setUpProcessPool(Array<int> worldRanks, int groupPopulation);
+    bool setUpProcessPool(Array<int> worldRanks);
     // Return process pool for this Configuration
     ProcessPool &processPool();
-    // Broadcast coordinate from specified root process
-    bool broadcastCoordinates(ProcessPool &procPool, int rootRank);
 };

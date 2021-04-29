@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "keywords/geometrylist.h"
 #include "base/lineparser.h"
@@ -35,7 +35,7 @@ int GeometryListKeyword::maxArguments() const
 }
 
 // Parse arguments from supplied LineParser, starting at given argument offset
-bool GeometryListKeyword::read(LineParser &parser, int startArg, CoreData &coreData)
+bool GeometryListKeyword::read(LineParser &parser, int startArg, const CoreData &coreData)
 {
     Geometry *g = data_.add();
     for (auto i = startArg; i <= (startArg + maxArguments() - 1); i++)
@@ -59,7 +59,7 @@ bool GeometryListKeyword::read(LineParser &parser, int startArg, CoreData &coreD
 }
 
 // Write keyword data to specified LineParser
-bool GeometryListKeyword::write(LineParser &parser, std::string_view keywordName, std::string_view prefix)
+bool GeometryListKeyword::write(LineParser &parser, std::string_view keywordName, std::string_view prefix) const
 {
     std::string index;
 

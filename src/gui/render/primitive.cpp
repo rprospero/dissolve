@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "gui/render/primitive.h"
 #include "base/messenger.h"
@@ -434,7 +434,6 @@ void Primitive::cylinder(GLfloat ox, GLfloat oy, GLfloat oz, GLfloat vx, GLfloat
 
     // Calculate orthogonal vectors
     u = rj.orthogonal();
-    // 	u.normalise();
     v = rj * u;
     v.normalise();
     w = rj;

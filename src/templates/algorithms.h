@@ -1,15 +1,41 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
+#include <functional>
 #include <optional>
+#include <tuple>
+
+// Cut a range into a smaller segment for MPI
+template <typename T> auto chop_range(const T begin, const T end, const int nChunks, const int index)
+{
+    auto diff = end - begin;
+    T start = begin + std::ldiv((const long int)index * diff, (const long int)nChunks).quot;
+    T stop = begin + std::ldiv((const long int)(index + 1) * diff, (const long int)nChunks).quot;
+    return std::make_tuple(start, stop);
+}
 
 // Perform an operation on every pair of elements in a container
 template <class Iter, class Lam> void for_each_pair(Iter begin, Iter end, Lam lambda)
 {
     int i = 0;
     for (auto elem1 = begin; elem1 != end; ++elem1, ++i)
+    {
+        int j = i;
+        for (auto elem2 = elem1; elem2 != end; ++elem2, ++j)
+        {
+            lambda(i, *elem1, j, *elem2);
+        }
+    }
+}
+
+// Perform an operation on every pair of elements in a container
+template <class Iter, class Lam> void for_each_pair(Iter begin, Iter end, int nChunks, int index, Lam lambda)
+{
+    auto [start, stop] = chop_range(begin, end, nChunks, index);
+    int i = start - begin;
+    for (auto elem1 = start; elem1 != stop; ++elem1, ++i)
     {
         int j = i;
         for (auto elem2 = elem1; elem2 != end; ++elem2, ++j)
@@ -94,3 +120,52 @@ template <class Lam> auto for_each_pair_early(int begin, int end, Lam lambda) ->
 
     return std::nullopt;
 }
+
+template <typename... Args> class ZipIterator
+{
+    public:
+    ZipIterator(std::tuple<Args...> args) : source_(args){};
+    bool operator!=(ZipIterator<Args...> other)
+    {
+        return std::apply(
+            [&other](auto &a, auto &... as) {
+                return std::apply(
+                    [&a](auto &b, auto &... bs) {
+                        // Only test the first elements.  We have to make the
+                        // assumption that all the containers are the same length,
+                        // anyway and this saves us some tests and some code.
+                        return a != b;
+                    },
+                    other.source_);
+            },
+            source_);
+    }
+    void operator++()
+    {
+        std::apply([](auto &... item) { (item++, ...); }, source_);
+    }
+    auto operator*()
+    {
+        return std::apply([](auto &... item) { return std::make_tuple(std::ref(*item)...); }, source_);
+    }
+
+    private:
+    std::tuple<Args...> source_;
+};
+
+template <typename... Args> class zip
+{
+    public:
+    zip(Args &... args) : sources_(args...) {}
+    auto begin()
+    {
+        return ZipIterator(std::apply([](auto &... item) { return std::make_tuple(item.begin()...); }, sources_));
+    }
+    auto end()
+    {
+        return ZipIterator(std::apply([](auto &... item) { return std::make_tuple(item.end()...); }, sources_));
+    }
+
+    private:
+    std::tuple<Args &...> sources_;
+};

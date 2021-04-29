@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "keywords/atomtypeselection.h"
 #include "base/lineparser.h"
@@ -68,7 +68,7 @@ int AtomTypeSelectionKeyword::minArguments() const { return 1; }
 int AtomTypeSelectionKeyword::maxArguments() const { return 999; }
 
 // Parse arguments from supplied LineParser, starting at given argument offset
-bool AtomTypeSelectionKeyword::read(LineParser &parser, int startArg, CoreData &coreData)
+bool AtomTypeSelectionKeyword::read(LineParser &parser, int startArg, const CoreData &coreData)
 {
     // Make sure our list is up-to-date
     checkSelection();
@@ -98,7 +98,7 @@ bool AtomTypeSelectionKeyword::read(LineParser &parser, int startArg, CoreData &
 }
 
 // Write keyword data to specified LineParser
-bool AtomTypeSelectionKeyword::write(LineParser &parser, std::string_view keywordName, std::string_view prefix)
+bool AtomTypeSelectionKeyword::write(LineParser &parser, std::string_view keywordName, std::string_view prefix) const
 {
     // Loop over the AtomType selection list
     std::string selection;

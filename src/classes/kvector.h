@@ -1,25 +1,26 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
-#include "genericitems/base.h"
 #include "templates/array.h"
 #include "templates/listitem.h"
 #include "templates/vector3.h"
 
 // Forward Declarations
 class BraggReflection;
+class CoreData;
 
 // K-Vector
-class KVector : public GenericItemBase
+class KVector
 {
     public:
     KVector(int h = 0, int k = 0, int l = 0, int reflectionIndex = -1, int nAtomTypes = 0);
-    ~KVector();
+    ~KVector() = default;
     KVector(const KVector &source);
-    // Operator=
-    void operator=(const KVector &source);
+    KVector(KVector &&source);
+    KVector(const KVector &&source);
+    KVector &operator=(const KVector &source);
 
     /*
      * Data
@@ -29,8 +30,8 @@ class KVector : public GenericItemBase
     Vec3<int> hkl_;
     // Associated BraggReflection index
     int braggReflectionIndex_;
-    // Contributions to this kvector from individual atom types
-    Array<double> cosTerms_, sinTerms_;
+    // Contributions to this k-vector from individual atom types
+    std::vector<double> cosTerms_, sinTerms_;
 
     public:
     // Initialise
@@ -53,24 +54,8 @@ class KVector : public GenericItemBase
     void addCosTerm(int atomTypeIndex, double value);
     // Add value to sinTerm index specified
     void addSinTerm(int atomTypeIndex, double value);
-    // Calculate intensities and sum into associated BraggReflection
-    void calculateIntensities(BraggReflection *reflectionArray);
+    // Calculate intensities and sum into associated BraggReflections
+    void calculateIntensities(std::vector<BraggReflection> &reflections);
     // Return specified intensity
     double intensity(int typeI, int typeJ);
-
-    /*
-     * GenericItemBase Implementations
-     */
-    public:
-    // Return class name
-    static std::string_view itemClassName();
-
-    /*
-     * Parallel Comms
-     */
-    public:
-    // Broadcast data from root to all other processes
-    bool broadcast(ProcessPool &procPool, const int root, const CoreData &coreData);
-    // Check item equality
-    bool equality(ProcessPool &procPool);
 };

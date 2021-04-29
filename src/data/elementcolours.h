@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -9,10 +9,7 @@
 namespace ElementColours
 {
 
-// Return colour for specified Z
-const float *colour(int Z);
-
-// Return colour for specified Element
-const float *colour(Element *el);
+// Return colour for specified element
+const float *colour(Elements::Element Z);
 
 } // namespace ElementColours

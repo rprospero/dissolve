@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "gui/render/axes.h"
 #include "base/sysfunc.h"
@@ -102,15 +102,11 @@ Axes::~Axes() {}
  */
 
 // Return enum options for AutoScaleMethod
-EnumOptions<Axes::AutoScaleMethod> &Axes::autoScaleMethods()
+EnumOptions<Axes::AutoScaleMethod> Axes::autoScaleMethods()
 {
-    static EnumOptionsList AutoScaleOptions = EnumOptionsList() << EnumOption(Axes::NoAutoScale, "None")
-                                                                << EnumOption(Axes::ExpandingAutoScale, "Expanding")
-                                                                << EnumOption(Axes::FullAutoScale, "Full");
-
-    static EnumOptions<Axes::AutoScaleMethod> options("AutoScaleMethod", AutoScaleOptions);
-
-    return options;
+    return EnumOptions<Axes::AutoScaleMethod>(
+        "AutoScaleMethod",
+        {{Axes::NoAutoScale, "None"}, {Axes::ExpandingAutoScale, "Expanding"}, {Axes::FullAutoScale, "Full"}});
 }
 
 // Recalculate minimum, maximum, and centre coordinates of axes
@@ -162,26 +158,7 @@ void Axes::clamp(int axis)
     {
         if (min_[axis] <= 0.0)
             setToLimit(axis, true);
-        // 		if (min_[axis] < limitMin_[axis]) setToLimit(axis, true);
-        // 		if (max_[axis] > limitMax_[axis]) setToLimit(axis, false);
     }
-
-    // 	// Clamp axis position point values if necessary
-    // 	for (auto axis=0; axis < 3; ++axis)
-    // 	{
-    // 		if (positionReal_[axis][(axis+1)%3] < limitMin_[(axis+1)%3])
-    // 		{
-    // 			positionReal_[axis].set((axis+1)%3, limitMin_[(axis+1)%3]);
-    // 			primitivesValid_ = false;
-    // 			parentView_.paneChanged();
-    // 		}
-    // 		if (positionReal_[axis][(axis+2)%3] < limitMin_[(axis+2)%3])
-    // 		{
-    // 			positionReal_[axis].set((axis+2)%3, limitMin_[(axis+2)%3]);
-    // 			primitivesValid_ = false;
-    // 			parentView_.paneChanged();
-    // 		}
-    // 	}
 }
 
 // Set minimum value for specified axis
@@ -506,8 +483,6 @@ void Axes::transformY(std::vector<double> &yArray) const
     if (inverted_.y && logarithmic_.y)
         for (auto n = 0; n < yArray.size(); ++n)
         {
-            // 		if (max_.y / yArray[n] <= 0.0) typeArray[n] = DisplayDataSet::NoPoint;
-            // 		else
             yArray[n] = log10(max_.y / yArray[n]) * stretch_.y;
         }
     else if (inverted_.y)
@@ -516,8 +491,6 @@ void Axes::transformY(std::vector<double> &yArray) const
     else if (logarithmic_.y)
         for (auto n = 0; n < yArray.size(); ++n)
         {
-            // 		if (yArray[n] <= 0.0) typeArray[n] = DisplayDataSet::NoPoint;
-            // 		else
             yArray[n] = log10(yArray[n]) * stretch_.y;
         }
     else
@@ -543,8 +516,6 @@ void Axes::transformZ(std::vector<double> &zArray) const
     if (inverted_.z && logarithmic_.z)
         for (auto n = 0; n < zArray.size(); ++n)
         {
-            // 		if (max_.z / zArray[n] <= 0.0) typeArray[n] = DisplayDataSet::NoPoint;
-            // 		else
             zArray[n] = log10(max_.z / zArray[n]) * stretch_.z;
         }
     else if (inverted_.z)
@@ -553,8 +524,6 @@ void Axes::transformZ(std::vector<double> &zArray) const
     else if (logarithmic_.z)
         for (auto n = 0; n < zArray.size(); ++n)
         {
-            // 		if (zArray[n] <= 0.0) typeArray[n] = DisplayDataSet::NoPoint;
-            // 		else
             zArray[n] = log10(zArray[n]) * stretch_.z;
         }
     else
@@ -738,7 +707,7 @@ void Axes::determineLabelFormat(int axis)
     auto logTick = int(log10(tickDelta_[axis]));
     if (abs(logTick) > 3)
     {
-        numberFormat_[axis].setType(NumberFormat::ScientificFormat);
+        numberFormat_[axis].setType(NumberFormat::FormatType::Scientific);
         numberFormat_[axis].setUseENotation(true);
         numberFormat_[axis].setNDecimals(3);
     }
@@ -746,7 +715,7 @@ void Axes::determineLabelFormat(int axis)
     {
         auto nDecimals = abs(logTick);
 
-        numberFormat_[axis].setType(NumberFormat::DecimalFormat);
+        numberFormat_[axis].setType(NumberFormat::FormatType::Decimal);
         numberFormat_[axis].setUseENotation(false);
         numberFormat_[axis].setNDecimals(nDecimals);
 
@@ -782,7 +751,7 @@ void Axes::determineLabelFormat(int axis)
             // If we're now at the threshold where we use exponential notation, set it and break now.
             if (nDecimals > 3)
             {
-                numberFormat_[axis].setType(NumberFormat::ScientificFormat);
+                numberFormat_[axis].setType(NumberFormat::FormatType::Scientific);
                 numberFormat_[axis].setUseENotation(true);
                 numberFormat_[axis].setNDecimals(3);
                 break;
@@ -793,7 +762,7 @@ void Axes::determineLabelFormat(int axis)
     }
     else
     {
-        numberFormat_[axis].setType(NumberFormat::IntegerFormat);
+        numberFormat_[axis].setType(NumberFormat::FormatType::Integer);
         numberFormat_[axis].setUseENotation(false);
         numberFormat_[axis].setNDecimals(0);
     }
@@ -1100,15 +1069,6 @@ void Axes::updateAxisPrimitives()
 
         // Create axis title transformation matrix
         titleTransform.setIdentity();
-        // 		// -- 1) Apply axial rotation along label left-to-right direction
-        // 		if (parentView_.viewType() == View::FlatZYView)
-        // titleTransform.applyPreRotationY(titleOrientation(axis).x); 		else
-        // titleTransform.applyPreRotationX(titleOrientation(axis).x);
-        // 		// -- 2) Perform in-plane rotation
-        // 		if (parentView_.viewType() == View::FlatZYView)
-        // titleTransform.applyPreRotationX(titleOrientation(axis).y); 		else if (inPlaneAxis == 1)
-        // titleTransform.applyPreRotationY(titleOrientation(axis).y); 		else
-        // titleTransform.applyPreRotationZ(titleOrientation(axis).y);
         titleTransform.applyPreRotationX(titleOrientation(axis).x);
         titleTransform.applyPreRotationY(titleOrientation(axis).y);
         titleTransform.applyPreRotationZ(titleOrientation(axis).z);
@@ -1138,9 +1098,6 @@ void Axes::updateAxisPrimitives()
             auto u = coordMin_[axis];
             while (value <= max_[axis])
             {
-                // Check break condition
-                // 				if (value > max_[axis]) break;
-
                 // If the current value is in range, plot a tick
                 u[axis] = (inverted_[axis] ? log10(max_[axis] / value) : log10(value)) * stretch_[axis];
                 if (log10(value) >= min)
@@ -1156,7 +1113,7 @@ void Axes::updateAxisPrimitives()
                         // Get formatted value text
                         s = numberFormat_[axis].format(value);
 
-                        labelPrimitives_[axis].add(fontInstance_, s, u + tickDir * tickSize_[axis], labelAnchor(axis),
+                        labelPrimitives_[axis].add(&fontInstance_, s, u + tickDir * tickSize_[axis], labelAnchor(axis),
                                                    tickDir * labelOrientation(axis).z, labelTransform,
                                                    parentView_.labelPointSize(),
                                                    parentView_.isFlatView() ? false : parentView_.flatLabelsIn3D());
@@ -1212,7 +1169,7 @@ void Axes::updateAxisPrimitives()
                         // Get formatted label text
                         s = numberFormat_[axis].format(value);
 
-                        labelPrimitives_[axis].add(fontInstance_, s, u + tickDir * tickSize_[axis], labelAnchor(axis),
+                        labelPrimitives_[axis].add(&fontInstance_, s, u + tickDir * tickSize_[axis], labelAnchor(axis),
                                                    tickDir * labelOrientation(axis).z, labelTransform,
                                                    parentView_.labelPointSize(),
                                                    parentView_.isFlatView() ? false : parentView_.flatLabelsIn3D());
@@ -1272,7 +1229,7 @@ void Axes::updateAxisPrimitives()
             adjustment = tickDir * titleDistances_[axis];
 
         // -- Add primitive
-        titlePrimitives_[axis].add(fontInstance_, QString::fromStdString(title_[axis]), u, titleAnchor(axis), adjustment,
+        titlePrimitives_[axis].add(&fontInstance_, QString::fromStdString(title_[axis]), u, titleAnchor(axis), adjustment,
                                    titleTransform, parentView_.titlePointSize(),
                                    parentView_.isFlatView() ? false : parentView_.flatLabelsIn3D());
     }
@@ -1310,9 +1267,6 @@ void Axes::updateAxisPrimitives()
                 v2[axis] = coordMax_[axis][axis];
                 v2[ortho1] = tickPositions[ortho1][i1];
                 v2[ortho2] = tickPositions[ortho2][i2];
-                // 				v1.set(coordMin_[0][0], tickPositions[1][j],
-                // tickPositions[2][k]); 				v2.set(coordMax_[0][0],
-                // tickPositions[1][j], tickPositions[2][k]);
 
                 // If we are only drawing lines in the planes orthogonal to the axis, break if we have moved
                 // away from it... Otherwise, we change either the i1 or i2 components of v1 and v2 to position

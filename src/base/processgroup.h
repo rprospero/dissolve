@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -35,13 +35,13 @@ class ProcessGroup : public ListItem<ProcessGroup>
     // Add process to group
     void addProcess(int poolRank, int worldRank);
     // Return total number of processes in group
-    int nProcesses();
+    int nProcesses() const;
     // Return world ranks of group processes
     Array<int> &worldRanks();
     // Return nth world rank of group processes
     int worldRank(int n) const;
     // Return pool ranks of group processes
-    Array<int> &poolRanks();
+    const Array<int> &poolRanks() const;
     // Return nth pool rank of group processes
     int poolRank(int n) const;
 };

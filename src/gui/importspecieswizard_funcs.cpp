@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "classes/atomtype.h"
 #include "classes/species.h"
@@ -138,16 +138,16 @@ bool ImportSpeciesWizard::prepareForNextPage(int currentIndex)
             }
             // Update the Species and AtomTypes lists
             ui_.SpeciesList->clear();
-            for (auto *sp = temporaryDissolve_.species().first(); sp != nullptr; sp = sp->next())
+            for (const auto &sp : temporaryDissolve_.species())
             {
                 QListWidgetItem *item = new QListWidgetItem(QString::fromStdString(std::string(sp->name())));
-                item->setData(Qt::UserRole, VariantPointer<Species>(sp));
+                item->setData(Qt::UserRole, VariantPointer<Species>(sp.get()));
                 ui_.SpeciesList->addItem(item);
             }
             if (ui_.SpeciesList->count() > 0)
             {
                 ui_.SpeciesList->setCurrentRow(0);
-                importTarget_ = temporaryCoreData_.species().first();
+                importTarget_ = temporaryCoreData_.species().front().get();
             }
 
             updateAtomTypesPage();
@@ -208,7 +208,7 @@ void ImportSpeciesWizard::reset()
 
     // Set a new, unique name ready on the final page
     ui_.SpeciesNameEdit->setText(
-        QString::fromStdString(std::string(dissolveReference_->constCoreData().uniqueSpeciesName("NewSpecies"))));
+        QString::fromStdString(std::string(dissolveReference_->coreData().uniqueSpeciesName("NewSpecies"))));
 }
 
 /*
@@ -357,7 +357,7 @@ void ImportSpeciesWizard::on_AtomTypesSuffixButton_clicked(bool checked)
  */
 
 // Row update function for MasterTermsList
-void ImportSpeciesWizard::updateMasterTermsTreeChild(QTreeWidgetItem *parent, int childIndex, MasterIntra *masterIntra,
+void ImportSpeciesWizard::updateMasterTermsTreeChild(QTreeWidgetItem *parent, int childIndex, const MasterIntra *masterIntra,
                                                      bool createItem)
 {
     QTreeWidgetItem *item;
@@ -373,7 +373,7 @@ void ImportSpeciesWizard::updateMasterTermsTreeChild(QTreeWidgetItem *parent, in
 
     // Set item data
     item->setText(0, QString::fromStdString(std::string(masterIntra->name())));
-    item->setIcon(0, QIcon(dissolveReference_->constCoreData().findMasterTerm(masterIntra->name())
+    item->setIcon(0, QIcon(dissolveReference_->coreData().findMasterTerm(masterIntra->name())
                                ? ":/general/icons/general_warn.svg"
                                : ":/general/icons/general_true.svg"));
 }
@@ -391,23 +391,26 @@ void ImportSpeciesWizard::updateMasterTermsPage()
 
     // Determine whether we have any naming conflicts
     auto conflicts = false;
-    ListIterator<MasterIntra> bondIterator(temporaryCoreData_.masterBonds());
-    while (MasterIntra *intra = bondIterator.iterate())
-        if (dissolveReference_->constCoreData().findMasterTerm(intra->name()))
+    for (auto &intra : temporaryCoreData_.masterBonds())
+        if (dissolveReference_->coreData().findMasterTerm(intra.name()))
         {
             conflicts = true;
             break;
         }
-    ListIterator<MasterIntra> angleIterator(temporaryCoreData_.masterAngles());
-    while (MasterIntra *intra = angleIterator.iterate())
-        if (dissolveReference_->constCoreData().findMasterTerm(intra->name()))
+    for (auto &intra : temporaryCoreData_.masterAngles())
+        if (dissolveReference_->coreData().findMasterTerm(intra.name()))
         {
             conflicts = true;
             break;
         }
-    ListIterator<MasterIntra> torsionIterator(temporaryCoreData_.masterTorsions());
-    while (MasterIntra *intra = torsionIterator.iterate())
-        if (dissolveReference_->constCoreData().findMasterTerm(intra->name()))
+    for (auto &intra : temporaryCoreData_.masterTorsions())
+        if (dissolveReference_->coreData().findMasterTerm(intra.name()))
+        {
+            conflicts = true;
+            break;
+        }
+    for (auto &intra : temporaryCoreData_.masterImpropers())
+        if (dissolveReference_->coreData().findMasterTerm(intra.name()))
         {
             conflicts = true;
             break;

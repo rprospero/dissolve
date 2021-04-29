@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "classes/atomtype.h"
 #include "gui/delegates/isotopecombo.hui"
@@ -15,7 +15,7 @@ Q_DECLARE_METATYPE(std::shared_ptr<AtomType>)
  */
 
 // IsotopologuesTree top-level update function
-void SpeciesTab::updateIsotopologuesTreeTopLevelItem(QTreeWidget *treeWidget, int topLevelItemIndex, Isotopologue *data,
+void SpeciesTab::updateIsotopologuesTreeTopLevelItem(QTreeWidget *treeWidget, int topLevelItemIndex, const Isotopologue *data,
                                                      bool createItem)
 {
     QTreeWidgetItem *item;

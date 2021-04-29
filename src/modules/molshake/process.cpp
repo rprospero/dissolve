@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "base/processpool.h"
 #include "base/timer.h"
@@ -9,9 +9,7 @@
 #include "classes/configuration.h"
 #include "classes/regionaldistributor.h"
 #include "classes/scaledenergykernel.h"
-#include "genericitems/listhelper.h"
 #include "main/dissolve.h"
-#include "modules/energy/energy.h"
 #include "modules/molshake/molshake.h"
 
 // Run main processing
@@ -80,7 +78,7 @@ bool MolShakeModule::process(Dissolve &dissolve, ProcessPool &procPool)
         double currentEnergy, newEnergy, delta, totalDelta = 0.0;
         Matrix3 transform;
         Vec3<double> rDelta;
-        const Box *box = cfg->box();
+        const auto *box = cfg->box();
 
         /*
          * In order to be able to adjust translation and rotational steps independently, we will perform 80% of moves

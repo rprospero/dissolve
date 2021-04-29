@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "classes/speciesbond.h"
 #include "gui/delegates/combolist.hui"
@@ -8,7 +8,8 @@
 #include "templates/list.h"
 #include "templates/variantpointer.h"
 
-IntraFormComboDelegate::IntraFormComboDelegate(QObject *parent, ComboListItems *items, const List<MasterIntra> &masterTerms)
+IntraFormComboDelegate::IntraFormComboDelegate(QObject *parent, ComboListItems *items,
+                                               const std::list<MasterIntra> &masterTerms)
     : QItemDelegate(parent), masterTerms_(masterTerms)
 {
     items_ = items;
@@ -29,7 +30,7 @@ QWidget *IntraFormComboDelegate::createEditor(QWidget *parent, const QStyleOptio
         editor->addItem(items_->currentItemText());
 
     // Now append any MasterBonds we have
-    if (masterTerms_.nItems() > 0)
+    if (!masterTerms_.empty())
         ComboNameListPopulator<MasterIntra>(editor, masterTerms_, "@", true);
 
     return editor;

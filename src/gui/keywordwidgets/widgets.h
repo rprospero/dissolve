@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 // General include for all KeywordWidget types
 #include "gui/keywordwidgets/atomtypeselection.h"
@@ -10,13 +10,13 @@
 #include "gui/keywordwidgets/double.hui"
 #include "gui/keywordwidgets/dropwidget.hui"
 #include "gui/keywordwidgets/enumoptions.hui"
-#include "gui/keywordwidgets/expressionvariablelist.h"
+#include "gui/keywordwidgets/expressionvariablevector.h"
 #include "gui/keywordwidgets/fileandformat.h"
 #include "gui/keywordwidgets/integer.hui"
 #include "gui/keywordwidgets/isotopologueset.h"
 #include "gui/keywordwidgets/module.h"
 #include "gui/keywordwidgets/modulegroups.h"
-#include "gui/keywordwidgets/modulereflist.h"
+#include "gui/keywordwidgets/modulevector.h"
 #include "gui/keywordwidgets/node.h"
 #include "gui/keywordwidgets/nodeandinteger.h"
 #include "gui/keywordwidgets/nodereflist.h"
@@ -32,4 +32,3 @@
 #include "gui/keywordwidgets/vec3double.h"
 #include "gui/keywordwidgets/vec3integer.h"
 #include "gui/keywordwidgets/vec3nodevalue.h"
-#include "gui/keywordwidgets/windowfunction.hui"

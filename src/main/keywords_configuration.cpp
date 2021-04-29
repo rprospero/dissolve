@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "base/lineparser.h"
 #include "base/sysfunc.h"
@@ -11,18 +11,13 @@
 // Return enum option info for ConfigurationKeyword
 EnumOptions<ConfigurationBlock::ConfigurationKeyword> ConfigurationBlock::keywords()
 {
-    static EnumOptionsList ConfigurationKeywords =
-        EnumOptionsList() << EnumOption(ConfigurationBlock::CellDivisionLengthKeyword, "CellDivisionLength", 1)
-                          << EnumOption(ConfigurationBlock::EndConfigurationKeyword, "EndConfiguration")
-                          << EnumOption(ConfigurationBlock::GeneratorKeyword, "Generator")
-                          << EnumOption(ConfigurationBlock::InputCoordinatesKeyword, "InputCoordinates", 2)
-                          << EnumOption(ConfigurationBlock::ModuleKeyword, "Module", EnumOption::OptionalSecondArgument)
-                          << EnumOption(ConfigurationBlock::SizeFactorKeyword, "SizeFactor", 1)
-                          << EnumOption(ConfigurationBlock::TemperatureKeyword, "Temperature", 1);
-
-    static EnumOptions<ConfigurationBlock::ConfigurationKeyword> options("ConfigurationKeyword", ConfigurationKeywords);
-
-    return options;
+    return EnumOptions<ConfigurationBlock::ConfigurationKeyword>(
+        "ConfigurationKeyword", {{ConfigurationBlock::CellDivisionLengthKeyword, "CellDivisionLength", 1},
+                                 {ConfigurationBlock::EndConfigurationKeyword, "EndConfiguration"},
+                                 {ConfigurationBlock::GeneratorKeyword, "Generator"},
+                                 {ConfigurationBlock::InputCoordinatesKeyword, "InputCoordinates", 2},
+                                 {ConfigurationBlock::SizeFactorKeyword, "SizeFactor", 1},
+                                 {ConfigurationBlock::TemperatureKeyword, "Temperature", 1}});
 }
 
 // Parse Configuration block
@@ -60,7 +55,7 @@ bool ConfigurationBlock::parse(LineParser &parser, Dissolve *dissolve, Configura
                 blockDone = true;
                 break;
             case (ConfigurationBlock::GeneratorKeyword):
-                if (!cfg->generator().read(parser, dissolve->coreData()))
+                if (!cfg->generator().deserialise(parser, dissolve->coreData()))
                 {
                     Messenger::error("Failed to read generator procedure for Configuration.\n");
                     error = true;
@@ -78,66 +73,6 @@ bool ConfigurationBlock::parse(LineParser &parser, Dissolve *dissolve, Configura
                 }
                 Messenger::printVerbose("Initial coordinates will be loaded from file '{}' ({})\n",
                                         cfg->inputCoordinates().filename(), cfg->inputCoordinates().format());
-                break;
-            case (ConfigurationBlock::ModuleKeyword):
-                // The argument following the keyword is the module name, so try to create an instance of that
-                // Module
-                module = dissolve->createModuleInstance(parser.argsv(1));
-                if (!module)
-                {
-                    error = true;
-                    break;
-                }
-
-                // Add the new instance to the current Configuration
-                if (cfg->ownModule(module))
-                {
-                    // Add our pointer to the Module's list of associated Configurations
-                    if (!module->addTargetConfiguration(cfg))
-                    {
-                        Messenger::error("Failed to add Configuration '{}' to Module '{}' as a target.\n", cfg->name(),
-                                         module->type());
-                        error = true;
-                    }
-                }
-                else
-                {
-                    Messenger::error("Failed to add Module '{}' to Configuration.\n", parser.argsv(1));
-                    error = true;
-                }
-                if (error)
-                    break;
-
-                // Set unique name, if it was provided - need to check if it has been used elsewhere (in any
-                // Module or instance of it, or any Configuration)
-                if (parser.hasArg(2))
-                {
-                    niceName = DissolveSys::niceName(parser.argsv(2));
-                    Module *existingModule = dissolve->findModuleInstance(niceName);
-                    if (existingModule && (existingModule != module))
-                    {
-                        Messenger::error("A Module with the unique name '{}' already exist.\n", niceName);
-                        error = true;
-                        break;
-                    }
-                    else if (dissolve->findConfigurationByNiceName(niceName))
-                    {
-                        Messenger::error("A Configuration with the unique name '{}' already exist, and so "
-                                         "cannot be used as a Module name.\n",
-                                         niceName);
-                        error = true;
-                        break;
-                    }
-                    else
-                        module->setUniqueName(niceName);
-                }
-
-                // Parse rest of Module block
-                module->setConfigurationLocal(true);
-                if (!ModuleBlock::parse(parser, dissolve, module, cfg->moduleData(), true))
-                    error = true;
-                else if (!module->setUp(*dissolve, dissolve->worldPool()))
-                    error = true;
                 break;
             case (ConfigurationBlock::SizeFactorKeyword):
                 cfg->setRequestedSizeFactor(parser.argd(1));

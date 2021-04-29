@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "procedure/nodes/operatenumberdensitynormalise.h"
 #include "base/lineparser.h"
@@ -11,27 +11,25 @@
 #include "procedure/nodes/select.h"
 
 OperateNumberDensityNormaliseProcedureNode::OperateNumberDensityNormaliseProcedureNode()
-    : OperateProcedureNodeBase(ProcedureNode::OperateNumberDensityNormaliseNode)
+    : OperateProcedureNodeBase(ProcedureNode::NodeType::OperateNumberDensityNormalise)
 {
     // Create keywords - store the pointers to the superclasses for later use
-    keywords_.add("Sites",
-                  new NodeRefListKeyword<const SelectProcedureNode>(this, ProcedureNode::SelectNode, false, selectNodes_),
+    keywords_.add("Control",
+                  new NodeRefListKeyword<const SelectProcedureNode>(this, ProcedureNode::NodeType::Select, false, selectNodes_),
                   "Site", "Site(s) by which to normalise data based on their population");
 }
 
 OperateNumberDensityNormaliseProcedureNode::OperateNumberDensityNormaliseProcedureNode(
     RefList<const SelectProcedureNode> selectNodes)
-    : OperateProcedureNodeBase(ProcedureNode::OperateNumberDensityNormaliseNode)
+    : OperateProcedureNodeBase(ProcedureNode::NodeType::OperateNumberDensityNormalise)
 {
     // Create keywords - store the pointers to the superclasses for later use
-    keywords_.add("Sites",
-                  new NodeRefListKeyword<const SelectProcedureNode>(this, ProcedureNode::SelectNode, false, selectNodes_),
+    keywords_.add("Control",
+                  new NodeRefListKeyword<const SelectProcedureNode>(this, ProcedureNode::NodeType::Select, false, selectNodes_),
                   "Site", "Site(s) by which to normalise data based on their population");
 
     selectNodes_ = selectNodes;
 }
-
-OperateNumberDensityNormaliseProcedureNode::~OperateNumberDensityNormaliseProcedureNode() {}
 
 /*
  * Data Target (implements virtuals in OperateProcedureNodeBase)

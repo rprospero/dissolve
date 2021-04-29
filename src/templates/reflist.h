@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
 #include "base/messenger.h"
+#include <cassert>
 #include <iterator>
 #include <stddef.h>
 
@@ -120,22 +121,15 @@ template <class T> class RefList
     }
     RefListItem<T> *operator[](int index)
     {
-#ifdef CHECKS
-        if ((index < 0) || (index >= nItems_))
-        {
-            Messenger::error("Array index ({}) out of bounds ({} items in RefList)\n", index, nItems_);
-            return nullptr;
-        }
-#endif
-        // Use array() function to return item
+        assert(index >= 0 && index < nItems_);
+
         return array()[index];
     }
     RefListItem<T> begin() const
     {
         if (listHead_ == nullptr)
-        {
             return end();
-        }
+
         return *listHead_;
     }
     const RefListItem<T> end() const

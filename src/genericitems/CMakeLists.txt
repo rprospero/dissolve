@@ -1,18 +1,15 @@
-add_library(genericitems
-  base.cpp
-  item.cpp
+add_library(
+  genericitems
+  deserialisers.cpp
   list.cpp
-  
-  base.h
-  item.h
-  items.h
+  producers.cpp
+  searchers.cpp
+  serialisers.cpp
+  deserialisers.h
   list.h
-  listhelper.h
+  producers.h
+  serialisers.h
 )
 
-include_directories(
-../
-${CMAKE_SOURCE_DIR}
-${CMAKE_BINARY_DIR}
-${CMAKE_BINARY_DIR}/src
-)
+include_directories(genericitems PRIVATE ${PROJECT_SOURCE_DIR}/src)
+target_link_libraries(genericitems PRIVATE base)

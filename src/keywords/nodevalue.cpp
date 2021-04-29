@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "keywords/nodevalue.h"
 #include "base/lineparser.h"
@@ -24,10 +24,13 @@ int NodeValueKeyword::minArguments() const { return 1; }
 int NodeValueKeyword::maxArguments() const { return 1; }
 
 // Parse arguments from supplied LineParser, starting at given argument offset
-bool NodeValueKeyword::read(LineParser &parser, int startArg, CoreData &coreData) { return setValue(parser.argsv(startArg)); }
+bool NodeValueKeyword::read(LineParser &parser, int startArg, const CoreData &coreData)
+{
+    return setValue(parser.argsv(startArg));
+}
 
 // Write keyword data to specified LineParser
-bool NodeValueKeyword::write(LineParser &parser, std::string_view keywordName, std::string_view prefix)
+bool NodeValueKeyword::write(LineParser &parser, std::string_view keywordName, std::string_view prefix) const
 {
     if (!parser.writeLineF("{}{}  '{}'\n", prefix, keywordName, data_.asString()))
         return false;
@@ -42,7 +45,10 @@ bool NodeValueKeyword::write(LineParser &parser, std::string_view keywordName, s
 // Set the value from supplied expression text
 bool NodeValueKeyword::setValue(std::string_view expressionText)
 {
-    if (!data_.set(expressionText, parentNode_->parametersInScope()))
+    // Get any variables currently in scope
+    auto vars = parentNode_->parametersInScope();
+
+    if (!data_.set(expressionText, vars))
         return false;
 
     set_ = true;

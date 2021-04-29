@@ -1,13 +1,16 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "math/filters.h"
 #include "math/data1d.h"
 #include "math/integrator.h"
+#include "templates/algorithms.h"
 #include "templates/array.h"
 
+namespace Filters
+{
 // Perform point-wise convolution of data with the supplied BroadeningFunction
-void Filters::convolve(Data1D &data, const BroadeningFunction &function, bool variableOmega, bool normalise)
+void convolve(Data1D &data, const BroadeningFunction &function, bool variableOmega, bool normalise)
 {
     // Check for no broadening function specified
     if (function.function() == BroadeningFunction::NoFunction)
@@ -22,21 +25,18 @@ void Filters::convolve(Data1D &data, const BroadeningFunction &function, bool va
 
     // Outer loop over existing data points - if variableOmega == true then we use the x value as the omega broadening
     // parameter
-    double xCentre, xBroad, norm;
+    double norm, xBroad;
     if (variableOmega)
-        for (auto n = 0; n < x.size(); ++n)
+        for (auto &&[xCentre, yn] : zip(x, y))
         {
-            // Grab x value as our current xCentre
-            xCentre = x[n];
-
             // Get normalisation for this convolution
             norm = (normalise ? function.discreteKernelNormalisation(xDelta, xCentre) : 1.0);
 
             // Inner loop over whole array
-            for (auto m = 0; m < x.size(); ++m)
+            for (auto &&[xm, newYm] : zip(x, newY))
             {
-                xBroad = x[m] - xCentre;
-                newY[m] += y[n] * function.y(xBroad, xCentre) * norm;
+                xBroad = xm - xCentre;
+                newYm += yn * function.y(xBroad, xCentre) * norm;
             }
         }
     else
@@ -44,15 +44,13 @@ void Filters::convolve(Data1D &data, const BroadeningFunction &function, bool va
         // Get normalisation for this convolution
         norm = (normalise ? function.discreteKernelNormalisation(xDelta) : 1.0);
 
-        for (auto n = 0; n < x.size(); ++n)
+        for (auto &&[xCentre, yn] : zip(x, y))
         {
-            // Grab x value as our current xCentre
-            xCentre = x[n];
-
             // Inner loop over whole array
-            std::transform(
-                x.begin(), x.end(), newY.begin(), newY.begin(),
-                [&y, &function, norm, n, xCentre](auto X, auto NewY) { return NewY + y[n] * function.y(X - xCentre) * norm; });
+            std::transform(x.begin(), x.end(), newY.begin(), newY.begin(),
+                           [yn = yn, &function, norm, xCentre = xCentre](auto X, auto NewY) {
+                               return NewY + yn * function.y(X - xCentre) * norm;
+                           });
         }
     }
 
@@ -60,7 +58,7 @@ void Filters::convolve(Data1D &data, const BroadeningFunction &function, bool va
 }
 
 // Perform convolution of the supplied delta function into the supplied data
-void Filters::convolve(double xCentre, double value, const BroadeningFunction &function, Data1D &dest)
+void convolve(double xCentre, double value, const BroadeningFunction &function, Data1D &dest)
 {
     // Check for no broadening function specified
     if (function.function() == BroadeningFunction::NoFunction)
@@ -71,20 +69,19 @@ void Filters::convolve(double xCentre, double value, const BroadeningFunction &f
     auto &y = dest.values();
 
     // Loop over existing datapoints
-    double xBroad;
     std::transform(x.begin(), x.end(), y.begin(), y.begin(),
                    [&](auto x, auto y) { return y + value * function.y(x - xCentre); });
 }
 
 // Apply Kolmogorov–Zurbenko filter
-void Filters::kolmogorovZurbenko(Data1D &data, int k, int m, bool normalised)
+void kolmogorovZurbenko(Data1D &data, int k, int m, bool normalised)
 {
     for (auto iteration = 0; iteration < k; ++iteration)
         normalised ? normalisedMovingAverage(data, m) : movingAverage(data, m);
 }
 
 // Apply median filter to data
-void Filters::median(Data1D &data, int length)
+void median(Data1D &data, int length)
 {
     // Grab y array
     auto &y = data.values();
@@ -140,7 +137,7 @@ void Filters::median(Data1D &data, int length)
 }
 
 // Perform moving average smoothing
-void Filters::movingAverage(Data1D &data, int avgSize)
+void movingAverage(Data1D &data, int avgSize)
 {
     // Grab y array
     auto &y = data.values();
@@ -181,28 +178,28 @@ void Filters::movingAverage(Data1D &data, int avgSize)
 }
 
 // Perform moving average smoothing, normalising area after smooth
-void Filters::normalisedMovingAverage(Data1D &data, int avgSize)
+void normalisedMovingAverage(Data1D &data, int avgSize)
 {
     // Calculate the original integral
-    double originalIntegral = Integrator::absTrapezoid(data);
+    auto originalIntegral = Integrator::absTrapezoid(data);
 
     // Perform the smoothing
     movingAverage(data, avgSize);
 
     // Calculate the new integral
-    double newIntegral = Integrator::absTrapezoid(data);
+    auto newIntegral = Integrator::absTrapezoid(data);
 
     data *= originalIntegral / newIntegral;
 }
 
 // Subtract average level from data, forming average from supplied x value
-double Filters::subtractAverage(Data1D &data, double xStart)
+double subtractAverage(Data1D &data, double xStart)
 {
     // Grab x and y arrays
     const auto &x = data.xAxis();
     auto &y = data.values();
 
-    double sum = 0.0;
+    auto sum = 0.0;
     auto nPoints = 0;
     for (auto n = 0; n < x.size(); ++n)
     {
@@ -219,7 +216,7 @@ double Filters::subtractAverage(Data1D &data, double xStart)
 }
 
 // Trim supplied data to specified range
-void Filters::trim(Data1D &data, double xMin, double xMax, bool interpolateEnds, double interpolationThreshold)
+void trim(Data1D &data, double xMin, double xMax, bool interpolateEnds, double interpolationThreshold)
 {
     std::vector<double> newX, newY;
     const auto &x = data.xAxis();
@@ -271,17 +268,17 @@ void Filters::trim(Data1D &data, double xMin, double xMax, bool interpolateEnds,
 }
 
 // Trim supplied data to be the same range as the reference data
-void Filters::trim(Data1D &data, const Data1D &ref, bool interpolateEnds, double interpolationThreshold)
+void trim(Data1D &data, const Data1D &ref, bool interpolateEnds, double interpolationThreshold)
 {
     trim(data, ref.xAxis().front(), ref.xAxis().back(), interpolateEnds, interpolationThreshold);
 }
 
 // Convert bin boundaries to centre-bin values
-void Filters::convertBinBoundaries(Data1D &data)
+void convertBinBoundaries(Data1D &data)
 {
     // Assume that input x values are histogram bin left-boundaries, so x(n) = 0.5[x(n)+x(n_1)]
     auto &x = data.xAxis();
-    double a = x[0], b;
+    auto a = x[0], b = 0.0;
     for (auto n = 0; n < data.nValues() - 1; ++n)
     {
         b = x[n + 1];
@@ -292,3 +289,4 @@ void Filters::convertBinBoundaries(Data1D &data)
     // Remove last point
     data.removeLastPoint();
 }
+} // namespace Filters

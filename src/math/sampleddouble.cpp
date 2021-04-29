@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "math/sampleddouble.h"
 #include "base/lineparser.h"
@@ -32,9 +32,6 @@ double SampledDouble::value() const { return mean_; }
 // Return number of samples contributing to averages etc.
 int SampledDouble::count() const { return count_; }
 
-// Return mean (current) value
-double SampledDouble::mean() const { return mean_; }
-
 // Return variance of sampled data
 double SampledDouble::variance() const { return (count_ < 2 ? 0.0 : m2_ / (count_ - 1)); }
 
@@ -45,25 +42,27 @@ double SampledDouble::stDev() const { return (count_ < 2 ? 0.0 : sqrt(m2_ / (cou
  * Operators
  */
 
-// Conversion (double)
 SampledDouble::operator double &() { return mean_; }
+
 SampledDouble::operator const double &() const { return mean_; }
 
-// Assigment
-void SampledDouble::operator=(double x)
+SampledDouble &SampledDouble::operator=(double x)
 {
     // Clear any existing statistics and set new value
     count_ = 1;
     m2_ = 0.0;
     mean_ = x;
+
+    return *this;
 }
 
-// Assigment
-void SampledDouble::operator=(const SampledDouble &source)
+SampledDouble &SampledDouble::operator=(const SampledDouble &source)
 {
     count_ = source.count_;
     mean_ = source.mean_;
     m2_ = source.m2_;
+
+    return *this;
 }
 
 void SampledDouble::operator+=(double x)
@@ -126,14 +125,11 @@ void SampledDouble::operator/=(double x)
 }
 
 /*
- * GenericItemBase Implementations
+ * Serialisation
  */
 
-// Return class name
-std::string_view SampledDouble::itemClassName() { return "SampledDouble"; }
-
 // Read data through specified LineParser
-bool SampledDouble::read(LineParser &parser, CoreData &coreData)
+bool SampledDouble::deserialise(LineParser &parser)
 {
     if (parser.getArgsDelim(LineParser::Defaults) != LineParser::Success)
         return false;
@@ -145,7 +141,7 @@ bool SampledDouble::read(LineParser &parser, CoreData &coreData)
 }
 
 // Write data through specified LineParser
-bool SampledDouble::write(LineParser &parser) { return parser.writeLineF("{}  {}  {}\n", mean_, count_, m2_); }
+bool SampledDouble::serialise(LineParser &parser) const { return parser.writeLineF("{}  {}  {}\n", mean_, count_, m2_); }
 
 /*
  * Parallel Comms
@@ -190,35 +186,6 @@ bool SampledDouble::allSum(ProcessPool &procPool)
         return false;
     if (!procPool.broadcast(m2_))
         return false;
-#endif
-    return true;
-}
-
-// Broadcast data
-bool SampledDouble::broadcast(ProcessPool &procPool, const int root, const CoreData &coreData)
-{
-#ifdef PARALLEL
-    if (!procPool.broadcast(count_, root))
-        return false;
-    if (!procPool.broadcast(mean_, root))
-        return false;
-    if (!procPool.broadcast(m2_, root))
-        return false;
-#endif
-    return true;
-}
-
-// Check equality of all data
-bool SampledDouble::equality(ProcessPool &procPool)
-{
-#ifdef PARALLEL
-    if (!procPool.equality(count_))
-        return Messenger::error("SampledDouble count is not equivalent (process {} has {}).\n", procPool.poolRank(), count_);
-    if (!procPool.equality(mean_))
-        return Messenger::error("SampledDouble mean value is not equivalent (process {} has {:e}).\n", procPool.poolRank(),
-                                mean_);
-    if (!procPool.equality(m2_))
-        return Messenger::error("SampledDouble m2 value is not equivalent (process {} has {:e}).\n", procPool.poolRank(), m2_);
 #endif
     return true;
 }

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "gui/gizmo.h"
 #include "base/sysfunc.h"
@@ -97,4 +97,4 @@ RefList<Gizmo> Gizmo::allThatAccept(const QString &dataType)
 }
 
 // Send data (referenced by its object tag) to the Gizmo
-bool Gizmo::sendData(const QString &dataType, std::string_view objectTag, std::string_view name) { return false; }
+bool Gizmo::sendData(const QString &dataType, std::string_view tag, std::string_view name) { return false; }

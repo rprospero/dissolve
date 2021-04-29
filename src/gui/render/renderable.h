@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -11,11 +11,11 @@
 #include "math/transformer.h"
 
 // Forward Declarations
-class PlottableData;
+class GenericList;
 class RenderableGroup;
 class View;
 
-class Renderable : public ListItem<Renderable>
+class Renderable
 {
     public:
     // Renderable type
@@ -31,7 +31,7 @@ class Renderable : public ListItem<Renderable>
     };
     // Return enum options for RenderableType
     static EnumOptions<RenderableType> renderableTypes();
-    Renderable(RenderableType type, std::string_view objectTag);
+    Renderable(RenderableType type, std::string_view tag);
     virtual ~Renderable();
 
     /*
@@ -54,7 +54,7 @@ class Renderable : public ListItem<Renderable>
     // Set name of Renderable
     void setName(std::string_view name);
     // Return name of Renderable
-    std::string_view name();
+    std::string_view name() const;
     // Return type of Renderable
     RenderableType type() const;
 
@@ -65,7 +65,7 @@ class Renderable : public ListItem<Renderable>
     // Whether access to source data is currently enabled
     static bool sourceDataAccessEnabled_;
     // Identifying tag for source data object
-    std::string objectTag_;
+    std::string tag_;
     // Equation transformer for values
     Transformer valuesTransform_;
     // Coordinate limits of all data (after value transform if enabled)
@@ -79,25 +79,25 @@ class Renderable : public ListItem<Renderable>
     // Data version at which values were last transformed
     int valuesTransformDataVersion_;
 
-    private:
-    // Return whether a valid data source is available (attempting to set it if not)
-    virtual bool validateDataSource() = 0;
-    // Invalidate the current data source
-    virtual void invalidateDataSource() = 0;
-
     protected:
     // Transform data values
-    virtual void transformValues() = 0;
+    virtual void transformValues();
 
     public:
+    // Attempt to set the data source, searching the supplied list for the object
+    virtual void validateDataSource(const GenericList &sourceList);
+    // Invalidate the current data source
+    virtual void invalidateDataSource();
     // Set whether access to source data is currently enabled
     static void setSourceDataAccessEnabled(bool b);
     // Return whether access to source data is currently enabled
     static bool sourceDataAccessEnabled();
     // Return identifying tag for source data object
-    std::string_view objectTag() const;
+    std::string_view tag() const;
+    // Validate all renderables
+    static void validateAll(const GenericList &source);
     // Invalidate renderable data for specified object tag
-    static int invalidate(std::string_view objectTag);
+    static int invalidate(std::string_view tag);
     // Invalidate all renderables
     static void invalidateAll();
     // Return version of data
@@ -138,13 +138,15 @@ class Renderable : public ListItem<Renderable>
      */
     protected:
     // Group that this Renderable is associated to (if any)
-    RenderableGroup *group_;
+    OptionalReferenceWrapper<RenderableGroup> group_;
 
     public:
     // Set group that this Renderable is associated to
-    void setGroup(RenderableGroup *group);
+    void setGroup(RenderableGroup &group);
+    // Remove the renderagle's group association
+    void unSetGroup();
     // Return group that this Renderable is associated to
-    RenderableGroup *group() const;
+    OptionalReferenceWrapper<RenderableGroup> group() const;
 
     /*
      * Basic Style
@@ -170,8 +172,7 @@ class Renderable : public ListItem<Renderable>
     void setColour(StockColours::StockColour stockColour);
     // Return local colour definition for display
     ColourDefinition &colour();
-    // Return local colour definition for display (const)
-    const ColourDefinition &constColour() const;
+    const ColourDefinition &colour() const;
     // Return line style
     LineStyle &lineStyle();
     // Return style version

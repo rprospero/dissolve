@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "gui/widgets/sampleddoublelabel.h"
 #include "math/sampleddouble.h"
@@ -28,6 +28,6 @@ void SampledDoubleLabel::setLabelFonts(int basePointSize)
 // Set label values
 void SampledDoubleLabel::setText(const SampledDouble &sampledDouble)
 {
-    ui_.ValueLabel->setText(QString::number(sampledDouble.mean()));
+    ui_.ValueLabel->setText(QString::number(sampledDouble.value()));
     ui_.StDevLabel->setText(QString::number(sampledDouble.stDev()));
 }

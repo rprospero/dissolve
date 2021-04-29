@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
 #include "classes/atomtypelist.h"
 #include "classes/isotopologues.h"
-#include "genericitems/base.h"
 #include "templates/array2d.h"
 #include "templates/list.h"
 #include <vector>
@@ -14,7 +13,7 @@
 /* none */
 
 // Neutron Weights Container
-class NeutronWeights : public GenericItemBase
+class NeutronWeights
 {
     public:
     NeutronWeights();
@@ -32,9 +31,10 @@ class NeutronWeights : public GenericItemBase
     // Clear contents
     void clear();
     // Add Species Isotopologue to the relevant mixture
-    void addIsotopologue(Species *sp, int speciesPopulation, const Isotopologue *iso, double isotopologueRelativePopulation);
+    void addIsotopologue(const Species *sp, int speciesPopulation, const Isotopologue *iso,
+                         double isotopologueRelativePopulation);
     // Return whether an Isotopologues definition exists for the provided Species
-    bool containsIsotopologues(Species *sp) const;
+    bool containsIsotopologues(const Species *sp) const;
     // Print atomtype / weights information
     void print() const;
 
@@ -92,22 +92,11 @@ class NeutronWeights : public GenericItemBase
     bool isValid() const;
 
     /*
-     * GenericItemBase Implementations
+     * Serialisation
      */
     public:
-    // Return class name
-    static std::string_view itemClassName();
     // Read data through specified LineParser
-    bool read(LineParser &parser, CoreData &coreData);
+    bool deserialise(LineParser &parser, const CoreData &coreData);
     // Write data through specified LineParser
-    bool write(LineParser &parser);
-
-    /*
-     * Parallel Comms
-     */
-    public:
-    // Broadcast item contents
-    bool broadcast(ProcessPool &procPool, const int root, const CoreData &coreData);
-    // Check item equality
-    bool equality(ProcessPool &procPool);
+    bool serialise(LineParser &parser) const;
 };

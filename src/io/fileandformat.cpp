@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "io/fileandformat.h"
 #include "base/lineparser.h"
@@ -32,7 +32,7 @@ void FileAndFormat::setFormatIndex(int id) { format_ = id; }
 int FileAndFormat::formatIndex() const { return format_; }
 
 // Return format string
-std::string_view FileAndFormat::format() const
+std::string FileAndFormat::format() const
 {
     if ((format_ < 0) || (format_ >= nFormats()))
         return "???";
@@ -41,7 +41,7 @@ std::string_view FileAndFormat::format() const
 }
 
 // Return nice format string
-std::string_view FileAndFormat::description() const
+std::string FileAndFormat::description() const
 {
     if ((format_ < 0) || (format_ >= nFormats()))
         return "???";
@@ -103,7 +103,7 @@ KeywordList &FileAndFormat::keywords() { return keywords_; }
  */
 
 // Read format / filename from specified parser
-bool FileAndFormat::read(LineParser &parser, int startArg, std::string_view endKeyword, CoreData &coreData)
+bool FileAndFormat::read(LineParser &parser, int startArg, std::string_view endKeyword, const CoreData &coreData)
 {
     // Convert first argument to format type
     format_ = format(parser.argsv(startArg));
@@ -151,13 +151,13 @@ bool FileAndFormat::read(LineParser &parser, int startArg, std::string_view endK
 }
 
 // Write format / filename to specified parser
-bool FileAndFormat::writeFilenameAndFormat(LineParser &parser, std::string_view prefix)
+bool FileAndFormat::writeFilenameAndFormat(LineParser &parser, std::string_view prefix) const
 {
     return parser.writeLineF("{}{}  '{}'\n", prefix, formatKeyword(format_), filename_);
 }
 
 // Write options and end block
-bool FileAndFormat::writeBlock(LineParser &parser, std::string_view prefix)
+bool FileAndFormat::writeBlock(LineParser &parser, std::string_view prefix) const
 {
     return keywords_.write(parser, fmt::format("{}  ", prefix));
 }

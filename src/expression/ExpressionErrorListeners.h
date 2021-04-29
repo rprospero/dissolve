@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -7,7 +7,7 @@
 #include <exception>
 
 // Forward Declarations
-class ExpressionNEW;
+class Expression;
 
 namespace ExpressionExceptions
 {
@@ -44,11 +44,11 @@ class ExpressionInternalErrorException : public std::exception
 class ExpressionLexerErrorListener : public antlr4::BaseErrorListener
 {
     public:
-    ExpressionLexerErrorListener(const ExpressionNEW &expr);
+    ExpressionLexerErrorListener(const Expression &expr);
 
     private:
     // Expression being constructed
-    const ExpressionNEW &expression_;
+    const Expression &expression_;
 
     /*
      * BaseErrorListener Overrides
@@ -62,11 +62,11 @@ class ExpressionLexerErrorListener : public antlr4::BaseErrorListener
 class ExpressionParserErrorListener : public antlr4::BaseErrorListener
 {
     public:
-    ExpressionParserErrorListener(const ExpressionNEW &expr);
+    ExpressionParserErrorListener(const Expression &expr);
 
     private:
     // Expression being constructed
-    const ExpressionNEW &expression_;
+    const Expression &expression_;
 
     /*
      * BaseErrorListener Overrides

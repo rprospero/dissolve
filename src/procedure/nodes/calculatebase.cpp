@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "procedure/nodes/calculatebase.h"
 #include "base/lineparser.h"
@@ -22,8 +22,6 @@ CalculateProcedureNodeBase::CalculateProcedureNodeBase(ProcedureNode::NodeType n
     value_ = 0.0;
 }
 
-CalculateProcedureNodeBase::~CalculateProcedureNodeBase() {}
-
 /*
  * Identity
  */
@@ -39,18 +37,7 @@ bool CalculateProcedureNodeBase::isContextRelevant(ProcedureNode::NodeContext co
  */
 
 // Return last calculated value of observable
-double CalculateProcedureNodeBase::value(int id) const
-{
-#ifdef CHECKS
-    if ((id < 0) || (id >= dimensionality()))
-    {
-        Messenger::error("Observable value index {} is out of range for this observable which has a dimensionality of {}.\n",
-                         id, dimensionality());
-        return 0.0;
-    }
-#endif
-    return value_.get(id);
-}
+double CalculateProcedureNodeBase::value(int id) const { return value_.get(id); }
 
 // Return last calculated value of observable
 Vec3<double> CalculateProcedureNodeBase::values() const { return value_; }

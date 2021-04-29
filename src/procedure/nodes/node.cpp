@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "procedure/nodes/node.h"
 #include "base/lineparser.h"
@@ -12,52 +12,44 @@
 // Return enum option info for NodeType
 EnumOptions<ProcedureNode::NodeType> ProcedureNode::nodeTypes()
 {
-    static EnumOptionsList NodeTypeKeywords =
-        EnumOptionsList() << EnumOption(ProcedureNode::AddSpeciesNode, "AddSpecies")
-                          << EnumOption(ProcedureNode::BoxNode, "Box")
-                          << EnumOption(ProcedureNode::CalculateAngleNode, "CalculateAngle")
-                          << EnumOption(ProcedureNode::CalculateAxisAngleNode, "CalculateAxisAngle")
-                          << EnumOption(ProcedureNode::CalculateDistanceNode, "CalculateDistance")
-                          << EnumOption(ProcedureNode::CalculateBaseNode, "Calculate(Any)")
-                          << EnumOption(ProcedureNode::CalculateVectorNode, "CalculateVector")
-                          << EnumOption(ProcedureNode::Collect1DNode, "Collect1D")
-                          << EnumOption(ProcedureNode::Collect2DNode, "Collect2D")
-                          << EnumOption(ProcedureNode::Collect3DNode, "Collect3D")
-                          << EnumOption(ProcedureNode::DynamicSiteNode, "DynamicSite")
-                          << EnumOption(ProcedureNode::ExcludeNode, "Exclude") << EnumOption(ProcedureNode::Fit1DNode, "Fit1D")
-                          << EnumOption(ProcedureNode::Integrate1DNode, "Integrate1D")
-                          << EnumOption(ProcedureNode::OperateBaseNode, "Operate(Any)")
-                          << EnumOption(ProcedureNode::OperateDivideNode, "OperateDivide")
-                          << EnumOption(ProcedureNode::OperateExpressionNode, "OperateExpression")
-                          << EnumOption(ProcedureNode::OperateMultiplyNode, "OperateMultiply")
-                          << EnumOption(ProcedureNode::OperateNormaliseNode, "OperateNormalise")
-                          << EnumOption(ProcedureNode::OperateNumberDensityNormaliseNode, "OperateNumberDensityNormalise")
-                          << EnumOption(ProcedureNode::OperateSitePopulationNormaliseNode, "OperateSitePopulationNormalise")
-                          << EnumOption(ProcedureNode::OperateSphericalShellNormaliseNode, "OperateSphericalShellNormalise")
-                          << EnumOption(ProcedureNode::ParametersNode, "Parameters")
-                          << EnumOption(ProcedureNode::Process1DNode, "Process1D")
-                          << EnumOption(ProcedureNode::Process2DNode, "Process2D")
-                          << EnumOption(ProcedureNode::Process3DNode, "Process3D")
-                          << EnumOption(ProcedureNode::SelectNode, "Select")
-                          << EnumOption(ProcedureNode::SequenceNode, "Sequence")
-                          << EnumOption(ProcedureNode::Sum1DNode, "Sum1D");
-
-    static EnumOptions<ProcedureNode::NodeType> options("NodeType", NodeTypeKeywords, ProcedureNode::nNodeTypes);
-
-    return options;
+    return EnumOptions<ProcedureNode::NodeType>(
+        "NodeType", {{ProcedureNode::NodeType::AddSpecies, "AddSpecies"},
+                     {ProcedureNode::NodeType::Box, "Box"},
+                     {ProcedureNode::NodeType::CalculateAngle, "CalculateAngle"},
+                     {ProcedureNode::NodeType::CalculateAxisAngle, "CalculateAxisAngle"},
+                     {ProcedureNode::NodeType::CalculateDistance, "CalculateDistance"},
+                     {ProcedureNode::NodeType::CalculateBase, "Calculate(Any)"},
+                     {ProcedureNode::NodeType::CalculateVector, "CalculateVector"},
+                     {ProcedureNode::NodeType::Collect1D, "Collect1D"},
+                     {ProcedureNode::NodeType::Collect2D, "Collect2D"},
+                     {ProcedureNode::NodeType::Collect3D, "Collect3D"},
+                     {ProcedureNode::NodeType::DynamicSite, "DynamicSite"},
+                     {ProcedureNode::NodeType::Fit1D, "Fit1D"},
+                     {ProcedureNode::NodeType::Integrate1D, "Integrate1D"},
+                     {ProcedureNode::NodeType::OperateBase, "Operate(Any)"},
+                     {ProcedureNode::NodeType::OperateDivide, "OperateDivide"},
+                     {ProcedureNode::NodeType::OperateExpression, "OperateExpression"},
+                     {ProcedureNode::NodeType::OperateMultiply, "OperateMultiply"},
+                     {ProcedureNode::NodeType::OperateNormalise, "OperateNormalise"},
+                     {ProcedureNode::NodeType::OperateNumberDensityNormalise, "OperateNumberDensityNormalise"},
+                     {ProcedureNode::NodeType::OperateSitePopulationNormalise, "OperateSitePopulationNormalise"},
+                     {ProcedureNode::NodeType::OperateSphericalShellNormalise, "OperateSphericalShellNormalise"},
+                     {ProcedureNode::NodeType::Parameters, "Parameters"},
+                     {ProcedureNode::NodeType::Process1D, "Process1D"},
+                     {ProcedureNode::NodeType::Process2D, "Process2D"},
+                     {ProcedureNode::NodeType::Process3D, "Process3D"},
+                     {ProcedureNode::NodeType::Select, "Select"},
+                     {ProcedureNode::NodeType::Sequence, "Sequence"},
+                     {ProcedureNode::NodeType::Sum1D, "Sum1D"}});
 }
 
 // Return enum option info for NodeContext
 EnumOptions<ProcedureNode::NodeContext> ProcedureNode::nodeContexts()
 {
-    static EnumOptionsList NodeContextKeywords = EnumOptionsList() << EnumOption(ProcedureNode::NoContext, "None")
-                                                                   << EnumOption(ProcedureNode::AnalysisContext, "Analysis")
-                                                                   << EnumOption(ProcedureNode::GenerationContext, "Generation")
-                                                                   << EnumOption(ProcedureNode::OperateContext, "Operate");
-
-    static EnumOptions<ProcedureNode::NodeContext> options("NodeContext", NodeContextKeywords, ProcedureNode::NoContext);
-
-    return options;
+    return EnumOptions<ProcedureNode::NodeContext>("NodeContext", {{ProcedureNode::NoContext, "None"},
+                                                                   {ProcedureNode::AnalysisContext, "Analysis"},
+                                                                   {ProcedureNode::GenerationContext, "Generation"},
+                                                                   {ProcedureNode::OperateContext, "Operate"}});
 }
 
 ProcedureNode::ProcedureNode(ProcedureNode::NodeType nodeType) : ListItem<ProcedureNode>()
@@ -70,8 +62,6 @@ ProcedureNode::ProcedureNode(ProcedureNode::NodeType nodeType) : ListItem<Proced
     name_ = fmt::format("Node{:04d}", ++nodeCount);
 }
 
-ProcedureNode::~ProcedureNode() {}
-
 /*
  * Identity
  */
@@ -83,10 +73,10 @@ ProcedureNode::NodeType ProcedureNode::type() const { return type_; }
 bool ProcedureNode::isType(ProcedureNode::NodeType thisType) const
 {
     // Handle derived node types
-    if (thisType == ProcedureNode::CalculateBaseNode)
-        return ((type_ > ProcedureNode::BEGIN_CalculateNodes) && (type_ < ProcedureNode::END_CalculateNodes));
-    else if (thisType == ProcedureNode::OperateBaseNode)
-        return ((type_ > ProcedureNode::BEGIN_OperateNodes) && (type_ < ProcedureNode::END_OperateNodes));
+    if (thisType == ProcedureNode::NodeType::CalculateBase)
+        return ((type_ > ProcedureNode::NodeType::BEGINCalculateNodes) && (type_ < ProcedureNode::NodeType::ENDCalculateNodes));
+    else if (thisType == ProcedureNode::NodeType::OperateBase)
+        return ((type_ > ProcedureNode::NodeType::BEGINOperateNodes) && (type_ < ProcedureNode::NodeType::ENDOperateNodes));
 
     return (thisType == type_);
 }
@@ -145,30 +135,31 @@ ProcedureNode::NodeContext ProcedureNode::scopeContext() const
 }
 
 // Return named node if it is currently in scope, and optionally matches the type given
-ProcedureNode *ProcedureNode::nodeInScope(std::string_view name, ProcedureNode::NodeType nt)
+ProcedureNode *ProcedureNode::nodeInScope(std::string_view name, std::optional<ProcedureNode::NodeType> optNodeType)
 {
     if (!scope_)
         return nullptr;
 
-    return scope_->nodeInScope(this, name, nt);
+    return scope_->nodeInScope(this, name, optNodeType);
 }
 
-// Return list of nodes of specified type present in this node's scope
-RefList<ProcedureNode> ProcedureNode::nodesInScope(ProcedureNode::NodeType nt)
+// Return list of nodes of optional specified type present in this node's scope
+RefList<ProcedureNode> ProcedureNode::nodesInScope(std::optional<ProcedureNode::NodeType> optNodeType)
 {
     if (!scope_)
         return RefList<ProcedureNode>();
 
-    return scope_->nodesInScope(this, nt);
+    return scope_->nodesInScope(this, optNodeType);
 }
 
 // Return named node if it exists anywhere in the same Procedure, and optionally matches the type given
-ProcedureNode *ProcedureNode::nodeExists(std::string_view name, ProcedureNode *excludeNode, ProcedureNode::NodeType nt) const
+ProcedureNode *ProcedureNode::nodeExists(std::string_view name, ProcedureNode *excludeNode,
+                                         std::optional<ProcedureNode::NodeType> optNodeType) const
 {
     if (!scope_)
         return nullptr;
 
-    return scope_->nodeExists(name, excludeNode, nt);
+    return scope_->nodeExists(name, excludeNode, optNodeType);
 }
 
 // Return list of nodes of specified type present in the Procedure
@@ -180,8 +171,9 @@ RefList<ProcedureNode> ProcedureNode::nodes(ProcedureNode::NodeType nt)
     return scope_->nodes(this, nt);
 }
 
-// Return whether the named parameter is currently in scope
-ExpressionVariable *ProcedureNode::parameterInScope(std::string_view name, ExpressionVariable *excludeParameter)
+// Return the named parameter if it is currently in scope
+std::shared_ptr<ExpressionVariable> ProcedureNode::parameterInScope(std::string_view name,
+                                                                    std::shared_ptr<ExpressionVariable> excludeParameter)
 {
     if (!scope_)
         return nullptr;
@@ -189,8 +181,9 @@ ExpressionVariable *ProcedureNode::parameterInScope(std::string_view name, Expre
     return scope_->parameterInScope(this, name, excludeParameter);
 }
 
-// Return whether the named parameter exists anywhere in the same Procedure
-ExpressionVariable *ProcedureNode::parameterExists(std::string_view name, ExpressionVariable *excludeParameter) const
+// Return the named parameter if it exists anywhere in the same Procedure
+std::shared_ptr<ExpressionVariable> ProcedureNode::parameterExists(std::string_view name,
+                                                                   std::shared_ptr<ExpressionVariable> excludeParameter) const
 {
     if (!scope_)
         return nullptr;
@@ -199,10 +192,10 @@ ExpressionVariable *ProcedureNode::parameterExists(std::string_view name, Expres
 }
 
 // Create and return reference list of parameters in scope
-RefList<ExpressionVariable> ProcedureNode::parametersInScope()
+std::vector<std::shared_ptr<ExpressionVariable>> ProcedureNode::parametersInScope()
 {
     if (!scope_)
-        return RefList<ExpressionVariable>();
+        return {};
 
     return scope_->parametersInScope(this);
 }
@@ -222,10 +215,17 @@ SequenceProcedureNode *ProcedureNode::branch() { return nullptr; }
  */
 
 // Return whether this node has the named parameter specified
-ExpressionVariable *ProcedureNode::hasParameter(std::string_view name, ExpressionVariable *excludeParameter) { return nullptr; }
+std::shared_ptr<ExpressionVariable> ProcedureNode::hasParameter(std::string_view name,
+                                                                std::shared_ptr<ExpressionVariable> excludeParameter)
+{
+    return nullptr;
+}
 
 // Return references to all parameters for this node
-RefList<ExpressionVariable> ProcedureNode::parameterReferences() const { return RefList<ExpressionVariable>(); }
+OptionalReferenceWrapper<const std::vector<std::shared_ptr<ExpressionVariable>>> ProcedureNode::parameters() const
+{
+    return std::nullopt;
+}
 
 /*
  * Execution
@@ -233,6 +233,12 @@ RefList<ExpressionVariable> ProcedureNode::parameterReferences() const { return 
 
 // Prepare any necessary data, ready for execution
 bool ProcedureNode::prepare(Configuration *cfg, std::string_view prefix, GenericList &targetList) { return true; }
+
+// Execute node, targetting the supplied Configuration
+bool ProcedureNode::execute(ProcessPool &procPool, Configuration *cfg, std::string_view prefix, GenericList &targetList)
+{
+    return true;
+}
 
 // Finalise any necessary data after execution
 bool ProcedureNode::finalise(ProcessPool &procPool, Configuration *cfg, std::string_view prefix, GenericList &targetList)
@@ -245,7 +251,7 @@ bool ProcedureNode::finalise(ProcessPool &procPool, Configuration *cfg, std::str
  */
 
 // Read node data from specified LineParser
-bool ProcedureNode::read(LineParser &parser, CoreData &coreData)
+bool ProcedureNode::deserialise(LineParser &parser, const CoreData &coreData)
 {
     // Read until we encounter the ending keyword (derived from the node type), or we fail for some reason
     while (!parser.eofOrBlank())

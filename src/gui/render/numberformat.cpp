@@ -1,42 +1,31 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "gui/render/numberformat.h"
 #include <QString>
 #include <math/doubleexp.h>
-#include <stdio.h>
 
-NumberFormat::NumberFormat()
+NumberFormat::NumberFormat(FormatType type, int nDecimals)
+    : type_(type), nDecimals_(nDecimals), forcePrecedingPlus_(false), useUpperCaseExponent_(true), useENotation_(true)
 {
-    type_ = NumberFormat::DecimalFormat;
-    nDecimals_ = 1;
-    forcePrecedingPlus_ = false;
-    useUpperCaseExponent_ = true;
-    useENotation_ = true;
 }
 
-NumberFormat::~NumberFormat() {}
-
 // Return enum options for FormatType
-EnumOptions<NumberFormat::FormatType> &NumberFormat::formatTypes()
+EnumOptions<NumberFormat::FormatType> NumberFormat::formatTypes()
 {
-    static EnumOptionsList FormatTypeOptions = EnumOptionsList() << EnumOption(NumberFormat::DecimalFormat, "Decimal")
-                                                                 << EnumOption(NumberFormat::IntegerFormat, "Integer")
-                                                                 << EnumOption(NumberFormat::ScientificFormat, "Scientific");
-
-    static EnumOptions<NumberFormat::FormatType> options("FormatType", FormatTypeOptions);
-
-    return options;
+    return EnumOptions<NumberFormat::FormatType>("FormatType", {{NumberFormat::FormatType::Decimal, "Decimal"},
+                                                                {NumberFormat::FormatType::Integer, "Integer"},
+                                                                {NumberFormat::FormatType::Scientific, "Scientific"}});
 }
 
 /*
  * Definition
  */
 
-// Set ndex type
+// Set format type
 void NumberFormat::setType(NumberFormat::FormatType type) { type_ = type; }
 
-// Return X index type
+// Return format type
 NumberFormat::FormatType NumberFormat::type() { return type_; }
 
 // Set number of decimals to use
@@ -81,13 +70,13 @@ QString NumberFormat::format(double number)
     // Construct rest of string
     switch (type_)
     {
-        case (NumberFormat::IntegerFormat):
+        case (NumberFormat::FormatType::Integer):
             result += QString::number(int(number));
             break;
-        case (NumberFormat::DecimalFormat):
+        case (NumberFormat::FormatType::Decimal):
             result += QString::number(number, 'f', nDecimals_);
             break;
-        case (NumberFormat::ScientificFormat):
+        case (NumberFormat::FormatType::Scientific):
             if (!useENotation_)
                 result += QString::number(x.mantissa(), 'f', nDecimals_) + QChar(0x00D7) + "10\\sup{" +
                           QString::number(x.exponent()) + "}";

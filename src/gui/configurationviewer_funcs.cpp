@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "classes/configuration.h"
 #include "data/elements.h"
@@ -12,7 +12,8 @@ ConfigurationViewer::ConfigurationViewer(QWidget *parent) : BaseViewer(parent)
     configuration_ = nullptr;
 
     // Interaction
-    setInteractionMode(ConfigurationViewer::DefaultInteraction);
+    setInteractionMode(ConfigurationViewer::InteractionMode::Default);
+    transientInteractionMode_ = TransientInteractionMode::None;
 
     // Set up the view
     view_.setViewType(View::NormalView);
@@ -32,9 +33,9 @@ ConfigurationViewer::~ConfigurationViewer() {}
  */
 
 // Set target Configuration
-void ConfigurationViewer::setConfiguration(Configuration *sp)
+void ConfigurationViewer::setConfiguration(Configuration *cfg)
 {
-    configuration_ = sp;
+    configuration_ = cfg;
     configurationRenderable_ = nullptr;
 
     // Clear Renderables
@@ -43,8 +44,8 @@ void ConfigurationViewer::setConfiguration(Configuration *sp)
     // Create a new Renderable for the supplied Configuration
     if (configuration_)
     {
-        configurationRenderable_ = new RenderableConfiguration(configuration_, configuration_->objectTag());
-        ownRenderable(configurationRenderable_);
+        configurationRenderable_ = std::make_shared<RenderableConfiguration>(configuration_);
+        addRenderable(configurationRenderable_);
         view_.showAllData();
     }
 }

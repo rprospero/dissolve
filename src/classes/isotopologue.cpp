@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "classes/isotopologue.h"
-#include "base/processpool.h"
 #include "classes/atomtype.h"
 #include "classes/species.h"
 #include "data/isotopes.h"
@@ -44,7 +43,7 @@ void Isotopologue::update()
         auto it = std::find_if(isotopes_.begin(), isotopes_.end(),
                                [&atd](auto value) { return std::get<0>(value) == atd.atomType(); });
         if (it == isotopes_.end())
-            isotopes_.emplace_back(atd.atomType(), Isotopes::naturalIsotope(atd.atomType()->element()));
+            isotopes_.emplace_back(atd.atomType(), Isotopes::naturalIsotope(atd.atomType()->Z()));
     }
 }
 
@@ -81,7 +80,7 @@ Isotope *Isotopologue::atomTypeIsotope(std::shared_ptr<AtomType> at) const
 {
     auto it = std::find_if(isotopes_.begin(), isotopes_.end(), [&at](auto value) { return std::get<0>(value) == at; });
     if (it == isotopes_.end())
-        return Isotopes::naturalIsotope(at->element());
+        return Isotopes::naturalIsotope(at->Z());
 
     return std::get<1>(*it);
 }

@@ -1,34 +1,22 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "classes/changedata.h"
 #include "base/messenger.h"
 #include "classes/atom.h"
 #include "classes/cell.h"
 
-ChangeData::ChangeData() : ListItem<ChangeData>()
-{
-    atom_ = nullptr;
-    cell_ = nullptr;
-    moved_ = false;
-}
-
-ChangeData::~ChangeData() {}
+ChangeData::ChangeData() : atom_(nullptr), moved_(false), cell_(nullptr) {}
 
 /*
  * Target Data
  */
 
 // Set target atom
-void ChangeData::setAtom(Atom *i)
+void ChangeData::setAtom(std::shared_ptr<Atom> i)
 {
-#ifdef CHECKS
-    if (i == nullptr)
-    {
-        Messenger::print("NULL_POINTER - nullptr passed to ChangeData::setAtom().\n");
-        return;
-    }
-#endif
+    assert(i != nullptr);
+
     atom_ = i;
     moved_ = false;
     r_ = atom_->r();
@@ -36,7 +24,7 @@ void ChangeData::setAtom(Atom *i)
 }
 
 // Return target Atom
-Atom *ChangeData::atom() { return atom_; }
+std::shared_ptr<Atom> ChangeData::atom() { return atom_; }
 
 // Return array index of stored Atom
 int ChangeData::atomArrayIndex() const { return atom_->arrayIndex(); }

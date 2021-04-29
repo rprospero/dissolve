@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -7,11 +7,10 @@
 class Data1D;
 
 // Regression
-class Regression
+namespace Regression
 {
-    public:
-    // Return gradient of last n points
-    static double linear(const Data1D &data, int nSamples);
-    // Return gradient of last n points, along with average y value
-    static double linear(const Data1D &data, int nSamples, double &yBar);
-};
+// Return gradient of last n points
+double linear(const Data1D &data, int nSamples);
+// Return gradient of last n points, along with average y value
+double linear(const Data1D &data, int nSamples, double &yBar);
+}; // namespace Regression

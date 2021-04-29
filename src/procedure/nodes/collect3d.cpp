@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "procedure/nodes/collect3d.h"
 #include "base/lineparser.h"
 #include "base/sysfunc.h"
 #include "classes/configuration.h"
-#include "genericitems/listhelper.h"
 #include "keywords/types.h"
 #include "math/data3d.h"
 #include "procedure/nodes/calculatebase.h"
@@ -15,32 +14,32 @@ Collect3DProcedureNode::Collect3DProcedureNode(CalculateProcedureNodeBase *xObse
                                                CalculateProcedureNodeBase *zObservable, double xMin, double xMax,
                                                double xBinWidth, double yMin, double yMax, double yBinWidth, double zMin,
                                                double zMax, double zBinWidth)
-    : ProcedureNode(ProcedureNode::Collect3DNode)
+    : ProcedureNode(ProcedureNode::NodeType::Collect3D)
 {
-    keywords_.add(
-        "Target",
-        new NodeAndIntegerKeyword<CalculateProcedureNodeBase>(this, ProcedureNode::CalculateBaseNode, true, xObservable, 0),
-        "QuantityX", "Calculated observable to collect for x axis");
-    keywords_.add(
-        "Target",
-        new NodeAndIntegerKeyword<CalculateProcedureNodeBase>(this, ProcedureNode::CalculateBaseNode, true, yObservable, 0),
-        "QuantityY", "Calculated observable to collect for y axis");
-    keywords_.add(
-        "Target",
-        new NodeAndIntegerKeyword<CalculateProcedureNodeBase>(this, ProcedureNode::CalculateBaseNode, true, zObservable, 0),
-        "QuantityZ", "Calculated observable to collect for z axis");
-    keywords_.add("Target",
+    keywords_.add("Control",
+                  new NodeAndIntegerKeyword<CalculateProcedureNodeBase>(this, ProcedureNode::NodeType::CalculateBase, true,
+                                                                        xObservable, 0),
+                  "QuantityX", "Calculated observable to collect for x axis");
+    keywords_.add("Control",
+                  new NodeAndIntegerKeyword<CalculateProcedureNodeBase>(this, ProcedureNode::NodeType::CalculateBase, true,
+                                                                        yObservable, 0),
+                  "QuantityY", "Calculated observable to collect for y axis");
+    keywords_.add("Control",
+                  new NodeAndIntegerKeyword<CalculateProcedureNodeBase>(this, ProcedureNode::NodeType::CalculateBase, true,
+                                                                        zObservable, 0),
+                  "QuantityZ", "Calculated observable to collect for z axis");
+    keywords_.add("Control",
                   new Vec3DoubleKeyword(Vec3<double>(xMin, xMax, xBinWidth), Vec3<double>(-1.0e6, -1.0e6, 0.001),
                                         Vec3Labels::MinMaxDeltaLabels),
-                  "RangeX", "Range of calculation for the specified x observable");
-    keywords_.add("Target",
+                  "RangeX", "Range and binwidth of the x-axis of the histogram");
+    keywords_.add("Control",
                   new Vec3DoubleKeyword(Vec3<double>(yMin, yMax, yBinWidth), Vec3<double>(-1.0e6, -1.0e6, 0.001),
                                         Vec3Labels::MinMaxDeltaLabels),
-                  "RangeY", "Range of calculation for the specified y observable");
-    keywords_.add("Target",
+                  "RangeY", "Range and binwidth of the y-axis of the histogram");
+    keywords_.add("Control",
                   new Vec3DoubleKeyword(Vec3<double>(zMin, zMax, zBinWidth), Vec3<double>(-1.0e6, -1.0e6, 0.0015),
                                         Vec3Labels::MinMaxDeltaLabels),
-                  "RangeZ", "Range of calculation for the specified z observable");
+                  "RangeZ", "Range and binwidth of the z-axis of the histogram");
     keywords_.add("HIDDEN", new NodeBranchKeyword(this, &subCollectBranch_, ProcedureNode::AnalysisContext), "SubCollect",
                   "Branch which runs if the target quantities were binned successfully");
 
@@ -50,29 +49,29 @@ Collect3DProcedureNode::Collect3DProcedureNode(CalculateProcedureNodeBase *xObse
 Collect3DProcedureNode::Collect3DProcedureNode(CalculateProcedureNodeBase *xyzObservable, double xMin, double xMax,
                                                double xBinWidth, double yMin, double yMax, double yBinWidth, double zMin,
                                                double zMax, double zBinWidth)
-    : ProcedureNode(ProcedureNode::Collect3DNode)
+    : ProcedureNode(ProcedureNode::NodeType::Collect3D)
 {
-    keywords_.add(
-        "Target",
-        new NodeAndIntegerKeyword<CalculateProcedureNodeBase>(this, ProcedureNode::CalculateBaseNode, true, xyzObservable, 0),
-        "QuantityX", "Calculated observable to collect for x axis");
-    keywords_.add(
-        "Target",
-        new NodeAndIntegerKeyword<CalculateProcedureNodeBase>(this, ProcedureNode::CalculateBaseNode, true, xyzObservable, 1),
-        "QuantityY", "Calculated observable to collect for y axis");
-    keywords_.add(
-        "Target",
-        new NodeAndIntegerKeyword<CalculateProcedureNodeBase>(this, ProcedureNode::CalculateBaseNode, true, xyzObservable, 2),
-        "QuantityZ", "Calculated observable to collect for z axis");
-    keywords_.add("Target",
+    keywords_.add("Control",
+                  new NodeAndIntegerKeyword<CalculateProcedureNodeBase>(this, ProcedureNode::NodeType::CalculateBase, true,
+                                                                        xyzObservable, 0),
+                  "QuantityX", "Calculated observable to collect for x axis");
+    keywords_.add("Control",
+                  new NodeAndIntegerKeyword<CalculateProcedureNodeBase>(this, ProcedureNode::NodeType::CalculateBase, true,
+                                                                        xyzObservable, 1),
+                  "QuantityY", "Calculated observable to collect for y axis");
+    keywords_.add("Control",
+                  new NodeAndIntegerKeyword<CalculateProcedureNodeBase>(this, ProcedureNode::NodeType::CalculateBase, true,
+                                                                        xyzObservable, 2),
+                  "QuantityZ", "Calculated observable to collect for z axis");
+    keywords_.add("Control",
                   new Vec3DoubleKeyword(Vec3<double>(xMin, xMax, xBinWidth), Vec3<double>(-1.0e6, -1.0e6, 0.001),
                                         Vec3Labels::MinMaxDeltaLabels),
                   "RangeX", "Range of calculation for the specified x observable");
-    keywords_.add("Target",
+    keywords_.add("Control",
                   new Vec3DoubleKeyword(Vec3<double>(yMin, yMax, yBinWidth), Vec3<double>(-1.0e6, -1.0e6, 0.001),
                                         Vec3Labels::MinMaxDeltaLabels),
                   "RangeY", "Range of calculation for the specified y observable");
-    keywords_.add("Target",
+    keywords_.add("Control",
                   new Vec3DoubleKeyword(Vec3<double>(zMin, zMax, zBinWidth), Vec3<double>(-1.0e6, -1.0e6, 0.001),
                                         Vec3Labels::MinMaxDeltaLabels),
                   "RangeZ", "Range of calculation for the specified z observable");
@@ -82,8 +81,6 @@ Collect3DProcedureNode::Collect3DProcedureNode(CalculateProcedureNodeBase *xyzOb
     // Initialise branch
     subCollectBranch_ = nullptr;
 }
-
-Collect3DProcedureNode::~Collect3DProcedureNode() {}
 
 /*
  * Identity
@@ -102,14 +99,9 @@ bool Collect3DProcedureNode::isContextRelevant(ProcedureNode::NodeContext contex
 // Return accumulated data
 const Data3D &Collect3DProcedureNode::accumulatedData() const
 {
-    if (!histogram_)
-    {
-        Messenger::error("No histogram pointer set in Collect3DProcedureNode, so no accumulated data to return.\n");
-        static Data3D dummy;
-        return dummy;
-    }
+    assert(histogram_);
 
-    return histogram_->accumulatedData();
+    return histogram_->get().accumulatedData();
 }
 
 // Return x range minimum
@@ -166,10 +158,8 @@ bool Collect3DProcedureNode::prepare(Configuration *cfg, std::string_view prefix
 {
     // Construct our data name, and search for it in the supplied list
     std::string dataName = fmt::format("{}_{}_Bins", name(), cfg->niceName());
-    bool created;
-    auto &target =
-        GenericListHelper<Histogram3D>::realise(targetList, dataName, prefix, GenericItem::InRestartFileFlag, &created);
-    if (created)
+    auto [target, status] = targetList.realiseIf<Histogram3D>(dataName, prefix, GenericItem::InRestartFileFlag);
+    if (status == GenericItem::ItemStatus::Created)
     {
         Messenger::printVerbose("Three-dimensional histogram data for '{}' was not in the target list, so it will now "
                                 "be initialised...\n",
@@ -181,8 +171,8 @@ bool Collect3DProcedureNode::prepare(Configuration *cfg, std::string_view prefix
     // Zero the current bins, ready for the new pass
     target.zeroBins();
 
-    // Store a pointer to the data
-    histogram_ = &target;
+    // Store a reference to the data
+    histogram_ = target;
 
     // Retrieve the observables
     std::tie(xObservable_, xObservableIndex_) = keywords_.retrieve<std::tuple<CalculateProcedureNodeBase *, int>>("QuantityX");
@@ -203,51 +193,28 @@ bool Collect3DProcedureNode::prepare(Configuration *cfg, std::string_view prefix
 }
 
 // Execute node, targetting the supplied Configuration
-ProcedureNode::NodeExecutionResult Collect3DProcedureNode::execute(ProcessPool &procPool, Configuration *cfg,
-                                                                   std::string_view prefix, GenericList &targetList)
+bool Collect3DProcedureNode::execute(ProcessPool &procPool, Configuration *cfg, std::string_view prefix,
+                                     GenericList &targetList)
 {
-#ifdef CHECKS
-    if (!xObservable_)
-    {
-        Messenger::error("No CalculateProcedureNodeBase pointer set for X observable in Collect3DProcedureNode '{}'.\n",
-                         name());
-        return ProcedureNode::Failure;
-    }
-    if (!yObservable_)
-    {
-        Messenger::error("No CalculateProcedureNodeBase pointer set for Y observable in Collect3DProcedureNode '{}'.\n",
-                         name());
-        return ProcedureNode::Failure;
-    }
-    if (!zObservable_)
-    {
-        Messenger::error("No CalculateProcedureNodeBase pointer set for Z observable in Collect3DProcedureNode '{}'.\n",
-                         name());
-        return ProcedureNode::Failure;
-    }
-#endif
+    assert(xObservable_ && yObservable_ && zObservable_ && histogram_);
+
     // Bin the current value of the observable
-    if (histogram_->bin(xObservable_->value(xObservableIndex_), yObservable_->value(yObservableIndex_),
-                        zObservable_->value(zObservableIndex_)) &&
+    if (histogram_->get().bin(xObservable_->value(xObservableIndex_), yObservable_->value(yObservableIndex_),
+                              zObservable_->value(zObservableIndex_)) &&
         subCollectBranch_)
         return subCollectBranch_->execute(procPool, cfg, prefix, targetList);
 
-    return ProcedureNode::Success;
+    return true;
 }
 
 // Finalise any necessary data after execution
 bool Collect3DProcedureNode::finalise(ProcessPool &procPool, Configuration *cfg, std::string_view prefix,
                                       GenericList &targetList)
 {
-#ifdef CHECKS
-    if (!histogram_)
-    {
-        Messenger::error("No Data3D pointer set in Collect3DProcedureNode '{}'.\n", name());
-        return ProcedureNode::Failure;
-    }
-#endif
+    assert(histogram_);
+
     // Accumulate the current binned data
-    histogram_->accumulate();
+    histogram_->get().accumulate();
 
     // Finalise any branches
     if (subCollectBranch_ && (!subCollectBranch_->finalise(procPool, cfg, prefix, targetList)))

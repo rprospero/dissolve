@@ -1,26 +1,28 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
+
+#include "data/elements.h"
 
 // Form Factor Base Class
 class FormFactorData
 {
     public:
-    FormFactorData(int Z = 0, int formalCharge = 0);
+    FormFactorData(Elements::Element Z = Elements::Unknown, int formalCharge = 0);
 
     /*
      * Element State
      */
     protected:
     // Element to which the data relates
-    int Z_;
+    Elements::Element Z_;
     // Formal charge of element to which the data relates
     int formalCharge_;
 
     public:
     // Return element to which the data relates
-    int Z() const;
+    Elements::Element Z() const;
     // Return formal charge of element to which the data relates
     int formalCharge() const;
 

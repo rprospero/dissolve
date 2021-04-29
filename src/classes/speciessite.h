@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -17,7 +17,7 @@ class Species;
 class SpeciesAtom;
 
 // Species Site Definition
-class SpeciesSite : public ListItem<SpeciesSite>
+class SpeciesSite
 {
     public:
     SpeciesSite();
@@ -123,9 +123,8 @@ class SpeciesSite : public ListItem<SpeciesSite>
                           mass-weighted coordinates */
         XAxisKeyword, /* 'XAxis' - Define one or more atoms whose average coordinates reflect the direction of the x
                  axis */
-        YAxisKeyword, /* 'YAxis' - Define one or more atoms whose average coordinates reflect the direction of the y
+        YAxisKeyword  /* 'YAxis' - Define one or more atoms whose average coordinates reflect the direction of the y
                  axis */
-        nSiteKeywords /* Number of keywords defined for this block */
     };
     // Return enum option info for SiteKeyword
     static EnumOptions<SpeciesSite::SiteKeyword> keywords();

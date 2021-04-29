@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
-#include "data/ff.h"
+#include "data/ff/ff.h"
 #include "templates/optionalref.h"
 
 // Forward Declarations
@@ -23,7 +23,7 @@ class OPLSAA2005BaseForcefield : public Forcefield
     // Return formatted publication references
     std::string_view publicationReferences() const;
     // Return short-range interaction style for AtomTypes
-    Forcefield::ShortRangeType shortRangeType() const;
+    Forcefield::ShortRangeType shortRangeType() const override;
 
     /*
      * Atom Type Data

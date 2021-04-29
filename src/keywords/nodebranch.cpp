@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "keywords/nodebranch.h"
 #include "base/lineparser.h"
@@ -21,7 +21,7 @@ NodeBranchKeyword::~NodeBranchKeyword() {}
  */
 
 // Determine whether current data is 'empty', and should be considered as 'not set'
-bool NodeBranchKeyword::isDataEmpty() const { return ((*data_) ? (*data_)->nNodes() > 0 : false); }
+bool NodeBranchKeyword::isDataEmpty() const { return ((*data_) ? (*data_)->nNodes() == 0 : false); }
 
 /*
  * Arguments
@@ -34,7 +34,7 @@ int NodeBranchKeyword::minArguments() const { return 0; }
 int NodeBranchKeyword::maxArguments() const { return 0; }
 
 // Parse arguments from supplied LineParser, starting at given argument offset
-bool NodeBranchKeyword::read(LineParser &parser, int startArg, CoreData &coreData)
+bool NodeBranchKeyword::read(LineParser &parser, int startArg, const CoreData &coreData)
 {
     // Check that a branch hasn't already been defined
     if (*data_)
@@ -44,14 +44,14 @@ bool NodeBranchKeyword::read(LineParser &parser, int startArg, CoreData &coreDat
     // Create and parse a new branch
     (*data_) =
         new SequenceProcedureNode(branchContext_, parentNode_->scope()->procedure(), parentNode_, fmt::format("End{}", name()));
-    if (!(*data_)->read(parser, coreData))
+    if (!(*data_)->deserialise(parser, coreData))
         return false;
 
     return true;
 }
 
 // Write keyword data to specified LineParser
-bool NodeBranchKeyword::write(LineParser &parser, std::string_view keywordName, std::string_view prefix)
+bool NodeBranchKeyword::write(LineParser &parser, std::string_view keywordName, std::string_view prefix) const
 {
     if (!(*data_) || ((*data_)->nNodes() == 0))
         return true;

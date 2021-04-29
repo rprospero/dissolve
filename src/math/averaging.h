@@ -1,164 +1,127 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
 #include "base/enumoptions.h"
-#include "genericitems/listhelper.h"
-
-// Forward Declarations
-/* none */
+#include "genericitems/list.h"
+#include "templates/algorithms.h"
 
 // Data Averaging
-class Averaging
+namespace Averaging
 {
-    public:
-    // Averaging Schemes
-    enum AveragingScheme
-    {
-        LinearAveraging,
-        ExponentialAveraging,
-        nAveragingSchemes
-    };
-    // Return enum options for AveragingScheme
-    static EnumOptions<Averaging::AveragingScheme> &averagingSchemes();
 
-    private:
-    // Establish the number of stored datasets, shift indices down, and lose oldest dataset if necessary
-    static int pruneOldData(GenericList &moduleData, std::string_view name, std::string_view prefix, int nSetsInAverage)
-    {
-        // Establish how many stored datasets we have
-        int nStored = 0;
-        for (nStored = 0; nStored < nSetsInAverage; ++nStored)
-            if (!moduleData.contains(fmt::format("{}_{}", name, nStored + 1), prefix))
-                break;
-        Messenger::print("Average requested over {} datsets - {} available in module data ({} max).\n", nSetsInAverage, nStored,
-                         nSetsInAverage - 1);
-
-        // Remove the oldest dataset if it exists, and shuffle the others down
-        if (nStored == nSetsInAverage)
-        {
-            moduleData.remove(fmt::format("{}_{}", name, nStored), prefix);
-            --nStored;
-        }
-        for (auto n = nStored; n > 0; --n)
-            moduleData.rename(fmt::format("{}_{}", name, n), prefix, fmt::format("{}_{}", name, n + 1), prefix);
-
-        return nStored;
-    }
-    // Return exponential decay factor
-    static double expDecay() { return 0.7; }
-    // Return the normalisation factor for the supplied scheme and number of data
-    static double normalisationFactor(Averaging::AveragingScheme scheme, int nData)
-    {
-        if (scheme == Averaging::LinearAveraging)
-            return nData;
-        else if (scheme == Averaging::ExponentialAveraging)
-            return (1.0 - pow(expDecay(), nData)) / (1.0 - expDecay());
-
-        return 1.0;
-    }
-
-    public:
-    // Perform averaging of named data
-    template <class T>
-    static bool average(GenericList &moduleData, std::string_view name, std::string_view prefix, int nSetsInAverage,
-                        AveragingScheme averagingScheme)
-    {
-        // Find the 'root' data of type T, which should currently contain the most recently-calculated data
-        if (!moduleData.contains(name, prefix))
-            return Messenger::error("Couldn't find root data '{}' (prefix = '{}') in order to perform averaging.\n", name,
-                                    prefix);
-        T &currentData = GenericListHelper<T>::retrieve(moduleData, name, prefix);
-
-        // Establish the number of existing datasets, and perform management on them
-        int nData = pruneOldData(moduleData, name, prefix, nSetsInAverage);
-
-        // Store the current T as the earliest data (index == 1)
-        T &recentData =
-            GenericListHelper<T>::realise(moduleData, fmt::format("{}_1", name), prefix, GenericItem::InRestartFileFlag);
-        recentData = currentData;
-        ++nData;
-
-        // Calculate normalisation factor
-        double normalisation = normalisationFactor(averagingScheme, nData);
-
-        // Perform averaging of the datsets that we have
-        currentData.reset();
-        double weight = 1.0;
-        for (auto n = 0; n < nData; ++n)
-        {
-            // Get a copy of the (n+1)'th dataset
-            T data = GenericListHelper<T>::value(moduleData, fmt::format("{}_{}", name, n + 1), prefix);
-
-            // Determine the weighting factor
-            if (averagingScheme == Averaging::LinearAveraging)
-                weight = 1.0 / normalisation;
-            else if (averagingScheme == Averaging::ExponentialAveraging)
-                weight = pow(expDecay(), n) / normalisation;
-
-            // Weight the data
-            data *= weight;
-
-            // Sum in to the average
-            currentData += data;
-        }
-
-        return true;
-    };
-    // Perform averaging of named array data
-    template <class T>
-    static bool arrayAverage(GenericList &moduleData, std::string_view name, std::string_view prefix, int nSetsInAverage,
-                             AveragingScheme averagingScheme)
-    {
-        // Find the 'root' data of type T, which should currently contain the most recently-calculated data
-        if (!moduleData.contains(name, prefix))
-        {
-            Messenger::error("Couldn't find root data '{}' (prefix = '{}') in order to perform averaging.\n", name, prefix);
-            return false;
-        }
-        T &currentData = GenericListHelper<T>::retrieve(moduleData, name, prefix);
-
-        // Establish the number of existing datasets, and perform management on them
-        int nData = pruneOldData(moduleData, name, prefix, nSetsInAverage);
-
-        // Store the current T as the earliest data (index == 1)
-        T &recentData =
-            GenericListHelper<T>::realise(moduleData, fmt::format("{}_1", name), prefix, GenericItem::InRestartFileFlag);
-        recentData = currentData;
-        ++nData;
-
-        // Calculate normalisation factor
-        double normalisation = normalisationFactor(averagingScheme, nData);
-
-        // Reset array elements
-        for (auto i = 0; i < currentData.nItems(); ++i)
-            currentData.at(i).reset();
-
-        // Perform averaging of the datsets that we have
-        double weight = 1.0;
-        for (auto n = 0; n < nData; ++n)
-        {
-            // Get a copy of the (n+1)'th dataset
-            T data = GenericListHelper<T>::value(moduleData, fmt::format("{}_{}", name, n + 1), prefix);
-
-            // Determine the weighting factor
-            if (averagingScheme == Averaging::LinearAveraging)
-                weight = 1.0 / normalisation;
-            else if (averagingScheme == Averaging::ExponentialAveraging)
-                weight = pow(expDecay(), n) / normalisation;
-
-            // Loop over individual elements of the array
-            for (auto i = 0; i < currentData.nItems(); ++i)
-            {
-                // Weight the data
-                data.at(i) *= weight;
-
-                // Sum in to the average
-                currentData.at(i) += data.at(i);
-            }
-        }
-
-        return true;
-    };
+// Averaging Schemes
+enum AveragingScheme
+{
+    LinearAveraging,
+    ExponentialAveraging,
+    nAveragingSchemes
 };
+// Return enum options for AveragingScheme
+EnumOptions<Averaging::AveragingScheme> averagingSchemes();
+
+// Establish the number of stored datasets, shift indices down, and lose oldest dataset if necessary
+int pruneOldData(GenericList &processingData, std::string_view name, std::string_view prefix, int nSetsInAverage);
+
+// Return exponential decay factor
+double expDecay();
+
+// Return the normalisation factor for the supplied scheme and number of data
+double normalisationFactor(Averaging::AveragingScheme scheme, int nData);
+
+// Perform averaging of named data
+template <class T>
+bool average(GenericList &processingData, std::string_view name, std::string_view prefix, int nSetsInAverage,
+             AveragingScheme averagingScheme)
+{
+    // Find the 'root' data of type T, which should currently contain the most recently-calculated data
+    if (!processingData.contains(name, prefix))
+        return Messenger::error("Couldn't find root data '{}' (prefix = '{}') in order to perform averaging.\n", name, prefix);
+    T &currentData = processingData.retrieve<T>(name, prefix);
+
+    // Establish the number of existing datasets, and perform management on them
+    auto nData = pruneOldData(processingData, name, prefix, nSetsInAverage);
+
+    // Store the current T as the earliest data (index == 1)
+    T &recentData = processingData.realise<T>(fmt::format("{}//1", name), prefix, GenericItem::InRestartFileFlag);
+    recentData = currentData;
+    ++nData;
+
+    // Calculate normalisation factor
+    auto normalisation = normalisationFactor(averagingScheme, nData);
+
+    // Perform averaging of the datasets that we have
+    currentData.reset();
+    auto weight = 1.0;
+    for (auto n = 0; n < nData; ++n)
+    {
+        // Get a copy of the (n+1)'th dataset
+        T data = processingData.value<T>(fmt::format("{}//{}", name, n + 1), prefix);
+
+        // Determine the weighting factor
+        if (averagingScheme == Averaging::LinearAveraging)
+            weight = 1.0 / normalisation;
+        else if (averagingScheme == Averaging::ExponentialAveraging)
+            weight = pow(expDecay(), n) / normalisation;
+
+        // Weight the data
+        data *= weight;
+
+        // Sum in to the average
+        currentData += data;
+    }
+
+    return true;
+};
+
+// Perform averaging of named vector data
+template <class T>
+static bool vectorAverage(GenericList &processingData, std::string_view name, std::string_view prefix, int nSetsInAverage,
+                          AveragingScheme averagingScheme)
+{
+    // Find the 'root' data of type T, which should currently contain the most recently-calculated data
+    if (!processingData.contains(name, prefix))
+    {
+        Messenger::error("Couldn't find root data '{}' (prefix = '{}') in order to perform averaging.\n", name, prefix);
+        return false;
+    }
+    T &currentData = processingData.retrieve<T>(name, prefix);
+
+    // Establish the number of existing datasets, and perform management on them
+    auto nData = pruneOldData(processingData, name, prefix, nSetsInAverage);
+
+    // Store the current T as the earliest data (index == 1)
+    T &recentData = processingData.realise<T>(fmt::format("{}//1", name), prefix, GenericItem::InRestartFileFlag);
+    recentData = currentData;
+    ++nData;
+
+    // Calculate normalisation factor
+    auto normalisation = normalisationFactor(averagingScheme, nData);
+
+    // Reset vector
+    currentData.clear();
+    currentData.resize(recentData.size());
+
+    // Perform averaging of the datasets that we have
+    auto weight = 1.0;
+    for (auto n = 0; n < nData; ++n)
+    {
+        // Get a copy of the (n+1)'th dataset
+        const T &data = processingData.value<T>(fmt::format("{}//{}", name, n + 1), prefix);
+
+        // Determine the weighting factor
+        if (averagingScheme == Averaging::LinearAveraging)
+            weight = 1.0 / normalisation;
+        else if (averagingScheme == Averaging::ExponentialAveraging)
+            weight = pow(expDecay(), n) / normalisation;
+
+        // Loop over individual elements of the vectors
+        for (auto &&[d, avg] : zip(data, currentData))
+            avg += d * weight;
+    }
+
+    return true;
+};
+
+}; // namespace Averaging

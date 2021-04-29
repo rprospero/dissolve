@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -36,7 +36,7 @@ class ConfigurationRefListKeywordWidget : public KeywordDropDown, public Keyword
 
     private:
     // Selection list update function
-    void updateSelectionRow(int row, Configuration *sp, bool createItem);
+    void updateSelectionRow(int row, Configuration *cfg, bool createItem);
 
     private slots:
     // List item changed

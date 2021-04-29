@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -34,15 +34,15 @@ class TrajectoryImportFileFormat : public FileAndFormat
      */
     private:
     // Return enum options for TrajectoryImportFileFormat
-    static EnumOptions<TrajectoryImportFileFormat::TrajectoryImportFormat> &trajectoryImportFormats();
+    static EnumOptions<TrajectoryImportFileFormat::TrajectoryImportFormat> trajectoryImportFormats();
 
     public:
     // Return number of available formats
     int nFormats() const;
     // Return format keyword for supplied index
-    std::string_view formatKeyword(int id) const;
+    std::string formatKeyword(int id) const;
     // Return description string for supplied index
-    std::string_view formatDescription(int id) const;
+    std::string formatDescription(int id) const;
     // Return current format as TrajectoryImportFormat
     TrajectoryImportFormat trajectoryFormat() const;
 

@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "classes/box.h"
 #include "classes/configuration.h"
 #include "classes/neutronweights.h"
 #include "classes/species.h"
-#include "genericitems/listhelper.h"
 #include "main/dissolve.h"
 #include "math/averaging.h"
 #include "modules/bragg/bragg.h"
@@ -61,7 +60,8 @@ bool BraggModule::process(Dissolve &dissolve, ProcessPool &procPool)
 
         // Calculate Bragg vectors and intensities for the current Configuration
         bool alreadyUpToDate;
-        if (!calculateBraggTerms(procPool, cfg, qMin, qDelta, qMax, multiplicity, alreadyUpToDate))
+        if (!calculateBraggTerms(dissolve.processingModuleData(), procPool, cfg, qMin, qDelta, qMax, multiplicity,
+                                 alreadyUpToDate))
             return false;
 
         // If we are already up-to-date, then theres nothing more to do for this Configuration
@@ -74,41 +74,38 @@ bool BraggModule::process(Dissolve &dissolve, ProcessPool &procPool)
         // Perform averaging of reflections data if requested
         if (averaging > 1)
         {
-            Averaging::arrayAverage<Array<BraggReflection>>(cfg->moduleData(), "BraggReflections", "", averaging,
-                                                            averagingScheme);
+            Averaging::vectorAverage<std::vector<BraggReflection>>(dissolve.processingModuleData(),
+                                                                   fmt::format("{}//BraggReflections", cfg->niceName()),
+                                                                   uniqueName(), averaging, averagingScheme);
         }
 
         // Form partial and total reflection functions
-        formReflectionFunctions(procPool, cfg, qMin, qDelta, qMax);
+        formReflectionFunctions(dissolve.processingModuleData(), procPool, cfg, qMin, qDelta, qMax);
 
         // Save reflection data?
         if (saveReflections)
         {
             // Retrieve BraggReflection data from the Configuration's module data
-            auto found = false;
-            const auto &braggReflections = GenericListHelper<Array<BraggReflection>>::value(
-                cfg->moduleData(), "BraggReflections", "", Array<BraggReflection>(), &found);
-            if (!found)
-                return Messenger::error("Failed to find BraggReflection array in module data for Configuration '{}'.\n",
-                                        cfg->name());
+            const auto &braggReflections = dissolve.processingModuleData().value<const std::vector<BraggReflection>>(
+                fmt::format("{}//BraggReflections", cfg->niceName()), uniqueName());
 
             // Open a file and save the basic reflection data
             LineParser braggParser(&procPool);
             if (!braggParser.openOutput(fmt::format("{}-Bragg.txt", cfg->niceName())))
                 return false;
             braggParser.writeLineF("#   ID      Q       nKVecs    Intensity(0,0)\n");
-            for (auto n = 0; n < braggReflections.nItems(); ++n)
+            auto count = 0;
+            for (const auto &reflxn : braggReflections)
             {
-                if (!braggParser.writeLineF("{:6d}  {:10.6f}  {:8d}  {:10.6e}\n", n, braggReflections.constAt(n).q(),
-                                            braggReflections.constAt(n).nKVectors(),
-                                            braggReflections.constAt(n).intensity(0, 0)))
+                if (!braggParser.writeLineF("{:6d}  {:10.6f}  {:8d}  {:10.6e}\n", ++count, reflxn.q(), reflxn.nKVectors(),
+                                            reflxn.intensity(0, 0)))
                     return false;
             }
             braggParser.closeFiles();
 
             // Save intensity data
             auto &types = cfg->usedAtomTypesList();
-            for_each_pair_early(
+            auto success = for_each_pair_early(
                 types.begin(), types.end(),
                 [&](int i, const AtomTypeData &atd1, int j, const AtomTypeData &atd2) -> EarlyReturn<bool> {
                     LineParser intensityParser(&procPool);
@@ -116,10 +113,9 @@ bool BraggModule::process(Dissolve &dissolve, ProcessPool &procPool)
                             fmt::format("{}-Bragg-{}-{}.txt", cfg->niceName(), atd1.atomTypeName(), atd2.atomTypeName())))
                         return false;
                     intensityParser.writeLineF("#     Q      Intensity({},{})\n", atd1.atomTypeName(), atd2.atomTypeName());
-                    for (auto n = 0; n < braggReflections.nItems(); ++n)
+                    for (const auto &reflxn : braggReflections)
                     {
-                        if (!intensityParser.writeLineF("{:10.6f}  {:10.6e}\n", braggReflections.constAt(n).q(),
-                                                        braggReflections.constAt(n).intensity(i, j)))
+                        if (!intensityParser.writeLineF("{:10.6f}  {:10.6e}\n", reflxn.q(), reflxn.intensity(i, j)))
                             return false;
                         intensityParser.writeLineF("#     Q      Intensity({},{})\n", atd1.atomTypeName(), atd2.atomTypeName());
                     }
@@ -127,6 +123,8 @@ bool BraggModule::process(Dissolve &dissolve, ProcessPool &procPool)
 
                     return EarlyReturn<bool>::Continue;
                 });
+            if (!success.value_or(true))
+                return false;
         }
     }
 

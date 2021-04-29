@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "classes/isotopologueset.h"
 #include "base/lineparser.h"
-#include "base/processpool.h"
 #include "classes/coredata.h"
 #include "classes/species.h"
 #include <algorithm>
@@ -95,18 +94,14 @@ int IsotopologueSet::nIsotopologues() const { return isotopologues_.size(); }
 // Return vector of all Isotopologues
 std::vector<Isotopologues> &IsotopologueSet::isotopologues() { return isotopologues_; }
 
-// Return vector of all Isotopologues (const)
-const std::vector<Isotopologues> &IsotopologueSet::constIsotopologues() const { return isotopologues_; }
+const std::vector<Isotopologues> &IsotopologueSet::isotopologues() const { return isotopologues_; }
 
 /*
- * GenericItemBase Implementations
+ * Serialisation
  */
 
-// Return class name
-std::string_view IsotopologueSet::itemClassName() { return "IsotopologueSet"; }
-
 // Read data through specified LineParser
-bool IsotopologueSet::read(LineParser &parser, CoreData &coreData)
+bool IsotopologueSet::deserialise(LineParser &parser, const CoreData &coreData)
 {
     clear();
 
@@ -115,7 +110,7 @@ bool IsotopologueSet::read(LineParser &parser, CoreData &coreData)
     {
         // Add a new isotopologue set and read it
         isotopologues_.emplace_back();
-        if (!isotopologues_.back().read(parser, coreData))
+        if (!isotopologues_.back().deserialise(parser, coreData))
             return false;
     }
 
@@ -131,7 +126,7 @@ bool IsotopologueSet::write(LineParser &parser)
 
     // Write details for each set of Isotopologues
     for (auto topes : isotopologues_)
-        if (!topes.write(parser))
+        if (!topes.serialise(parser))
             return false;
 
     return true;

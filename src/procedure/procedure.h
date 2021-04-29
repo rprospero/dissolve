@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -10,7 +10,6 @@
 // Forward Declarations
 class Configuration;
 class LineParser;
-class ProcessPool;
 
 // Procedure
 class Procedure
@@ -38,7 +37,7 @@ class Procedure
     // Return the block termination keyword for the Procedure
     std::string_view blockTerminationKeyword() const;
     // Return named node if present, and which matches the (optional) type given
-    ProcedureNode *node(std::string_view name, ProcedureNode::NodeType nt = ProcedureNode::nNodeTypes) const;
+    ProcedureNode *node(std::string_view name, std::optional<ProcedureNode::NodeType> optNodeType = std::nullopt) const;
 
     /*
      * Execute
@@ -56,7 +55,7 @@ class Procedure
      */
     public:
     // Read procedure from specified LineParser
-    bool read(LineParser &parser, CoreData &coreData);
+    bool deserialise(LineParser &parser, const CoreData &coreData);
     // Write procedure to specified LineParser
     bool write(LineParser &parser, std::string_view prefix);
 };

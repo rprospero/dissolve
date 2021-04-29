@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "classes/atomtype.h"
 #include "classes/speciesangle.h"
@@ -11,14 +11,16 @@
 #include "gui/forcefieldtab.h"
 #include "gui/gui.h"
 #include "gui/helpers/combopopulator.h"
-#include "gui/helpers/listwidgetupdater.h"
 #include "gui/helpers/tablewidgetupdater.h"
+#include "gui/render/renderabledata1d.h"
 #include "gui/widgets/elementselector.hui"
 #include "main/dissolve.h"
 #include <QListWidgetItem>
 
 Q_DECLARE_SMART_POINTER_METATYPE(std::shared_ptr)
 Q_DECLARE_METATYPE(std::shared_ptr<AtomType>)
+Q_DECLARE_METATYPE(MasterIntra *)
+Q_DECLARE_METATYPE(PairPotential *)
 
 ForcefieldTab::ForcefieldTab(DissolveWindow *dissolveWindow, Dissolve &dissolve, MainTabsWidget *parent, const QString title)
     : MainTab(dissolveWindow, dissolve, parent, title, this)
@@ -42,7 +44,7 @@ ForcefieldTab::ForcefieldTab(DissolveWindow *dissolveWindow, Dissolve &dissolve,
                this, new ComboEnumOptionsItems<SpeciesTorsion::TorsionFunction>(SpeciesTorsion::torsionFunctions())));
     ui_.MasterImpropersTable->setItemDelegateForColumn(
         1, new ComboListDelegate(
-               this, new ComboEnumOptionsItems<SpeciesImproper::ImproperFunction>(SpeciesImproper::improperFunctions())));
+               this, new ComboEnumOptionsItems<SpeciesTorsion::TorsionFunction>(SpeciesTorsion::torsionFunctions())));
 
     // -- Parameters
     for (auto n = 2; n < 6; ++n)
@@ -97,9 +99,6 @@ ForcefieldTab::ForcefieldTab(DissolveWindow *dissolveWindow, Dissolve &dissolve,
     ui_.PairPotentialsTable->horizontalHeader()->setFont(font());
     ui_.PairPotentialsTable->horizontalHeader()->setVisible(true);
 
-    // -- Charges / Parameters delegates
-    // 	for (auto n=3; n<9; ++n) ui_.PairPotentialsTable->setItemDelegateForColumn(n, new ExponentialSpinDelegate(this));
-
     DataViewer *viewer = ui_.PairPotentialsPlotWidget->dataViewer();
     viewer->view().axes().setTitle(0, "\\it{r}, \\sym{angstrom}");
     viewer->view().axes().setTitle(1, "U, kj/mol");
@@ -131,7 +130,7 @@ void ForcefieldTab::updateBondsTableRow(int row, MasterIntra *masterBond, bool c
     if (createItems)
     {
         item = new QTableWidgetItem;
-        item->setData(Qt::UserRole, VariantPointer<MasterIntra>(masterBond));
+        item->setData(Qt::UserRole, QVariant::fromValue(masterBond));
         ui_.MasterBondsTable->setItem(row, 0, item);
     }
     else
@@ -142,7 +141,6 @@ void ForcefieldTab::updateBondsTableRow(int row, MasterIntra *masterBond, bool c
     if (createItems)
     {
         item = new QTableWidgetItem;
-        item->setData(Qt::UserRole, VariantPointer<MasterIntra>(masterBond));
         ui_.MasterBondsTable->setItem(row, 1, item);
     }
     else
@@ -156,7 +154,6 @@ void ForcefieldTab::updateBondsTableRow(int row, MasterIntra *masterBond, bool c
         if (createItems)
         {
             item = new QTableWidgetItem;
-            item->setData(Qt::UserRole, VariantPointer<MasterIntra>(masterBond));
             ui_.MasterBondsTable->setItem(row, n + 2, item);
         }
         else
@@ -174,7 +171,7 @@ void ForcefieldTab::updateAnglesTableRow(int row, MasterIntra *masterAngle, bool
     if (createItems)
     {
         item = new QTableWidgetItem;
-        item->setData(Qt::UserRole, VariantPointer<MasterIntra>(masterAngle));
+        item->setData(Qt::UserRole, QVariant::fromValue(masterAngle));
         ui_.MasterAnglesTable->setItem(row, 0, item);
     }
     else
@@ -185,7 +182,6 @@ void ForcefieldTab::updateAnglesTableRow(int row, MasterIntra *masterAngle, bool
     if (createItems)
     {
         item = new QTableWidgetItem;
-        item->setData(Qt::UserRole, VariantPointer<MasterIntra>(masterAngle));
         ui_.MasterAnglesTable->setItem(row, 1, item);
     }
     else
@@ -198,7 +194,6 @@ void ForcefieldTab::updateAnglesTableRow(int row, MasterIntra *masterAngle, bool
         if (createItems)
         {
             item = new QTableWidgetItem;
-            item->setData(Qt::UserRole, VariantPointer<MasterIntra>(masterAngle));
             ui_.MasterAnglesTable->setItem(row, n + 2, item);
         }
         else
@@ -216,7 +211,7 @@ void ForcefieldTab::updateTorsionsTableRow(int row, MasterIntra *masterTorsion, 
     if (createItems)
     {
         item = new QTableWidgetItem;
-        item->setData(Qt::UserRole, VariantPointer<MasterIntra>(masterTorsion));
+        item->setData(Qt::UserRole, QVariant::fromValue(masterTorsion));
         ui_.MasterTorsionsTable->setItem(row, 0, item);
     }
     else
@@ -227,7 +222,6 @@ void ForcefieldTab::updateTorsionsTableRow(int row, MasterIntra *masterTorsion, 
     if (createItems)
     {
         item = new QTableWidgetItem;
-        item->setData(Qt::UserRole, VariantPointer<MasterIntra>(masterTorsion));
         ui_.MasterTorsionsTable->setItem(row, 1, item);
     }
     else
@@ -241,7 +235,6 @@ void ForcefieldTab::updateTorsionsTableRow(int row, MasterIntra *masterTorsion, 
         if (createItems)
         {
             item = new QTableWidgetItem;
-            item->setData(Qt::UserRole, VariantPointer<MasterIntra>(masterTorsion));
             ui_.MasterTorsionsTable->setItem(row, n + 2, item);
         }
         else
@@ -259,7 +252,7 @@ void ForcefieldTab::updateImpropersTableRow(int row, MasterIntra *masterImproper
     if (createItems)
     {
         item = new QTableWidgetItem;
-        item->setData(Qt::UserRole, VariantPointer<MasterIntra>(masterImproper));
+        item->setData(Qt::UserRole, QVariant::fromValue(masterImproper));
         ui_.MasterImpropersTable->setItem(row, 0, item);
     }
     else
@@ -270,13 +263,12 @@ void ForcefieldTab::updateImpropersTableRow(int row, MasterIntra *masterImproper
     if (createItems)
     {
         item = new QTableWidgetItem;
-        item->setData(Qt::UserRole, VariantPointer<MasterIntra>(masterImproper));
         ui_.MasterImpropersTable->setItem(row, 1, item);
     }
     else
         item = ui_.MasterImpropersTable->item(row, 1);
     item->setText(
-        QString::fromStdString(std::string(SpeciesImproper::improperFunctions().keywordFromInt(masterImproper->form()))));
+        QString::fromStdString(std::string(SpeciesTorsion::torsionFunctions().keywordFromInt(masterImproper->form()))));
 
     // Parameters
     for (int n = 0; n < masterImproper->parameters().size(); ++n)
@@ -284,7 +276,6 @@ void ForcefieldTab::updateImpropersTableRow(int row, MasterIntra *masterImproper
         if (createItems)
         {
             item = new QTableWidgetItem;
-            item->setData(Qt::UserRole, VariantPointer<MasterIntra>(masterImproper));
             ui_.MasterImpropersTable->setItem(row, n + 2, item);
         }
         else
@@ -319,7 +310,7 @@ void ForcefieldTab::updateAtomTypesTableRow(int row, std::shared_ptr<AtomType> a
     }
     else
         item = ui_.AtomTypesTable->item(row, 1);
-    item->setText(QString::fromStdString(std::string(atomType->element()->symbol())));
+    item->setText(QString::fromStdString(std::string(Elements::symbol(atomType->Z()))));
 
     // Charge
     if (createItems)
@@ -330,7 +321,7 @@ void ForcefieldTab::updateAtomTypesTableRow(int row, std::shared_ptr<AtomType> a
     }
     else
         item = ui_.AtomTypesTable->item(row, 2);
-    item->setText(QString::number(atomType->parameters().charge()));
+    item->setText(QString::number(atomType->charge()));
 
     // Short-Range Form
     if (createItems)
@@ -344,17 +335,18 @@ void ForcefieldTab::updateAtomTypesTableRow(int row, std::shared_ptr<AtomType> a
     item->setText(QString::fromStdString(std::string(Forcefield::shortRangeTypes().keyword(atomType->shortRangeType()))));
 
     // Parameters
-    for (auto n = 0; n < MAXSRPARAMETERS; ++n)
+    auto col = 4;
+    for (auto x : atomType->shortRangeParameters())
     {
         if (createItems)
         {
             item = new QTableWidgetItem;
             item->setData(Qt::UserRole, QVariant::fromValue(atomType));
-            ui_.AtomTypesTable->setItem(row, n + 4, item);
+            ui_.AtomTypesTable->setItem(row, col++, item);
         }
         else
-            item = ui_.AtomTypesTable->item(row, n + 4);
-        item->setText(QString::number(atomType->parameters().parameter(n)));
+            item = ui_.AtomTypesTable->item(row, col++);
+        item->setText(QString::number(x));
     }
 }
 
@@ -367,7 +359,7 @@ void ForcefieldTab::updatePairPotentialsTableRow(int row, PairPotential *pairPot
     if (createItems)
     {
         item = new QTableWidgetItem;
-        item->setData(Qt::UserRole, VariantPointer<PairPotential>(pairPotential));
+        item->setData(Qt::UserRole, QVariant::fromValue(pairPotential));
         item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
         ui_.PairPotentialsTable->setItem(row, 0, item);
     }
@@ -379,7 +371,6 @@ void ForcefieldTab::updatePairPotentialsTableRow(int row, PairPotential *pairPot
     if (createItems)
     {
         item = new QTableWidgetItem;
-        item->setData(Qt::UserRole, VariantPointer<PairPotential>(pairPotential));
         item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
         ui_.PairPotentialsTable->setItem(row, 1, item);
     }
@@ -391,7 +382,6 @@ void ForcefieldTab::updatePairPotentialsTableRow(int row, PairPotential *pairPot
     if (createItems)
     {
         item = new QTableWidgetItem;
-        item->setData(Qt::UserRole, VariantPointer<PairPotential>(pairPotential));
         item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
         ui_.PairPotentialsTable->setItem(row, 2, item);
     }
@@ -403,7 +393,6 @@ void ForcefieldTab::updatePairPotentialsTableRow(int row, PairPotential *pairPot
     if (createItems)
     {
         item = new QTableWidgetItem;
-        item->setData(Qt::UserRole, VariantPointer<PairPotential>(pairPotential));
         item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
         ui_.PairPotentialsTable->setItem(row, 3, item);
     }
@@ -415,7 +404,6 @@ void ForcefieldTab::updatePairPotentialsTableRow(int row, PairPotential *pairPot
     if (createItems)
     {
         item = new QTableWidgetItem;
-        item->setData(Qt::UserRole, VariantPointer<PairPotential>(pairPotential));
         item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
         ui_.PairPotentialsTable->setItem(row, 4, item);
     }
@@ -424,18 +412,18 @@ void ForcefieldTab::updatePairPotentialsTableRow(int row, PairPotential *pairPot
     item->setText(QString::number(pairPotential->chargeJ()));
 
     // Parameters
-    for (auto n = 0; n < MAXSRPARAMETERS; ++n)
+    auto col = 5;
+    for (auto x : pairPotential->parameters())
     {
         if (createItems)
         {
             item = new QTableWidgetItem;
-            item->setData(Qt::UserRole, VariantPointer<PairPotential>(pairPotential));
             item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-            ui_.PairPotentialsTable->setItem(row, n + 5, item);
+            ui_.PairPotentialsTable->setItem(row, col++, item);
         }
         else
-            item = ui_.PairPotentialsTable->item(row, n + 5);
-        item->setText(QString::number(pairPotential->parameter(n)));
+            item = ui_.PairPotentialsTable->item(row, col++);
+        item->setText(QString::number(x));
     }
 }
 
@@ -531,12 +519,12 @@ void ForcefieldTab::on_AtomTypeAddButton_clicked(bool checked)
 {
     // First, need to get target element for the new AtomType
     bool ok;
-    Element *element =
-        ElementSelector::getElement(this, "Element Selection", "Choose the Element for the AtomType", nullptr, &ok);
+    auto Z =
+        ElementSelector::getElement(this, "Element Selection", "Choose the Element for the AtomType", Elements::Unknown, &ok);
     if (!ok)
         return;
 
-    std::shared_ptr<AtomType> at = dissolve_.addAtomType(element);
+    std::shared_ptr<AtomType> at = dissolve_.addAtomType(Z);
 
     Locker refreshLocker(refreshLock_);
 
@@ -572,7 +560,7 @@ void ForcefieldTab::on_AtomTypesTable_itemChanged(QTableWidgetItem *w)
             break;
         // Charge
         case (2):
-            atomType->parameters().setCharge(w->text().toDouble());
+            atomType->setCharge(w->text().toDouble());
             atomTypeDataModified();
             dissolveWindow_->setModified();
             break;
@@ -586,7 +574,7 @@ void ForcefieldTab::on_AtomTypesTable_itemChanged(QTableWidgetItem *w)
         case (5):
         case (6):
         case (7):
-            atomType->parameters().setParameter(w->column() - 4, w->text().toDouble());
+            atomType->setShortRangeParameter(w->column() - 4, w->text().toDouble());
             atomTypeDataModified();
             dissolveWindow_->setModified();
             break;
@@ -720,20 +708,19 @@ void ForcefieldTab::on_PairPotentialsTable_currentItemChanged(QTableWidgetItem *
     PairPotential *pp = VariantPointer<PairPotential>(currentItem->data(Qt::UserRole));
     if (pp)
     {
-        Renderable *fullPotential = graph->createRenderable(Renderable::Data1DRenderable, pp->uFull().objectTag(), "Full");
+        printf("IN here?\n");
+        auto fullPotential = graph->createRenderable<RenderableData1D, Data1D>(pp->uFull(), "Full");
         fullPotential->setColour(StockColours::BlackStockColour);
 
-        Renderable *originalPotential =
-            graph->createRenderable(Renderable::Data1DRenderable, pp->uOriginal().objectTag(), "Original");
+        auto originalPotential = graph->createRenderable<RenderableData1D, Data1D>(pp->uOriginal(), "Original");
         originalPotential->setColour(StockColours::RedStockColour);
         originalPotential->lineStyle().set(1.0, LineStipple::HalfDashStipple);
 
-        Renderable *additionalPotential =
-            graph->createRenderable(Renderable::Data1DRenderable, pp->uAdditional().objectTag(), "Additional");
+        auto additionalPotential = graph->createRenderable<RenderableData1D, Data1D>(pp->uAdditional(), "Additional");
         additionalPotential->setColour(StockColours::BlueStockColour);
         additionalPotential->lineStyle().set(1.0, LineStipple::DotStipple);
 
-        Renderable *dUFull = graph->createRenderable(Renderable::Data1DRenderable, pp->dUFull().objectTag(), "Force");
+        auto dUFull = graph->createRenderable<RenderableData1D, Data1D>(pp->dUFull(), "Force");
         dUFull->setColour(StockColours::GreenStockColour);
     }
 }
@@ -744,7 +731,8 @@ void ForcefieldTab::on_PairPotentialsTable_itemChanged(QTableWidgetItem *w)
         return;
 
     // Get target PairPotential from the passed widget
-    PairPotential *pairPotential = w ? VariantPointer<PairPotential>(w->data(Qt::UserRole)) : nullptr;
+    PairPotential *pairPotential =
+        w ? ui_.PairPotentialsTable->item(w->row(), 0)->data(Qt::UserRole).value<PairPotential *>() : nullptr;
     if (!pairPotential)
         return;
 
@@ -753,7 +741,6 @@ void ForcefieldTab::on_PairPotentialsTable_itemChanged(QTableWidgetItem *w)
     {
         // Functional form
         case (2):
-            // 			pairPotential->setShortRangeType(PairPotential::shortRangeType(qPrintable(w->text())));
             dissolveWindow_->setModified();
             break;
         // Charge I
@@ -790,7 +777,7 @@ void ForcefieldTab::on_MasterBondsTable_itemChanged(QTableWidgetItem *w)
         return;
 
     // Get target MasterIntra from the passed widget
-    MasterIntra *masterIntra = w ? VariantPointer<MasterIntra>(w->data(Qt::UserRole)) : nullptr;
+    MasterIntra *masterIntra = w ? ui_.MasterBondsTable->item(w->row(), 0)->data(Qt::UserRole).value<MasterIntra *>() : nullptr;
     if (!masterIntra)
         return;
 
@@ -831,7 +818,8 @@ void ForcefieldTab::on_MasterAnglesTable_itemChanged(QTableWidgetItem *w)
         return;
 
     // Get target MasterIntra from the passed widget
-    MasterIntra *masterIntra = w ? VariantPointer<MasterIntra>(w->data(Qt::UserRole)) : nullptr;
+    MasterIntra *masterIntra =
+        w ? ui_.MasterAnglesTable->item(w->row(), 0)->data(Qt::UserRole).value<MasterIntra *>() : nullptr;
     if (!masterIntra)
         return;
 
@@ -872,7 +860,8 @@ void ForcefieldTab::on_MasterTorsionsTable_itemChanged(QTableWidgetItem *w)
         return;
 
     // Get target MasterIntra from the passed widgetmasterIntra->setForm(SpeciesBond::bondFunction(qPrintable(w->text())));
-    MasterIntra *masterIntra = w ? VariantPointer<MasterIntra>(w->data(Qt::UserRole)) : nullptr;
+    MasterIntra *masterIntra =
+        w ? ui_.MasterTorsionsTable->item(w->row(), 0)->data(Qt::UserRole).value<MasterIntra *>() : nullptr;
     if (!masterIntra)
         return;
 
@@ -913,7 +902,8 @@ void ForcefieldTab::on_MasterImpropersTable_itemChanged(QTableWidgetItem *w)
         return;
 
     // Get target MasterIntra from the passed widgetmasterIntra->setForm(SpeciesBond::bondFunction(qPrintable(w->text())));
-    MasterIntra *masterIntra = w ? VariantPointer<MasterIntra>(w->data(Qt::UserRole)) : nullptr;
+    MasterIntra *masterIntra =
+        w ? ui_.MasterImpropersTable->item(w->row(), 0)->data(Qt::UserRole).value<MasterIntra *>() : nullptr;
     if (!masterIntra)
         return;
 
@@ -927,7 +917,7 @@ void ForcefieldTab::on_MasterImpropersTable_itemChanged(QTableWidgetItem *w)
             break;
         // Functional Form
         case (1):
-            masterIntra->setForm(SpeciesImproper::improperFunctions().enumeration(qPrintable(w->text())));
+            masterIntra->setForm(SpeciesTorsion::torsionFunctions().enumeration(qPrintable(w->text())));
             dissolveWindow_->setModified();
             break;
         // Parameters
@@ -943,13 +933,3 @@ void ForcefieldTab::on_MasterImpropersTable_itemChanged(QTableWidgetItem *w)
             break;
     }
 }
-
-/*
- * State
- */
-
-// Read widget state through specified LineParser
-bool ForcefieldTab::readState(LineParser &parser, const CoreData &coreData) { return true; }
-
-// Write widget state through specified LineParser
-bool ForcefieldTab::writeState(LineParser &parser) const { return true; }

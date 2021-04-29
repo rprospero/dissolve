@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "procedure/procedure.h"
 #include "base/lineparser.h"
@@ -35,7 +35,10 @@ const SequenceProcedureNode &Procedure::rootSequence() const { return rootSequen
 std::string_view Procedure::blockTerminationKeyword() const { return rootSequence_.blockTerminationKeyword(); }
 
 // Return named node if present, and which matches the (optional) type given
-ProcedureNode *Procedure::node(std::string_view name, ProcedureNode::NodeType nt) const { return rootSequence_.node(name, nt); }
+ProcedureNode *Procedure::node(std::string_view name, std::optional<ProcedureNode::NodeType> optNodeType) const
+{
+    return rootSequence_.node(name, optNodeType);
+}
 
 /*
  * Execute
@@ -84,11 +87,11 @@ bool Procedure::execute(ProcessPool &procPool, Configuration *cfg, std::string_v
  */
 
 // Read structure from specified LineParser
-bool Procedure::read(LineParser &parser, CoreData &coreData)
+bool Procedure::deserialise(LineParser &parser, const CoreData &coreData)
 {
     clear();
 
-    return rootSequence_.read(parser, coreData);
+    return rootSequence_.deserialise(parser, coreData);
 }
 
 // Write structure to specified LineParser

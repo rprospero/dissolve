@@ -1,31 +1,26 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "classes/kvector.h"
-#include "base/processpool.h"
 #include "classes/braggreflection.h"
+#include "templates/algorithms.h"
 
-KVector::KVector(int h, int k, int l, int reflectionIndex, int nAtomTypes)
-{
-    hkl_.set(h, k, l);
-    braggReflectionIndex_ = reflectionIndex;
-
-    // Create atomtype contribution arrays
-    cosTerms_.initialise(nAtomTypes);
-    sinTerms_.initialise(nAtomTypes);
-}
-
-KVector::~KVector() {}
+KVector::KVector(int h, int k, int l, int reflectionIndex, int nAtomTypes) { initialise(h, k, l, reflectionIndex, nAtomTypes); }
 
 KVector::KVector(const KVector &source) { (*this) = source; }
 
-// Operator=
-void KVector::operator=(const KVector &source)
+KVector::KVector(KVector &&source) { (*this) = source; }
+
+KVector::KVector(const KVector &&source) { (*this) = source; }
+
+KVector &KVector::operator=(const KVector &source)
 {
     hkl_ = source.hkl_;
     braggReflectionIndex_ = source.braggReflectionIndex_;
     cosTerms_ = source.cosTerms_;
     sinTerms_ = source.sinTerms_;
+
+    return *this;
 }
 
 /*
@@ -39,8 +34,8 @@ void KVector::initialise(int h, int k, int l, int reflectionIndex, int nAtomType
     braggReflectionIndex_ = reflectionIndex;
 
     // Create atomtype contribution arrays
-    cosTerms_.initialise(nAtomTypes);
-    sinTerms_.initialise(nAtomTypes);
+    cosTerms_.resize(nAtomTypes, 0);
+    sinTerms_.resize(nAtomTypes, 0);
 }
 
 // Return integer hkl indices
@@ -64,112 +59,33 @@ int KVector::braggReflectionIndex() const { return braggReflectionIndex_; }
 // Zero cos/sin term arrays
 void KVector::zeroCosSinTerms()
 {
-    cosTerms_ = 0.0;
-    sinTerms_ = 0.0;
+    std::fill(cosTerms_.begin(), cosTerms_.end(), 0.0);
+    std::fill(sinTerms_.begin(), sinTerms_.end(), 0.0);
 }
 
 // Add value to cosTerm index specified
-void KVector::addCosTerm(int atomTypeIndex, double value)
-{
-#ifdef CHECKS
-    if (atomTypeIndex >= cosTerms_.nItems())
-    {
-        Messenger::print("BAD_USAGE - KVector::cosTerms_ index supplied ({}) is greated than the size of the array ({}).\n",
-                         atomTypeIndex, cosTerms_.nItems());
-        return;
-    }
-#endif
-    cosTerms_[atomTypeIndex] += value;
-}
+void KVector::addCosTerm(int atomTypeIndex, double value) { cosTerms_[atomTypeIndex] += value; }
 
 // Add value to sinTerm index specified
-void KVector::addSinTerm(int atomTypeIndex, double value)
-{
-#ifdef CHECKS
-    if (atomTypeIndex >= sinTerms_.nItems())
-    {
-        Messenger::print("BAD_USAGE - KVector::sinTerms_ index supplied ({}) is greated than the size of the array ({}).\n",
-                         atomTypeIndex, sinTerms_.nItems());
-        return;
-    }
-#endif
-    sinTerms_[atomTypeIndex] += value;
-}
+void KVector::addSinTerm(int atomTypeIndex, double value) { sinTerms_[atomTypeIndex] += value; }
 
 // Calculate intensities from stored cos and sin term arrays
-void KVector::calculateIntensities(BraggReflection *reflectionArray)
+void KVector::calculateIntensities(std::vector<BraggReflection> &reflections)
 {
-#ifdef CHECKS
-    if (reflectionArray == nullptr)
-    {
-        Messenger::print("NULL_POINTER - NULL BraggReflection array found in KVector::calculateIntensities().\n");
-        return;
-    }
-#endif
     // Calculate final intensities from stored cos/sin terms
     // Take account of the half-sphere, doubling intensities of all k-vectors not on h == 0
-    // Do *not* multiply cross-terms (i != j) by 2 - we want to generate the unmultiplied intensity for consistency with
+    // Do *not* multiply cross-terms (i != j) by 2 - we want to generate the un-multiplied intensity for consistency with
     // other objects
-    int i, j, nTypes = cosTerms_.nItems(), halfSphereNorm = (hkl_.x == 0 ? 1 : 2);
-    double intensity;
-    BraggReflection &braggReflection = reflectionArray[braggReflectionIndex_];
+    auto halfSphereNorm = (hkl_.x == 0 ? 1 : 2);
+    auto &braggReflection = reflections[braggReflectionIndex_];
     braggReflection.addKVectors(halfSphereNorm);
-    for (i = 0; i < nTypes; ++i)
-    {
-        for (j = i; j < nTypes; ++j)
-        {
-            intensity = (cosTerms_[i] * cosTerms_[j] + sinTerms_[i] * sinTerms_[j]);
-            braggReflection.addIntensity(i, j, intensity * halfSphereNorm);
-        }
-    }
+    for_each_pair(0, cosTerms_.size(), [&](auto i, auto j) {
+        braggReflection.addIntensity(i, j, (cosTerms_[i] * cosTerms_[j] + sinTerms_[i] * sinTerms_[j]) * halfSphereNorm);
+    });
 }
 
 // Return specified intensity
 double KVector::intensity(int typeI, int typeJ)
 {
     return (cosTerms_[typeI] * cosTerms_[typeJ] + sinTerms_[typeI] * sinTerms_[typeJ]) * (hkl_.x == 0 ? 1 : 2);
-}
-
-/*
- * GenericItemBase Implementations
- */
-
-// Return class name
-std::string_view KVector::itemClassName() { return "KVector"; }
-
-/*
- * Parallel Comms
- */
-
-// Broadcast data from Master to all Slaves
-bool KVector::broadcast(ProcessPool &procPool, const int root, const CoreData &coreData)
-{
-#ifdef PARALLEL
-    if (!procPool.broadcast(hkl_, root))
-        return false;
-    if (!procPool.broadcast(braggReflectionIndex_, root))
-        return false;
-    if (!procPool.broadcast(cosTerms_, root))
-        return false;
-    if (!procPool.broadcast(sinTerms_, root))
-        return false;
-#endif
-    return true;
-}
-
-// Check item equality
-bool KVector::equality(ProcessPool &procPool)
-{
-#ifdef PARALLEL
-    if (!procPool.equality(hkl_))
-        return Messenger::error("KVector hkl value is not equivalent.\n");
-    if (!procPool.equality(braggReflectionIndex_))
-        return Messenger::error("KVector bragg reflection index is not equivalent (process {} has {}).\n", procPool.poolRank(),
-                                braggReflectionIndex_);
-    if (!procPool.equality(cosTerms_))
-        return Messenger::error("KVector cos terms are not equivalent.\n");
-    if (!procPool.equality(sinTerms_))
-        return Messenger::error("KVector sin terms are not equivalent.\n");
-#endif
-    return true;
 }

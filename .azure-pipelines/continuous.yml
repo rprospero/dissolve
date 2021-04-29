@@ -9,11 +9,15 @@ trigger:
     - cmake/*
     - icon/*
     - tests/*
+    - unit/*
     - CMakeLists.txt
     - conanfile.txt
     - .azure-pipelines/*
     - .clang-format
     - .cmake-format.json
+    exclude:
+    - .azure-pipelines/pr.yml
+    - .azure-pipelines/release.yml
 
 pr: none
 
@@ -41,6 +45,7 @@ stages:
             displayName: 'Publish Linux Artifacts'
       - job: 'osx_serialgui'
         displayName: 'Build OSX (Serial/GUI, macos-latest)'
+        timeoutInMinutes: 120
         pool:
           vmImage: 'macos-latest' 
         steps:
@@ -55,8 +60,8 @@ stages:
               ArtifactName: 'osx-artifacts'
             displayName: 'Publish OSX Artifacts'
       - job: 'windows_serialgui'
-        timeoutInMinutes: 120
         displayName: 'Build Windows (Serial/GUI, windows-latest)'
+        timeoutInMinutes: 120
         pool:
           vmImage: 'windows-latest' 
         steps:
@@ -72,64 +77,6 @@ stages:
             displayName: 'Publish Windows Artifacts'
 
   # Deploy
-  - stage: 'deploy'
-    displayName: 'Deploy'
-    jobs:
-      - job: 'continuous_gh'
-        displayName: 'Create Continuous Release (GH)'
-        pool:
-          vmImage: 'ubuntu-latest'
-        steps:
-          - checkout: self
-            fetchDepth: 1
-          - task: DownloadBuildArtifacts@0
-            inputs:
-              buildType: 'current'
-              specificBuildWithTriggering: true
-              downloadType: 'single'
-              artifactName: 'linux-artifacts'
-            displayName: 'Download Linux Artifacts'
-          - task: DownloadBuildArtifacts@0
-            inputs:
-              buildType: 'current'
-              specificBuildWithTriggering: true
-              downloadType: 'single'
-              artifactName: 'osx-artifacts'
-            displayName: 'Download OSX Artifacts'
-          - task: DownloadBuildArtifacts@0
-            inputs:
-              buildType: 'current'
-              specificBuildWithTriggering: true
-              downloadType: 'single'
-              artifactName: 'windows-artifacts'
-            displayName: 'Download Windows Artifacts'
-          - bash: |
-              VERSION=`grep "#define DISSOLVEVERSION" src/main/version.cpp | sed "s/.*\"\(.*\)\"/\1/g"`
-              cd ./examples
-              ./package-examples -v ${VERSION}
-            displayName: 'Create Example Data Archives'
-          - bash: |
-              VERSION=`grep "#define DISSOLVEVERSION" src/main/version.cpp | sed "s/.*\"\(.*\)\"/\1/g"`
-              # Linux AppImages
-              cd $(System.ArtifactsDirectory)/linux-artifacts
-              mv -v Dissolve-x86_64.AppImage Dissolve-${VERSION}-x86_64.AppImage
-              mv -v Dissolve-GUI-x86_64.AppImage Dissolve-GUI-${VERSION}-x86_64.AppImage
-              cd ../
-              # OSX Disk Images
-              cd $(System.ArtifactsDirectory)/osx-artifacts
-              mv -v Dissolve-GUI-${VERSION}.dmg Dissolve-GUI-${VERSION}-Catalina.dmg
-              cd ../
-              # Windows Installer / Zip
-              cd $(System.ArtifactsDirectory)/windows-artifacts
-              mv -v Dissolve-GUI-${VERSION}-Win64.zip Dissolve-GUI-${VERSION}-Win64.zip
-              mv -v Dissolve-GUI-${VERSION}-Win64.exe Dissolve-GUI-${VERSION}-Win64.exe
-              cd ../
-            displayName: 'Rename Artifacts'
-          - bash: |
-              SHORTHASH=`git rev-parse --short HEAD`
-              DATE=`date`
-              VERSION=`grep "#define DISSOLVEVERSION" src/main/version.cpp | sed "s/.*\"\(.*\)\"/\1/g"`
-              ./ci/scripts/update-release -r projectdissolve/dissolve -t continuous -n "Continuous Build (${VERSION} @ ${SHORTHASH})" -b "Continuous release from current \`develop\` branch at ${SHORTHASH}. Built ${DATE}." -p -e -u $(System.ArtifactsDirectory)/linux-artifacts/*.AppImage $(System.ArtifactsDirectory)/windows-artifacts/*.exe $(System.ArtifactsDirectory)/windows-artifacts/*.zip $(System.ArtifactsDirectory)/osx-artifacts/*dmg examples/*zip examples/*.tar.gz
-            env:
-              GITHUB_TOKEN: $(REPO_SECRET)
-            displayName: 'Update Continuous Release (GitHub)'
+  - template: templates/create-release.yml
+    parameters:
+      continuous: true

@@ -1,26 +1,26 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "procedure/nodes/process3d.h"
 #include "base/lineparser.h"
 #include "base/sysfunc.h"
 #include "classes/box.h"
 #include "classes/configuration.h"
-#include "genericitems/listhelper.h"
 #include "keywords/types.h"
 #include "procedure/nodes/collect3d.h"
 #include "procedure/nodes/operatebase.h"
 #include "procedure/nodes/select.h"
 
 Process3DProcedureNode::Process3DProcedureNode(const Collect3DProcedureNode *target)
-    : ProcedureNode(ProcedureNode::Process3DNode)
+    : ProcedureNode(ProcedureNode::NodeType::Process3D)
 {
-    keywords_.add("Target", new NodeKeyword<const Collect3DProcedureNode>(this, ProcedureNode::Collect3DNode, false, target),
-                  "SourceData", "Collect3D node containing the data to process");
-    keywords_.add("Target", new StringKeyword("Y"), "LabelValue", "Label for the value axis");
-    keywords_.add("Target", new StringKeyword("X"), "LabelX", "Label for the x axis");
-    keywords_.add("Target", new StringKeyword("Y"), "LabelY", "Label for the y axis");
-    keywords_.add("Target", new StringKeyword("Z"), "LabelZ", "Label for the z axis");
+    keywords_.add("Control",
+                  new NodeKeyword<const Collect3DProcedureNode>(this, ProcedureNode::NodeType::Collect3D, false, target),
+                  "SourceData", "Collect3D node containing the histogram data to process");
+    keywords_.add("Control", new StringKeyword("Counts"), "LabelValue", "Label for the value axis");
+    keywords_.add("Control", new StringKeyword("X"), "LabelX", "Label for the x axis");
+    keywords_.add("Control", new StringKeyword("Y"), "LabelY", "Label for the y axis");
+    keywords_.add("Control", new StringKeyword("Z"), "LabelZ", "Label for the z axis");
     keywords_.add("Export", new FileAndFormatKeyword(exportFileAndFormat_, "EndSave"), "Save", "Save processed data to disk");
     keywords_.add("HIDDEN", new NodeBranchKeyword(this, &normalisationBranch_, ProcedureNode::OperateContext), "Normalisation",
                   "Branch providing normalisation operations for the data");
@@ -31,8 +31,6 @@ Process3DProcedureNode::Process3DProcedureNode(const Collect3DProcedureNode *tar
     // Initialise data pointer
     processedData_ = nullptr;
 }
-
-Process3DProcedureNode::~Process3DProcedureNode() {}
 
 /*
  * Identity
@@ -110,18 +108,14 @@ bool Process3DProcedureNode::prepare(Configuration *cfg, std::string_view prefix
     return true;
 }
 
-// Execute node, targetting the supplied Configuration
-ProcedureNode::NodeExecutionResult Process3DProcedureNode::execute(ProcessPool &procPool, Configuration *cfg,
-                                                                   std::string_view prefix, GenericList &targetList)
+// Finalise any necessary data after execution
+bool Process3DProcedureNode::finalise(ProcessPool &procPool, Configuration *cfg, std::string_view prefix,
+                                      GenericList &targetList)
 {
     // Retrieve / realise the normalised data from the supplied list
-    bool created;
-    auto &data = GenericListHelper<Data3D>::realise(targetList, fmt::format("{}_{}", name(), cfg->niceName()), prefix,
-                                                    GenericItem::InRestartFileFlag, &created);
+    auto &data = targetList.realise<Data3D>(fmt::format("Process3D//{}", name()), prefix, GenericItem::InRestartFileFlag);
     processedData_ = &data;
-
-    data.setName(name());
-    data.setObjectTag(fmt::format("{}//Process3D//{}//{}", prefix, cfg->name(), name()));
+    data.setTag(name());
 
     // Copy the averaged data from the associated Process3D node
     data = collectNode_->accumulatedData();
@@ -133,7 +127,7 @@ ProcedureNode::NodeExecutionResult Process3DProcedureNode::execute(ProcessPool &
         ListIterator<ProcedureNode> nodeIterator(normalisationBranch_->sequence());
         while (ProcedureNode *node = nodeIterator.iterate())
         {
-            if (!node->isType(ProcedureNode::OperateBaseNode))
+            if (!node->isType(ProcedureNode::NodeType::OperateBase))
                 continue;
 
             // Cast the node
@@ -141,9 +135,8 @@ ProcedureNode::NodeExecutionResult Process3DProcedureNode::execute(ProcessPool &
             operateNode->setTarget(processedData_);
         }
 
-        ProcedureNode::NodeExecutionResult result = normalisationBranch_->execute(procPool, cfg, prefix, targetList);
-        if (result != ProcedureNode::Success)
-            return result;
+        if (!normalisationBranch_->execute(procPool, cfg, prefix, targetList))
+            return false;
     }
 
     // Save data?
@@ -156,19 +149,12 @@ ProcedureNode::NodeExecutionResult Process3DProcedureNode::execute(ProcessPool &
             else
             {
                 procPool.decideFalse();
-                return ProcedureNode::Failure;
+                return false;
             }
         }
         else if (!procPool.decision())
-            return ProcedureNode::Failure;
+            return false;
     }
 
-    return ProcedureNode::Success;
-}
-
-// Finalise any necessary data after execution
-bool Process3DProcedureNode::finalise(ProcessPool &procPool, Configuration *cfg, std::string_view prefix,
-                                      GenericList &targetList)
-{
     return true;
 }

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -43,7 +43,7 @@ class NodeValueEnumOptionsBaseKeyword
     // Set node value from expression text, informing KeywordBase
     virtual bool setValue(std::string_view expressionText) = 0;
     // Set new option index, informing KeywordBase
-    virtual bool setEnumerationByIndex(int optionIndex) = 0;
+    virtual void setEnumerationByIndex(int optionIndex) = 0;
 
     /*
      * Access to KeywordBase
@@ -79,11 +79,11 @@ class NodeValueEnumOptionsKeyword : public NodeValueEnumOptionsBaseKeyword, publ
      */
     public:
     // Return minimum number of arguments accepted
-    int minArguments() const { return 2; }
+    int minArguments() const override { return 2; }
     // Return maximum number of arguments accepted
-    int maxArguments() const { return 2; }
+    int maxArguments() const override { return 2; }
     // Parse arguments from supplied LineParser, starting at given argument offset
-    bool read(LineParser &parser, int startArg, CoreData &coreData)
+    bool read(LineParser &parser, int startArg, const CoreData &coreData)
     {
         // Check that the parent node has been set
         if (!parentNode_)
@@ -93,8 +93,11 @@ class NodeValueEnumOptionsKeyword : public NodeValueEnumOptionsBaseKeyword, publ
         // Need two args...
         if (parser.hasArg(startArg + 1))
         {
+            // Get any variables currently in scope
+            auto vars = parentNode_->parametersInScope();
+
             // Parse the value to start with...
-            if (!KeywordData<Venum<NodeValue, E>>::data_.value().set(parser.argsv(startArg), parentNode_->parametersInScope()))
+            if (!KeywordData<Venum<NodeValue, E>>::data_.value().set(parser.argsv(startArg), vars))
                 return false;
 
             // Now the enum option
@@ -109,7 +112,7 @@ class NodeValueEnumOptionsKeyword : public NodeValueEnumOptionsBaseKeyword, publ
         return false;
     }
     // Write keyword data to specified LineParser
-    bool write(LineParser &parser, std::string_view keywordName, std::string_view prefix)
+    bool write(LineParser &parser, std::string_view keywordName, std::string_view prefix) const override
     {
         return parser.writeLineF("{}{}  '{}'  {}\n", prefix, KeywordBase::name(),
                                  KeywordData<Venum<NodeValue, E>>::data_.value().asString(),
@@ -127,20 +130,21 @@ class NodeValueEnumOptionsKeyword : public NodeValueEnumOptionsBaseKeyword, publ
             return Messenger::error("Can't read keyword {} since the parent ProcedureNode has not been set.\n",
                                     KeywordBase::name());
 
-        bool result = KeywordData<Venum<NodeValue, E>>::data_.value().set(expressionText, parentNode_->parametersInScope());
+        // Get any variables currently in scope
+        auto vars = parentNode_->parametersInScope();
+
+        bool result = KeywordData<Venum<NodeValue, E>>::data_.value().set(expressionText, vars);
 
         KeywordData<Venum<NodeValue, E>>::hasBeenSet();
 
         return result;
     }
     // Set new option index, informing KeywordBase
-    bool setEnumerationByIndex(int optionIndex)
+    void setEnumerationByIndex(int optionIndex)
     {
-        bool result = KeywordData<Venum<NodeValue, E>>::data_.setEnumerationByIndex(optionIndex);
+        KeywordData<Venum<NodeValue, E>>::data_.setEnumerationByIndex(optionIndex);
 
         KeywordData<Venum<NodeValue, E>>::hasBeenSet();
-
-        return result;
     }
 
     /*

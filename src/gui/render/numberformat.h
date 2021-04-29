@@ -1,30 +1,26 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
 #include "base/enumoptions.h"
 #include <QString>
 
-// Forward Declarations
-/* none */
-
 // Number Format
 class NumberFormat
 {
     public:
-    NumberFormat();
-    ~NumberFormat();
     // Basic Number Type
-    enum FormatType
+    enum class FormatType
     {
-        DecimalFormat,
-        IntegerFormat,
-        ScientificFormat,
-        nNumberFormats
+        Decimal,
+        Integer,
+        Scientific
     };
     // Return enum options for FormatType
-    static EnumOptions<NumberFormat::FormatType> &formatTypes();
+    static EnumOptions<NumberFormat::FormatType> formatTypes();
+    NumberFormat(FormatType type = FormatType::Decimal, int nDecimals = 1);
+    ~NumberFormat() = default;
 
     /*
      * Definition

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "gui/helpers/mousewheeladjustmentguard.h"
 #include "gui/keywordwidgets/nodevalueenumoptions.h"
@@ -26,7 +26,7 @@ NodeValueEnumOptionsKeywordWidget::NodeValueEnumOptionsKeywordWidget(QWidget *pa
         for (int n = 0; n < options.nOptions(); ++n)
         {
             ui_.OptionsCombo->addItem(QString::fromStdString(std::string(options.keywordByIndex(n))));
-            if (options.currentOptionIndex() == n)
+            if (options.index() == n)
                 ui_.OptionsCombo->setCurrentIndex(n);
         }
 
@@ -88,7 +88,7 @@ void NodeValueEnumOptionsKeywordWidget::updateValue()
 
     ui_.ValueEdit->setText(QString::fromStdString(keyword_->value().asString()));
     ui_.ValueValidIndicator->setOK(keyword_->value().isValid());
-    ui_.OptionsCombo->setCurrentIndex(keyword_->baseOptions().currentOptionIndex());
+    ui_.OptionsCombo->setCurrentIndex(keyword_->baseOptions().index());
 
     refreshing_ = false;
 }

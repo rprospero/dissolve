@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "base/processpool.h"
 #include "base/timer.h"
@@ -8,7 +8,6 @@
 #include "classes/configuration.h"
 #include "classes/energykernel.h"
 #include "classes/regionaldistributor.h"
-#include "genericitems/listhelper.h"
 #include "main/dissolve.h"
 #include "modules/atomshake/atomshake.h"
 
@@ -102,7 +101,7 @@ bool AtomShakeModule::process(Dissolve &dissolve, ProcessPool &procPool)
 
                 n = 0;
                 // Loop over atoms in the Molecule
-                for (auto *i : mol->atoms())
+                for (auto i : mol->atoms())
                 {
                     // Calculate reference energy for the Atom
                     currentEnergy = kernel.energy(i, ProcessPool::subDivisionStrategy(strategy), true);

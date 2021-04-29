@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -9,7 +9,6 @@
 // Forward Declarations
 class SpeciesAtom;
 class Species;
-class ProcessPool;
 
 // SpeciesAngle Definition
 class SpeciesAngle : public SpeciesIntra
@@ -33,6 +32,12 @@ class SpeciesAngle : public SpeciesIntra
     // Third SpeciesAtom in interaction
     SpeciesAtom *k_;
 
+    private:
+    // Assign the three atoms in the angle
+    void assign(SpeciesAtom *i, SpeciesAtom *j, SpeciesAtom *k);
+    // Detach from current atoms
+    void detach();
+
     public:
     // Return first SpeciesAtom
     SpeciesAtom *i() const;
@@ -52,8 +57,6 @@ class SpeciesAngle : public SpeciesIntra
     bool matches(SpeciesAtom *i, SpeciesAtom *j, SpeciesAtom *k) const;
     // Return whether all atoms in the interaction are currently selected
     bool isSelected() const;
-    // Detach from current atoms
-    void detach();
 
     /*
      * Interaction Parameters

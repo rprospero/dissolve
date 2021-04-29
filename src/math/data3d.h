@@ -1,22 +1,21 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
 #include "base/version.h"
-#include "math/plottable.h"
+#include "math/data3dbase.h"
 #include "templates/array3d.h"
-#include "templates/objectstore.h"
 
 // Forward Declarations
 class Histogram3D;
 
 // One-Dimensional Data
-class Data3D : public PlottableData, public ListItem<Data3D>, public ObjectStore<Data3D>, public GenericItemBase
+class Data3D : public Data3DBase
 {
     public:
     Data3D();
-    virtual ~Data3D();
+    virtual ~Data3D() = default;
     Data3D(const Data3D &source);
     // Clear data
     void clear();
@@ -25,6 +24,8 @@ class Data3D : public PlottableData, public ListItem<Data3D>, public ObjectStore
      * Data
      */
     private:
+    // Tag for data (optional)
+    std::string tag_;
     // X axis array
     std::vector<double> x_;
     // Y axis array
@@ -41,6 +42,10 @@ class Data3D : public PlottableData, public ListItem<Data3D>, public ObjectStore
     VersionCounter version_;
 
     public:
+    // Set tag
+    void setTag(std::string_view tag);
+    // Return tag
+    std::string_view tag() const;
     // Initialise arrays to specified size
     void initialise(int xSize, int ySize, int zSize, bool withError = false);
     // Initialise to be consistent in size and axes with supplied object
@@ -53,54 +58,44 @@ class Data3D : public PlottableData, public ListItem<Data3D>, public ObjectStore
     int version() const;
     // Return x axis value specified
     double &xAxis(int index);
-    // Return x axis value specified (const)
-    double constXAxis(int index) const;
-    // Return x axis Array
+    const double &xAxis(int index) const;
+    // Return x axis vector
     std::vector<double> &xAxis();
-    // Return x axis Array (const)
-    const std::vector<double> &xAxis() const;
+    const std::vector<double> &xAxis() const override;
     // Return y axis value specified
     double &yAxis(int index);
-    // Return y axis value specified (const)
-    double constYAxis(int index) const;
-    // Return y axis Array
+    const double &yAxis(int index) const;
+    // Return y axis vector
     std::vector<double> &yAxis();
-    // Return y axis Array (const)
-    const std::vector<double> &yAxis() const;
+    const std::vector<double> &yAxis() const override;
     // Return z axis value specified
     double &zAxis(int index);
-    // Return z axis value specified (const)
-    double constZAxis(int index) const;
+    const double &zAxis(int index) const;
     // Return z axis Array
     std::vector<double> &zAxis();
-    // Return z axis Array (const)
-    const std::vector<double> &zAxis() const;
+    const std::vector<double> &zAxis() const override;
     // Return value specified
     double &value(int xIndex, int yIndex, int zIndex);
-    // Return value value specified (const)
-    double constValue(int xIndex, int yIndex, int zIndex) const;
-    // Return value Array
+    const double &value(int xIndex, int yIndex, int zIndex) const;
+    // Return three-dimensional values Array
     Array3D<double> &values();
-    // Return values Array
-    const Array3D<double> &constValues3D() const;
+    const Array3D<double> &values() const override;
     // Return number of values present in whole dataset
-    int nValues() const;
+    int nValues() const override;
     // Return minimum value over all data points
-    double minValue() const;
+    double minValue() const override;
     // Return maximum value over all data points
-    double maxValue() const;
+    double maxValue() const override;
     // Add / initialise errors array
     void addErrors();
     // Return whether the values have associated errors
-    bool valuesHaveErrors() const;
+    bool valuesHaveErrors() const override;
     // Return error value specified
     double &error(int xIndex, int yIndex, int zIndex);
-    // Return error value specified (const)
-    double constError(int xIndex, int yIndex, int zIndex) const;
-    // Return error Array
+    const double &error(int xIndex, int yIndex, int zIndex) const;
+    // Return three-dimensional errors Array
     Array3D<double> &errors();
-    // Return errors Array
-    const Array3D<double> &constErrors3D() const;
+    const Array3D<double> &errors() const override;
 
     /*
      * Operators
@@ -115,22 +110,11 @@ class Data3D : public PlottableData, public ListItem<Data3D>, public ObjectStore
     void operator/=(const double factor);
 
     /*
-     * GenericItemBase Implementations
+     * Serialisation
      */
     public:
-    // Return class name
-    static std::string_view itemClassName();
     // Read data through specified LineParser
-    bool read(LineParser &parser, CoreData &coreData);
+    bool deserialise(LineParser &parser);
     // Write data through specified LineParser
-    bool write(LineParser &parser);
-
-    /*
-     * Parallel Comms
-     */
-    public:
-    // Broadcast data
-    bool broadcast(ProcessPool &procPool, const int root, const CoreData &coreData);
-    // Check item equality
-    bool equality(ProcessPool &procPool);
+    bool serialise(LineParser &parser) const;
 };

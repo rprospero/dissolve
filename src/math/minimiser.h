@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -114,7 +114,7 @@ template <class T> class MinimiserBase
         addTarget(&var, minLimit, minValue, maxLimit, maxValue);
     }
     // Add ExpressionVariable as target, with limits specified
-    void addTarget(ExpressionVariable *var, bool minLimit = false, double minValue = 0.0, bool maxLimit = false,
+    void addTarget(std::shared_ptr<ExpressionVariable> var, bool minLimit = false, double minValue = 0.0, bool maxLimit = false,
                    double maxValue = 0.0)
     {
         addTarget(var->valuePointer()->doublePointer(), minLimit, minValue, maxLimit, maxValue);

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -80,13 +80,4 @@ class ProcedureChart : public ChartBase
     void calculateGeometries(RefList<ProcedureChartNodeBlock> &nodeWidgets, QSize &requiredSize, int &indentLevel);
     // Calculate new widget geometry according to the layout requirements, returning the entire area required
     QSize calculateNewWidgetGeometry(QSize currentSize);
-
-    /*
-     * State I/O (ChartBase Reimplementations)
-     */
-    public:
-    // Read widget state through specified LineParser
-    bool readState(LineParser &parser);
-    // Write widget state through specified LineParser
-    bool writeState(LineParser &parser) const;
 };

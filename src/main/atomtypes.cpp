@@ -1,17 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "base/sysfunc.h"
 #include "classes/atomtype.h"
 #include "main/dissolve.h"
 
 // Add AtomType with specified Element
-std::shared_ptr<AtomType> Dissolve::addAtomType(Element *el)
-{
-    std::shared_ptr<AtomType> newAtomType = coreData_.addAtomType(el);
-
-    return newAtomType;
-}
+std::shared_ptr<AtomType> Dissolve::addAtomType(Elements::Element Z) { return coreData_.addAtomType(Z); }
 
 // Return number of AtomTypes in list
 int Dissolve::nAtomTypes() const { return coreData_.nAtomTypes(); }

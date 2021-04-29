@@ -1,12 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "neta/or.h"
 #include "neta/NETAErrorListeners.h"
 
-NETAOrNode::NETAOrNode(NETADefinition *parent) : NETANode(parent, NETANode::OrNode) {}
-
-NETAOrNode::~NETAOrNode() {}
+NETAOrNode::NETAOrNode(NETADefinition *parent) : NETANode(parent, NETANode::NodeType::Or) {}
 
 /*
  * Scoring

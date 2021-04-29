@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -20,7 +20,7 @@ class CalculateAvgMolModuleWidget : public ModuleWidget
     CalculateAvgMolModule *module_;
 
     public:
-    CalculateAvgMolModuleWidget(QWidget *parent, CalculateAvgMolModule *module);
+    CalculateAvgMolModuleWidget(QWidget *parent, const GenericList &processingData, CalculateAvgMolModule *module);
 
     /*
      * UI
@@ -31,20 +31,7 @@ class CalculateAvgMolModuleWidget : public ModuleWidget
 
     public:
     // Update controls within widget
-    void updateControls(int flags = ModuleWidget::DefaultUpdateFlag);
-    // Disable sensitive controls within widget
-    void disableSensitiveControls();
-    // Enable sensitive controls within widget
-    void enableSensitiveControls();
-
-    /*
-     * State I/O
-     */
-    public:
-    // Write widget state through specified LineParser
-    bool writeState(LineParser &parser) const;
-    // Read widget state through specified LineParser
-    bool readState(LineParser &parser);
+    void updateControls(ModuleWidget::UpdateType updateType) override;
 
     /*
      * Widgets / Functions

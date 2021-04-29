@@ -1,4 +1,5 @@
-add_library(procedurenodes
+add_library(
+  procedurenodes
   addspecies.cpp
   box.cpp
   calculateangle.cpp
@@ -10,7 +11,6 @@ add_library(procedurenodes
   collect2d.cpp
   collect3d.cpp
   dynamicsite.cpp
-  exclude.cpp
   fit1d.cpp
   integrate1d.cpp
   node.cpp
@@ -31,7 +31,6 @@ add_library(procedurenodes
   select.cpp
   sequence.cpp
   sum1d.cpp
-
   addspecies.h
   box.h
   calculateangle.h
@@ -43,7 +42,6 @@ add_library(procedurenodes
   collect2d.h
   collect3d.h
   dynamicsite.h
-  exclude.h
   fit1d.h
   integrate1d.h
   node.h
@@ -67,11 +65,5 @@ add_library(procedurenodes
   sum1d.h
 )
 
-include_directories(
-../
-../../
-${CMAKE_SOURCE_DIR}
-${CMAKE_BINARY_DIR}
-${CMAKE_BINARY_DIR}/src
-)
-
+include_directories(procedurenodes PRIVATE ${PROJECT_SOURCE_DIR}/src)
+target_link_libraries(procedurenodes PRIVATE base)

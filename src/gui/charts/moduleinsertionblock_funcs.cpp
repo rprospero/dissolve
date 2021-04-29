@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "gui/charts/moduleinsertionblock.h"
 #include "gui/charts/modulelistmetrics.h"
@@ -42,8 +42,6 @@ void ModuleInsertionBlock::paintEvent(QPaintEvent *event)
     borderPath.lineTo(width() - metrics.blockBorderWidth(), height() - metrics.blockBorderWidth());
     borderPath.lineTo(width() - metrics.blockBorderWidth(), metrics.blockBorderMidPoint());
     borderPath.closeSubpath();
-
-    // 	painter.setBrush(Qt::white);
 
     // Ready - draw the border + fill!
     painter.drawPath(borderPath);

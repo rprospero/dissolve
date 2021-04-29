@@ -1,18 +1,22 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
-#include "gui/referencepoint.h"
+#include "classes/referencepoint.h"
+#include "genericitems/list.h"
+#include "gui/models/dataManagerReferencePointModel.h"
+#include "gui/models/dataManagerSimulationModel.h"
 #include "gui/ui_datamanagerdialog.h"
 #include "templates/list.h"
 #include <QDialog>
+#include <QSortFilterProxyModel>
+#include <vector>
 
-Q_DECLARE_METATYPE(ReferencePoint *)
+Q_DECLARE_METATYPE(const ReferencePoint *)
 
 // Forward Declarations
 class Dissolve;
-class GenericItem;
 
 // Data Manager Dialog
 class DataManagerDialog : public QDialog
@@ -20,14 +24,20 @@ class DataManagerDialog : public QDialog
     Q_OBJECT
 
     public:
-    DataManagerDialog(QWidget *parent, Dissolve &dissolve, List<ReferencePoint> &referencePoints);
+    DataManagerDialog(QWidget *parent, Dissolve &dissolve, std::vector<ReferencePoint> &referencePoints, GenericList &items);
     ~DataManagerDialog();
 
     private:
     // Reference to Dissolve
     Dissolve &dissolve_;
     // List of current ReferencePoints
-    List<ReferencePoint> &referencePoints_;
+    std::vector<ReferencePoint> &referencePoints_;
+    // ReferencePoint Model
+    DataManagerReferencePointModel refModel_;
+    // Simulation Model
+    DataManagerSimulationModel simModel_;
+    // Simulation Proxy
+    QSortFilterProxyModel simProxy_;
 
     /*
      * UI
@@ -37,13 +47,10 @@ class DataManagerDialog : public QDialog
     Ui::DataManagerDialog ui_;
 
     private:
-    // Append GenericItems to table under specified source
-    void addItemsToTable(QTableWidget *table, List<GenericItem> &items, const QString locationName,
-                         const QString locationIconResource);
     // Update the specified table of GenericItems, optionally filtering them by name and description
-    void filterTable(QTableWidget *table, GenericItem *current, QString filter);
+    void filterTable(QString filterText);
     // Update ReferencePoint table row
-    void referencePointRowUpdate(int row, ReferencePoint *refPoint, bool createItems);
+    void referencePointRowUpdate(int row, const ReferencePoint *refPoint, bool createItems);
     // Return currently-selected ReferencePoint
     ReferencePoint *currentReferencePoint() const;
     // Update controls
@@ -56,7 +63,6 @@ class DataManagerDialog : public QDialog
     void on_ReferencePointRemoveButton_clicked(bool checked);
     void on_ReferencePointCreateButton_clicked(bool checked);
     void on_ReferencePointOpenButton_clicked(bool checked);
-    void on_ReferencePointsTable_currentItemChanged(QTableWidgetItem *currentItem, QTableWidgetItem *previousItem);
 
     // Dialog
     void on_CloseButton_clicked(bool checked);

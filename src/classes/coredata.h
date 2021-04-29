@@ -1,12 +1,15 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
 #include "base/version.h"
 #include "classes/masterintra.h"
+#include "data/elements.h"
 #include "templates/list.h"
+#include "templates/optionalref.h"
 #include "templates/reflist.h"
+#include <list>
 #include <memory>
 #include <optional>
 #include <vector>
@@ -14,7 +17,6 @@
 // Forward Declarations
 class AtomType;
 class Configuration;
-class Element;
 class Species;
 class Module;
 
@@ -38,7 +40,7 @@ class CoreData
 
     public:
     // Add new AtomType
-    std::shared_ptr<AtomType> addAtomType(Element *el);
+    std::shared_ptr<AtomType> addAtomType(Elements::Element Z);
     // Remove specified AtomType
     void removeAtomType(std::shared_ptr<AtomType> at);
     // Return number of AtomTypes in list
@@ -62,57 +64,57 @@ class CoreData
      */
     private:
     // List of master Bond parameters for Species
-    List<MasterIntra> masterBonds_;
+    std::list<MasterIntra> masterBonds_;
     // List of master Angles parameters for Species
-    List<MasterIntra> masterAngles_;
+    std::list<MasterIntra> masterAngles_;
     // List of master Torsions parameters for Species
-    List<MasterIntra> masterTorsions_;
+    std::list<MasterIntra> masterTorsions_;
     // List of master Improper parameters for Species
-    List<MasterIntra> masterImpropers_;
+    std::list<MasterIntra> masterImpropers_;
 
     public:
     // Add new master Bond parameters
-    MasterIntra *addMasterBond(std::string_view name);
+    MasterIntra &addMasterBond(std::string_view name);
     // Return number of master Bond parameters in list
     int nMasterBonds() const;
     // Return list of master Bond parameters
-    const List<MasterIntra> &masterBonds() const;
-    // Return nth master Bond
-    MasterIntra *masterBond(int n);
+    std::list<MasterIntra> &masterBonds();
+    const std::list<MasterIntra> &masterBonds() const;
     // Return whether named master Bond parameters exist
-    MasterIntra *hasMasterBond(std::string_view name) const;
+    OptionalReferenceWrapper<MasterIntra> getMasterBond(std::string_view name);
+    OptionalReferenceWrapper<const MasterIntra> getMasterBond(std::string_view name) const;
     // Add new master Angle parameters
-    MasterIntra *addMasterAngle(std::string_view name);
+    MasterIntra &addMasterAngle(std::string_view name);
     // Return number of master Angles parameters in list
     int nMasterAngles() const;
     // Return list of master Angle parameters
-    const List<MasterIntra> &masterAngles() const;
-    // Return nth master Angle parameters
-    MasterIntra *masterAngle(int n);
+    std::list<MasterIntra> &masterAngles();
+    const std::list<MasterIntra> &masterAngles() const;
     // Return whether named master Angle parameters exist
-    MasterIntra *hasMasterAngle(std::string_view name) const;
+    OptionalReferenceWrapper<MasterIntra> getMasterAngle(std::string_view name);
+    OptionalReferenceWrapper<const MasterIntra> getMasterAngle(std::string_view name) const;
     // Add new master Torsion parameters
-    MasterIntra *addMasterTorsion(std::string_view name);
+    MasterIntra &addMasterTorsion(std::string_view name);
     // Return number of master Torsions parameters in list
     int nMasterTorsions() const;
     // Return list of master Torsion parameters
-    const List<MasterIntra> &masterTorsions() const;
-    // Return nth master Torsion parameters
-    MasterIntra *masterTorsion(int n);
+    std::list<MasterIntra> &masterTorsions();
+    const std::list<MasterIntra> &masterTorsions() const;
     // Return whether named master Torsion parameters exist
-    MasterIntra *hasMasterTorsion(std::string_view name) const;
+    OptionalReferenceWrapper<MasterIntra> getMasterTorsion(std::string_view name);
+    OptionalReferenceWrapper<const MasterIntra> getMasterTorsion(std::string_view name) const;
     // Add new master Improper parameters
-    MasterIntra *addMasterImproper(std::string_view name);
+    MasterIntra &addMasterImproper(std::string_view name);
     // Return number of master Impropers parameters in list
     int nMasterImpropers() const;
     // Return list of master Improper parameters
-    const List<MasterIntra> &masterImpropers() const;
-    // Return nth master Improper parameters
-    MasterIntra *masterImproper(int n);
+    std::list<MasterIntra> &masterImpropers();
+    const std::list<MasterIntra> &masterImpropers() const;
     // Return whether named master Improper parameters exist
-    MasterIntra *hasMasterImproper(std::string_view name) const;
+    OptionalReferenceWrapper<MasterIntra> getMasterImproper(std::string_view name);
+    OptionalReferenceWrapper<const MasterIntra> getMasterImproper(std::string_view name) const;
     // Return the named master term (of any form) if it exists
-    MasterIntra *findMasterTerm(std::string_view name) const;
+    OptionalReferenceWrapper<const MasterIntra> findMasterTerm(std::string_view name) const;
     // Clear all master terms
     void clearMasterTerms();
 
@@ -121,7 +123,7 @@ class CoreData
      */
     private:
     // Core Species list
-    List<Species> species_;
+    std::vector<std::unique_ptr<Species>> species_;
 
     public:
     // Add new Species
@@ -131,10 +133,8 @@ class CoreData
     // Return number of Species in list
     int nSpecies() const;
     // Return core Species list
-    List<Species> &species();
-    const List<Species> &species() const;
-    // Return nth Species in list
-    Species *species(int n);
+    std::vector<std::unique_ptr<Species>> &species();
+    const std::vector<std::unique_ptr<Species>> &species() const;
     // Generate unique Species name with base name provided
     std::string uniqueSpeciesName(std::string_view baseName) const;
     // Search for Species by name

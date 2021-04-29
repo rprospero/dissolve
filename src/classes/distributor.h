@@ -1,15 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
 #include "base/processpool.h"
 #include "classes/cellarray.h"
 #include "templates/array.h"
-#include "templates/dynamicarray.h"
-
-// Forward Declarations
-class ProcessPool;
 
 // Distributor
 class Distributor

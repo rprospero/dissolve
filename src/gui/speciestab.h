@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -111,7 +111,7 @@ class SpeciesTab : public QWidget, public ListItem<SpeciesTab>, public MainTab
      */
     private:
     // IsotopologuesTree top-level update function
-    void updateIsotopologuesTreeTopLevelItem(QTreeWidget *treeWidget, int topLevelItemIndex, Isotopologue *data,
+    void updateIsotopologuesTreeTopLevelItem(QTreeWidget *treeWidget, int topLevelItemIndex, const Isotopologue *data,
                                              bool createItem);
     // IsotopologuesTree item update function
     void updateIsotopologuesTreeChildItem(QTreeWidgetItem *parentItem, int childIndex, std::shared_ptr<AtomType> item,
@@ -149,13 +149,4 @@ class SpeciesTab : public QWidget, public ListItem<SpeciesTab>, public MainTab
     public slots:
     // Update sites tab
     void updateSitesTab();
-
-    /*
-     * State
-     */
-    public:
-    // Read widget state through specified LineParser
-    bool readState(LineParser &parser, const CoreData &coreData);
-    // Write widget state through specified LineParser
-    bool writeState(LineParser &parser) const;
 };

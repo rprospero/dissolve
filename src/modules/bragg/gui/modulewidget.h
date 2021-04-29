@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -21,7 +21,7 @@ class BraggModuleWidget : public ModuleWidget
     Q_OBJECT
 
     public:
-    BraggModuleWidget(QWidget *parent, BraggModule *module);
+    BraggModuleWidget(QWidget *parent, const GenericList &processingData, BraggModule *module);
     ~BraggModuleWidget();
 
     private:
@@ -39,20 +39,7 @@ class BraggModuleWidget : public ModuleWidget
 
     public:
     // Update controls within widget
-    void updateControls(int flags = ModuleWidget::DefaultUpdateFlag);
-    // Disable sensitive controls within widget
-    void disableSensitiveControls();
-    // Enable sensitive controls within widget
-    void enableSensitiveControls();
-
-    /*
-     * State I/O
-     */
-    public:
-    // Write widget state through specified LineParser
-    bool writeState(LineParser &parser) const;
-    // Read widget state through specified LineParser
-    bool readState(LineParser &parser);
+    void updateControls(ModuleWidget::UpdateType updateType) override;
 
     /*
      * Widgets / Functions

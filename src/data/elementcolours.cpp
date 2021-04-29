@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "data/elementcolours.h"
 
@@ -137,9 +137,6 @@ constexpr color const colours_[] = {
     {1.0, 1.0, 1.0, 1.0}        // OG
 };
 
-const float *colour(int Z) { return reinterpret_cast<const float *>(&colours_[Z]); }
-
-// Return colour for specified Element
-const float *colour(Element *el) { return reinterpret_cast<const float *>(&colours_[el->Z()]); }
+const float *colour(Elements::Element Z) { return reinterpret_cast<const float *>(&colours_[Z]); }
 
 } // namespace ElementColours

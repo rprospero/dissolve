@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "base/messenger.h"
 #include "gui/viewer.hui"
@@ -24,7 +24,6 @@ BaseViewer::BaseViewer(QWidget *parent) : QOpenGLWidget(parent), view_(renderabl
 
     // Interaction
     interacting_ = false;
-    interactionMode_ = -1;
     mouseReleaseTimer_.setSingleShot(true);
     mouseReleaseTimer_.setInterval(400);
 

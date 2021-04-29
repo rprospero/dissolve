@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "gui/render/renderablespeciessite.h"
 #include "base/lineparser.h"
@@ -35,32 +35,8 @@ RenderableSpeciesSite::~RenderableSpeciesSite() {}
  * Data
  */
 
-// Return whether a valid data source is available (attempting to set it if not)
-bool RenderableSpeciesSite::validateDataSource()
-{
-    // Don't try to access source_ if we are not currently permitted to do so
-    if (!sourceDataAccessEnabled_)
-        return false;
-
-    return ((speciesSource_ != nullptr) && (siteSource_ != nullptr));
-}
-
-// Invalidate the current data source
-void RenderableSpeciesSite::invalidateDataSource()
-{
-    speciesSource_ = nullptr;
-    siteSource_ = nullptr;
-}
-
 // Return version of data
 int RenderableSpeciesSite::dataVersion() { return (siteSource_ ? siteSource_->version() : -99); }
-
-/*
- * Transform / Limits
- */
-
-// Transform data according to current settings
-void RenderableSpeciesSite::transformValues() { return; }
 
 /*
  * Rendering Primitives
@@ -75,7 +51,7 @@ void RenderableSpeciesSite::recreatePrimitives(const View &view, const ColourDef
     siteAssembly_.clear();
 
     // Check source pointers
-    if (!validateDataSource())
+    if (!siteSource_)
         return;
 
     // Generate a temporary Site from the parent Species
@@ -100,15 +76,6 @@ void RenderableSpeciesSite::recreatePrimitives(const View &view, const ColourDef
             siteAssembly_.add(axesPrimitive_, A);
         }
     }
-    // 	else if (displayStyle_ == SolidStyle)
-    // 	{
-    // 		// Set basic styling for assemblies
-    // 		siteAssembly_.add(true, GL_FILL);
-    //
-    // 		// Plot origin
-    // 		A.setTranslation(site->origin());
-    // 		siteAssembly_.add(originPrimitive_, A, 0.0, 0.0, 0.0, 0.5);
-    // 	}
 }
 
 // Send primitives for rendering
@@ -126,13 +93,8 @@ const void RenderableSpeciesSite::sendToGL(const double pixelScaling)
 // Return EnumOptions for SpeciesSiteDisplayStyle
 EnumOptions<RenderableSpeciesSite::SpeciesSiteDisplayStyle> RenderableSpeciesSite::speciesSiteDisplayStyles()
 {
-    static EnumOptionsList SpeciesSiteStyleOptions = EnumOptionsList()
-                                                     << EnumOption(RenderableSpeciesSite::LinesStyle, "Lines");
-
-    static EnumOptions<RenderableSpeciesSite::SpeciesSiteDisplayStyle> options("SpeciesSiteDisplayStyle",
-                                                                               SpeciesSiteStyleOptions);
-
-    return options;
+    return EnumOptions<RenderableSpeciesSite::SpeciesSiteDisplayStyle>("SpeciesSiteDisplayStyle",
+                                                                       {{RenderableSpeciesSite::LinesStyle, "Lines"}});
 }
 
 // Set display style for renderable
@@ -153,12 +115,9 @@ RenderableSpeciesSite::SpeciesSiteDisplayStyle RenderableSpeciesSite::displaySty
 // Return enum option info for RenderableKeyword
 EnumOptions<RenderableSpeciesSite::SpeciesSiteStyleKeyword> RenderableSpeciesSite::speciesSiteStyleKeywords()
 {
-    static EnumOptionsList StyleKeywords = EnumOptionsList() << EnumOption(RenderableSpeciesSite::DisplayKeyword, "Display", 1)
-                                                             << EnumOption(RenderableSpeciesSite::EndStyleKeyword, "EndStyle");
-
-    static EnumOptions<RenderableSpeciesSite::SpeciesSiteStyleKeyword> options("SpeciesSiteStyleKeyword", StyleKeywords);
-
-    return options;
+    return EnumOptions<RenderableSpeciesSite::SpeciesSiteStyleKeyword>(
+        "SpeciesSiteStyleKeyword",
+        {{RenderableSpeciesSite::DisplayKeyword, "Display", 1}, {RenderableSpeciesSite::EndStyleKeyword, "EndStyle"}});
 }
 
 // Write style information

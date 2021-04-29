@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "base/lineparser.h"
 #include "base/sysfunc.h"
@@ -9,7 +9,7 @@
 #include <algorithm>
 
 // Write through specified LineParser
-bool Configuration::write(LineParser &parser) const
+bool Configuration::serialise(LineParser &parser) const
 {
     if (!parser.writeLineF("'{}'  {}  # nMolecules\n", name(), molecules_.size()))
         return false;
@@ -17,8 +17,8 @@ bool Configuration::write(LineParser &parser) const
     // Write unit cell (box) lengths and angles
     const auto lengths = box()->axisLengths();
     const auto angles = box()->axisAngles();
-    if (!parser.writeLineF("{:12e} {:12e} {:12e}  {}  {}\n", lengths.x, lengths.y, lengths.z, requestedSizeFactor_,
-                           DissolveSys::btoa(box()->type() == Box::NonPeriodicBoxType)))
+    if (!parser.writeLineF("{:12e} {:12e} {:12e}  {}  {}  {}\n", lengths.x, lengths.y, lengths.z, appliedSizeFactor_,
+                           requestedSizeFactor_, DissolveSys::btoa(box()->type() == Box::NonPeriodicBoxType)))
         return false;
     if (!parser.writeLineF("{:12e} {:12e} {:12e}\n", angles.x, angles.y, angles.z))
         return false;
@@ -50,11 +50,10 @@ bool Configuration::write(LineParser &parser) const
         return false;
 
     // Write all Atoms - for each write index and coordinates
-    if (!parser.writeLineF("{}  # nAtoms\n", atoms_.nItems()))
+    if (!parser.writeLineF("{}  # nAtoms\n", atoms_.size()))
         return false;
-    for (auto n = 0; n < atoms_.nItems(); ++n)
+    for (const auto i : atoms_)
     {
-        const Atom *i = atoms_.constValue(n);
         if (!parser.writeLineF("{} {:e} {:e} {:e}\n", i->molecule()->arrayIndex(), i->x(), i->y(), i->z()))
             return false;
     }
@@ -63,7 +62,8 @@ bool Configuration::write(LineParser &parser) const
 }
 
 // Read through specified LineParser
-bool Configuration::read(LineParser &parser, const List<Species> &availableSpecies, double pairPotentialRange)
+bool Configuration::read(LineParser &parser, const std::vector<std::unique_ptr<Species>> &availableSpecies,
+                         double pairPotentialRange)
 {
     // Clear current contents of Configuration
     empty();
@@ -75,20 +75,21 @@ bool Configuration::read(LineParser &parser, const List<Species> &availableSpeci
 
     /*
      * Read box definition
-     * Lengths, along with atomic coordinates, reflect the specified size factor (if present).
+     * Lengths, along with atomic coordinates, reflect the applied size factor.
      * Create box with unscaled lengths - they will be scaled according to the size factor at the end of the routine.
      */
     if (parser.getArgsDelim(LineParser::Defaults) != LineParser::Success)
         return false;
-    auto scaledLengths = parser.arg3d(0);
-    requestedSizeFactor_ = (parser.hasArg(3) ? parser.argd(3) : 1.0);
+    appliedSizeFactor_ = parser.argd(3);
+    requestedSizeFactor_ = parser.argd(4);
+    auto nonPeriodic = parser.argb(5);
+    const auto lengths = parser.arg3d(0) / appliedSizeFactor_;
+
     if (parser.getArgsDelim(LineParser::Defaults) != LineParser::Success)
         return false;
-
-    appliedSizeFactor_ = requestedSizeFactor_;
-    const auto lengths = scaledLengths / appliedSizeFactor_;
     const auto angles = parser.arg3d(0);
-    if (!createBox(lengths, angles))
+
+    if (!createBox(lengths, angles, nonPeriodic))
         return false;
 
     // Read total number of Molecules to expect
@@ -98,23 +99,26 @@ bool Configuration::read(LineParser &parser, const List<Species> &availableSpeci
 
     // Read Species types for Molecules
     auto nMolsRead = 0;
-    Species *sp = nullptr;
     while (nMolsRead < expectedNMols)
     {
         // Read line containing number of molecules and Species name
         if (parser.getArgsDelim(LineParser::Defaults) != LineParser::Success)
             return false;
-        for (sp = availableSpecies.first(); sp != nullptr; sp = sp->next())
-            if (DissolveSys::sameString(sp->name(), parser.argsv(1)))
-                break;
-        if (!sp)
+
+        auto it = std::find_if(availableSpecies.cbegin(), availableSpecies.cend(),
+                               [&](const auto &sp) { return DissolveSys::sameString(sp->name(), parser.argsv(1)); });
+
+        if (it == availableSpecies.cend())
+        {
             return Messenger::error("Unrecognised Species '{}' found in Configuration '{}' in restart file.\n", parser.argsv(1),
                                     name());
+        }
+        auto &sp = *it;
 
         // Set Species pointers for this range of Molecules
         auto nMols = parser.argi(0);
         for (auto n = 0; n < nMols; ++n)
-            addMolecule(sp);
+            addMolecule(sp.get());
 
         // Increase our counter
         nMolsRead += parser.argi(0);

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "keywords/types.h"
 #include "modules/neutronsq/neutronsq.h"
@@ -29,7 +29,8 @@ void NeutronSQModule::initialise()
                                                                                   StructureFactors::NoNormalisation),
                   "ReferenceNormalisation", "Normalisation to remove from reference data before use",
                   KeywordBase::ModificationRequiresSetUpOption);
-    keywords_.add("Reference Data", new WindowFunctionKeyword(WindowFunction(WindowFunction::Lorch0Window)),
+    keywords_.add("Reference Data",
+                  new EnumOptionsKeyword<WindowFunction::Form>(WindowFunction::forms() = WindowFunction::Form::Lorch0),
                   "ReferenceWindowFunction", "Window function to apply when Fourier-transforming reference S(Q) to g(r)",
                   KeywordBase::ModificationRequiresSetUpOption);
 

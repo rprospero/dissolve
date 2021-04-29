@@ -1,26 +1,18 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "math/histogram1d.h"
 #include "base/lineparser.h"
 #include "base/messenger.h"
 
-// Static Members (ObjectStore)
-template <class Histogram1D> RefDataList<Histogram1D, int> ObjectStore<Histogram1D>::objects_;
-template <class Histogram1D> int ObjectStore<Histogram1D>::objectCount_ = 0;
-template <class Histogram1D> int ObjectStore<Histogram1D>::objectType_ = ObjectInfo::Histogram1DObject;
-template <class Histogram1D> std::string_view ObjectStore<Histogram1D>::objectTypeName_ = "Histogram1D";
-
-Histogram1D::Histogram1D() : ListItem<Histogram1D>(), ObjectStore<Histogram1D>(this)
+Histogram1D::Histogram1D()
 {
     accumulatedData_.addErrors();
 
     clear();
 }
 
-Histogram1D::~Histogram1D() {}
-
-Histogram1D::Histogram1D(const Histogram1D &source) : ObjectStore<Histogram1D>(this) { (*this) = source; }
+Histogram1D::Histogram1D(const Histogram1D &source) { (*this) = source; }
 
 // Clear Data
 void Histogram1D::clear()
@@ -163,6 +155,9 @@ void Histogram1D::add(Histogram1D &other, int factor)
     }
     for (auto n = 0; n < nBins_; ++n)
         bins_[n] += other.bins_[n] * factor;
+
+    nBinned_ += other.nBinned_;
+    nMissed_ += other.nMissed_;
 }
 
 // Return accumulated (averaged) data
@@ -185,21 +180,29 @@ void Histogram1D::operator=(const Histogram1D &source)
     averages_ = source.averages_;
 }
 
+Histogram1D Histogram1D::operator+(const Histogram1D &other) const
+{
+    assert(nBins_ == other.nBins_);
+
+    Histogram1D ret = *this;
+
+    std::transform(other.bins_.cbegin(), other.bins_.cend(), ret.bins_.cbegin(), ret.bins_.begin(), std::plus<>());
+
+    ret.nBinned_ = this->nBinned_ + other.nBinned_;
+    ret.nMissed_ = this->nMissed_ + other.nMissed_;
+    ret.nBins_ = this->nBins_;
+
+    return ret;
+}
+
 /*
- * GenericItemBase Implementations
+ * Serialisation
  */
 
-// Return class name
-std::string_view Histogram1D::itemClassName() { return "Histogram1D"; }
-
 // Read data through specified LineParser
-bool Histogram1D::read(LineParser &parser, CoreData &coreData)
+bool Histogram1D::deserialise(LineParser &parser)
 {
     clear();
-
-    if (parser.readNextLine(LineParser::Defaults) != LineParser::Success)
-        return false;
-    setObjectTag(parser.line());
 
     if (parser.getArgsDelim(LineParser::Defaults) != LineParser::Success)
         return false;
@@ -211,23 +214,21 @@ bool Histogram1D::read(LineParser &parser, CoreData &coreData)
     nMissed_ = parser.argli(1);
 
     for (auto n = 0; n < nBins_; ++n)
-        if (!averages_[n].read(parser, coreData))
+        if (!averages_[n].deserialise(parser))
             return false;
 
     return true;
 }
 
 // Write data through specified LineParser
-bool Histogram1D::write(LineParser &parser)
+bool Histogram1D::serialise(LineParser &parser) const
 {
-    if (!parser.writeLineF("{}\n", objectTag()))
-        return false;
     if (!parser.writeLineF("{} {} {}\n", minimum_, maximum_, binWidth_))
         return false;
     if (!parser.writeLineF("{}  {}\n", nBinned_, nMissed_))
         return false;
     for (auto n = 0; n < nBins_; ++n)
-        if (!averages_[n].write(parser))
+        if (!averages_.at(n).serialise(parser))
             return false;
 
     return true;
@@ -243,70 +244,6 @@ bool Histogram1D::allSum(ProcessPool &procPool)
 #ifdef PARALLEL
     if (!procPool.allSum(bins_.data(), nBins_))
         return false;
-#endif
-    return true;
-}
-
-// Broadcast data
-bool Histogram1D::broadcast(ProcessPool &procPool, const int root, const CoreData &coreData)
-{
-#ifdef PARALLEL
-    // Range data
-    if (!procPool.broadcast(minimum_, root))
-        return false;
-    if (!procPool.broadcast(maximum_, root))
-        return false;
-    if (!procPool.broadcast(binWidth_, root))
-        return false;
-    if (!procPool.broadcast(nBins_, root))
-        return false;
-
-    // Data
-    if (!procPool.broadcast(nBinned_, root))
-        return false;
-    if (!procPool.broadcast(nMissed_, root))
-        return false;
-    if (!procPool.broadcast(binCentres_, root))
-        return false;
-    if (!procPool.broadcast(bins_, root))
-        return false;
-    for (auto &n : averages_)
-        if (!n.broadcast(procPool, root, coreData))
-            return false;
-#endif
-    return true;
-}
-
-// Check item equality
-bool Histogram1D::equality(ProcessPool &procPool)
-{
-#ifdef PARALLEL
-    // Check number of items in arrays first
-    if (!procPool.equality(minimum_))
-        return Messenger::error("Histogram1D minimum value is not equivalent (process {} has {:e}).\n", procPool.poolRank(),
-                                minimum_);
-    if (!procPool.equality(maximum_))
-        return Messenger::error("Histogram1D maximum value is not equivalent (process {} has {:e}).\n", procPool.poolRank(),
-                                maximum_);
-    if (!procPool.equality(binWidth_))
-        return Messenger::error("Histogram1D bin width is not equivalent (process {} has {:e}).\n", procPool.poolRank(),
-                                binWidth_);
-    if (!procPool.equality(nBins_))
-        return Messenger::error("Histogram1D number of bins is not equivalent (process {} has {}).\n", procPool.poolRank(),
-                                nBins_);
-    if (!procPool.equality(binCentres_))
-        return Messenger::error("Histogram1D bin centre values not equivalent.\n");
-    if (!procPool.equality(bins_))
-        return Messenger::error("Histogram1D bin values not equivalent.\n");
-    if (!procPool.equality(nBinned_))
-        return Messenger::error("Histogram1D nunmber of binned values is not equivalent (process {} has {}).\n",
-                                procPool.poolRank(), nBinned_);
-    if (!procPool.equality(nMissed_))
-        return Messenger::error("Histogram1D nunmber of binned values is not equivalent (process {} has {}).\n",
-                                procPool.poolRank(), nBinned_);
-    for (auto n : averages_)
-        if (!n.equality(procPool))
-            return Messenger::error("Histogram1D average values not equivalent.\n");
 #endif
     return true;
 }

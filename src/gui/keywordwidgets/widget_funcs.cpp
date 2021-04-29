@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "base/lineparser.h"
 #include "gui/keywordwidgets/widget.hui"
@@ -78,13 +78,13 @@ QWidget *KeywordsWidget::createKeywordWidget(RefList<KeywordWidgetBase> &keyword
         widget = enumOptionsWidget;
         base = enumOptionsWidget;
     }
-    else if (type == KeywordBase::ExpressionVariableListData)
+    else if (type == KeywordBase::ExpressionVariableVectorData)
     {
-        ExpressionVariableListKeywordWidget *expressionVariableListWidget =
-            new ExpressionVariableListKeywordWidget(nullptr, keywordBase, coreData);
-        connect(expressionVariableListWidget, SIGNAL(keywordValueChanged(int)), this, SLOT(keywordDataChanged(int)));
-        widget = expressionVariableListWidget;
-        base = expressionVariableListWidget;
+        ExpressionVariableVectorKeywordWidget *expressionVariableVectorWidget =
+            new ExpressionVariableVectorKeywordWidget(nullptr, keywordBase, coreData);
+        connect(expressionVariableVectorWidget, SIGNAL(keywordValueChanged(int)), this, SLOT(keywordDataChanged(int)));
+        widget = expressionVariableVectorWidget;
+        base = expressionVariableVectorWidget;
     }
     else if (type == KeywordBase::FileAndFormatData)
     {
@@ -123,10 +123,10 @@ QWidget *KeywordsWidget::createKeywordWidget(RefList<KeywordWidgetBase> &keyword
     }
     else if (type == KeywordBase::ModuleRefListData)
     {
-        ModuleRefListKeywordWidget *moduleRefListWidget = new ModuleRefListKeywordWidget(nullptr, keywordBase, coreData);
-        connect(moduleRefListWidget, SIGNAL(keywordValueChanged(int)), this, SLOT(keywordDataChanged(int)));
-        widget = moduleRefListWidget;
-        base = moduleRefListWidget;
+        ModuleVectorKeywordWidget *ModuleVectorWidget = new ModuleVectorKeywordWidget(nullptr, keywordBase, coreData);
+        connect(ModuleVectorWidget, SIGNAL(keywordValueChanged(int)), this, SLOT(keywordDataChanged(int)));
+        widget = ModuleVectorWidget;
+        base = ModuleVectorWidget;
     }
     else if (type == KeywordBase::NodeData)
     {
@@ -214,13 +214,6 @@ QWidget *KeywordsWidget::createKeywordWidget(RefList<KeywordWidgetBase> &keyword
         connect(charWidget, SIGNAL(keywordValueChanged(int)), this, SLOT(keywordDataChanged(int)));
         widget = charWidget;
         base = charWidget;
-    }
-    else if (type == KeywordBase::WindowFunctionData)
-    {
-        WindowFunctionKeywordWidget *windowFunctionWidget = new WindowFunctionKeywordWidget(nullptr, keywordBase, coreData);
-        connect(windowFunctionWidget, SIGNAL(keywordValueChanged(int)), this, SLOT(keywordDataChanged(int)));
-        widget = windowFunctionWidget;
-        base = windowFunctionWidget;
     }
     else if (type == KeywordBase::Vec3DoubleData)
     {

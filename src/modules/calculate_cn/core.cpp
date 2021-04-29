@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "modules/calculate_cn/cn.h"
 
@@ -12,8 +12,6 @@ CalculateCNModule::CalculateCNModule() : Module(nRequiredTargets()), analyser_(P
     // Initialise Module - set up keywords etc.
     initialise();
 }
-
-CalculateCNModule::~CalculateCNModule() {}
 
 /*
  * Instances

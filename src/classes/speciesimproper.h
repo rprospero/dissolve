@@ -1,31 +1,26 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
 #include "base/enumoptions.h"
 #include "classes/speciesintra.h"
+#include "classes/speciestorsion.h"
 
 // Forward Declarations
 class SpeciesAtom;
 class Species;
-class ProcessPool;
 
 // SpeciesImproper Definition
 class SpeciesImproper : public SpeciesIntra
 {
     public:
-    SpeciesImproper();
-    SpeciesImproper(SpeciesAtom *i, SpeciesAtom *j, SpeciesAtom *k, SpeciesAtom *l);
-    ~SpeciesImproper() = default;
+    SpeciesImproper(SpeciesImproper &source);
     SpeciesImproper(SpeciesImproper &&source);
-
-    /*
-     * DynamicArrayObject Virtuals
-     */
-    public:
-    // Clear object, ready for re-use
-    void clear();
+    SpeciesImproper(SpeciesAtom *i = nullptr, SpeciesAtom *j = nullptr, SpeciesAtom *k = nullptr, SpeciesAtom *l = nullptr);
+    ~SpeciesImproper();
+    SpeciesImproper &operator=(const SpeciesImproper &source);
+    SpeciesImproper &operator=(SpeciesImproper &&source);
 
     /*
      * Atom Information
@@ -40,9 +35,13 @@ class SpeciesImproper : public SpeciesIntra
     // Fourth SpeciesAtom in interaction
     SpeciesAtom *l_;
 
-    public:
+    private:
     // Set Atoms involved in Improper
     void assign(SpeciesAtom *i, SpeciesAtom *j, SpeciesAtom *k, SpeciesAtom *l);
+    // Detach from current atoms
+    void detach();
+
+    public:
     // Return first SpeciesAtom
     SpeciesAtom *i() const;
     // Return second SpeciesAtom
@@ -71,22 +70,6 @@ class SpeciesImproper : public SpeciesIntra
     /*
      * Interaction Parameters
      */
-    public:
-    // Improper functional forms
-    enum ImproperFunction
-    {
-        NoForm,
-        CosineForm,
-        Cos3Form,
-        Cos3CForm,
-        Cos4Form,
-        CosNForm,
-        CosNCForm,
-        UFFCosineForm
-    };
-    // Return enum options for ImproperFunction
-    static EnumOptions<ImproperFunction> improperFunctions();
-
     public:
     // Set up any necessary parameters
     void setUp();

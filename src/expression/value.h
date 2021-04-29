@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -15,19 +15,21 @@ class ExpressionValue
     ExpressionValue();
     ExpressionValue(int value);
     ExpressionValue(double value);
-    ~ExpressionValue();
+    ~ExpressionValue() = default;
     ExpressionValue(const ExpressionValue &source);
-    void operator=(const ExpressionValue &source);
+    ExpressionValue &operator=(const ExpressionValue &source);
+    ExpressionValue &operator=(int i);
+    ExpressionValue &operator=(double d);
 
     /*
      * Data
      */
     public:
     // Value Type
-    enum ValueType
+    enum class ValueType
     {
-        IntegerType,
-        DoubleType
+        Integer,
+        Double
     };
 
     private:
@@ -43,8 +45,6 @@ class ExpressionValue
     public:
     // Return the current result type
     ValueType type() const;
-    void operator=(int i);
-    void operator=(double d);
     // Return as integer (regardless of current type)
     int asInteger() const;
     // Return as double (regardless of current type)

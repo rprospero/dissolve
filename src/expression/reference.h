@@ -1,26 +1,33 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
-#include "expression/nodeNEW.h"
+#include "expression/node.h"
 
 // Forward Declarations
 class ExpressionVariable;
 
 // Expression Variable Reference Node
-class ExpressionReferenceNode : public ExpressionNodeNEW
+class ExpressionReferenceNode : public ExpressionNode
 {
     public:
-    ExpressionReferenceNode(ExpressionVariable *variable);
+    ExpressionReferenceNode(std::shared_ptr<ExpressionVariable> variable);
     ~ExpressionReferenceNode() = default;
+
+    /*
+     * Nodes
+     */
+    protected:
+    // Duplicate this node and its contents
+    std::shared_ptr<ExpressionNode> duplicate();
 
     /*
      * Data
      */
     private:
     // Target variable
-    ExpressionVariable *variable_;
+    std::shared_ptr<ExpressionVariable> variable_;
 
     /*
      * Evaluation

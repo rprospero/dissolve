@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "procedure/nodes/addspecies.h"
 #include "base/lineparser.h"
@@ -12,7 +12,7 @@
 
 AddSpeciesProcedureNode::AddSpeciesProcedureNode(Species *sp, NodeValue population, NodeValue density,
                                                  Units::DensityUnits densityUnits)
-    : ProcedureNode(ProcedureNode::AddSpeciesNode)
+    : ProcedureNode(ProcedureNode::NodeType::AddSpecies)
 {
     // Set up keywords
     keywords_.add("Control", new SpeciesKeyword(sp), "Species", "Target species to add");
@@ -30,8 +30,6 @@ AddSpeciesProcedureNode::AddSpeciesProcedureNode(Species *sp, NodeValue populati
                       positioningTypes() = AddSpeciesProcedureNode::RandomPositioning),
                   "Positioning", "Positioning type for individual molecules");
 }
-
-AddSpeciesProcedureNode::~AddSpeciesProcedureNode() {}
 
 /*
  * Identity
@@ -53,27 +51,19 @@ bool AddSpeciesProcedureNode::mustBeNamed() const { return false; }
 // Return enum option info for PositioningType
 EnumOptions<AddSpeciesProcedureNode::BoxActionStyle> AddSpeciesProcedureNode::boxActionStyles()
 {
-    static EnumOptionsList BoxActionStyleKeywords = EnumOptionsList()
-                                                    << EnumOption(AddSpeciesProcedureNode::None, "None")
-                                                    << EnumOption(AddSpeciesProcedureNode::AddVolume, "AddVolume")
-                                                    << EnumOption(AddSpeciesProcedureNode::ScaleVolume, "ScaleVolume");
-
-    static EnumOptions<AddSpeciesProcedureNode::BoxActionStyle> options("BoxAction", BoxActionStyleKeywords);
-
-    return options;
+    return EnumOptions<AddSpeciesProcedureNode::BoxActionStyle>("BoxAction",
+                                                                {{AddSpeciesProcedureNode::None, "None"},
+                                                                 {AddSpeciesProcedureNode::AddVolume, "AddVolume"},
+                                                                 {AddSpeciesProcedureNode::ScaleVolume, "ScaleVolume"}});
 }
 
 // Return enum option info for PositioningType
 EnumOptions<AddSpeciesProcedureNode::PositioningType> AddSpeciesProcedureNode::positioningTypes()
 {
-    static EnumOptionsList PositioningTypeKeywords = EnumOptionsList()
-                                                     << EnumOption(AddSpeciesProcedureNode::CentralPositioning, "Central")
-                                                     << EnumOption(AddSpeciesProcedureNode::CurrentPositioning, "Current")
-                                                     << EnumOption(AddSpeciesProcedureNode::RandomPositioning, "Random");
-
-    static EnumOptions<AddSpeciesProcedureNode::PositioningType> options("PositioningType", PositioningTypeKeywords);
-
-    return options;
+    return EnumOptions<AddSpeciesProcedureNode::PositioningType>("PositioningType",
+                                                                 {{AddSpeciesProcedureNode::CentralPositioning, "Central"},
+                                                                  {AddSpeciesProcedureNode::CurrentPositioning, "Current"},
+                                                                  {AddSpeciesProcedureNode::RandomPositioning, "Random"}});
 }
 
 /*
@@ -84,24 +74,18 @@ EnumOptions<AddSpeciesProcedureNode::PositioningType> AddSpeciesProcedureNode::p
 bool AddSpeciesProcedureNode::prepare(Configuration *cfg, std::string_view prefix, GenericList &targetList) { return true; }
 
 // Execute node, targetting the supplied Configuration
-ProcedureNode::NodeExecutionResult AddSpeciesProcedureNode::execute(ProcessPool &procPool, Configuration *cfg,
-                                                                    std::string_view prefix, GenericList &targetList)
+bool AddSpeciesProcedureNode::execute(ProcessPool &procPool, Configuration *cfg, std::string_view prefix,
+                                      GenericList &targetList)
 {
     const auto requestedPopulation = keywords_.asInt("Population");
     auto *sp = keywords_.retrieve<Species *>("Species");
     if (!sp)
-    {
-        Messenger::error("No Species set in AddSpecies node.\n");
-        return ProcedureNode::Failure;
-    }
+        return Messenger::error("No Species set in AddSpecies node.\n");
     const auto nAtomsToAdd = requestedPopulation * sp->nAtoms();
 
     // Can't add the Species if it has any missing core information
     if (!sp->checkSetUp())
-    {
-        Messenger::error("Can't add Species '{}' because it is not set up correctly.\n", sp->name());
-        return ProcedureNode::Failure;
-    }
+        return Messenger::error("Can't add Species '{}' because it is not set up correctly.\n", sp->name());
 
     Messenger::print("[AddSpecies] Adding species '{}' - population is {}.\n", sp->name(), requestedPopulation);
 
@@ -197,7 +181,7 @@ ProcedureNode::NodeExecutionResult AddSpeciesProcedureNode::execute(ProcessPool 
     Vec3<double> r, cog, newCentre, fr;
     CoordinateSet *coordSet = sp->coordinateSets().first();
     Matrix3 transform;
-    const Box *box = cfg->box();
+    const auto *box = cfg->box();
     for (auto n = 0; n < requestedPopulation; ++n)
     {
         // Add the Molecule
@@ -242,5 +226,5 @@ ProcedureNode::NodeExecutionResult AddSpeciesProcedureNode::execute(ProcessPool 
     Messenger::print("[AddSpecies] New box density is {:e} cubic Angstroms ({} g/cm3).\n", cfg->atomicDensity(),
                      cfg->chemicalDensity());
 
-    return ProcedureNode::Success;
+    return true;
 }

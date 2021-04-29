@@ -1,23 +1,18 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "base/lineparser.h"
 #include "base/sysfunc.h"
 #include "classes/species.h"
-#include "genericitems/listhelper.h"
 #include "main/dissolve.h"
 #include "main/keywords.h"
 
 // Return enum option info for ModuleKeyword
 EnumOptions<ModuleBlock::ModuleKeyword> ModuleBlock::keywords()
 {
-    static EnumOptionsList ModuleKeywords = EnumOptionsList() << EnumOption(ModuleBlock::DisableKeyword, "Disabled")
-                                                              << EnumOption(ModuleBlock::EndModuleKeyword, "EndModule")
-                                                              << EnumOption(ModuleBlock::FrequencyKeyword, "Frequency", 1);
-
-    static EnumOptions<ModuleBlock::ModuleKeyword> options("ModuleKeyword", ModuleKeywords);
-
-    return options;
+    return EnumOptions<ModuleBlock::ModuleKeyword>("ModuleKeyword", {{ModuleBlock::DisableKeyword, "Disabled"},
+                                                                     {ModuleBlock::EndModuleKeyword, "EndModule"},
+                                                                     {ModuleBlock::FrequencyKeyword, "Frequency", 1}});
 }
 
 // Parse Module block
@@ -55,9 +50,6 @@ bool ModuleBlock::parse(LineParser &parser, Dissolve *dissolve, Module *module, 
                     break;
                 case (ModuleBlock::FrequencyKeyword):
                     module->setFrequency(parser.argi(1));
-                    break;
-                case (ModuleBlock::nModuleKeywords):
-                    // Never used, since it is accounted for in the beginning 'if'
                     break;
                 default:
                     Messenger::error("{} block keyword '{}' not accounted for.\n",

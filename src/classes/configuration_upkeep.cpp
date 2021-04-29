@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "classes/atom.h"
 #include "classes/box.h"
@@ -11,13 +11,12 @@
 void Configuration::updateCellContents()
 {
     // Fold the coordinates of each atom into the box, and then check its Cell location, moving if necessary.
-    Atom **atoms = atoms_.array();
-    for (auto n = 0; n < atoms_.nItems(); ++n)
-        updateCellLocation(atoms[n]);
+    for (auto &atom : atoms_)
+        updateCellLocation(atom);
 }
 
 // Update Cell location of specified Atom
-void Configuration::updateCellLocation(Atom *i)
+void Configuration::updateCellLocation(std::shared_ptr<Atom> i)
 {
     // Fold Atom coordinates into Box
     i->setCoordinates(box_->fold(i->r()));

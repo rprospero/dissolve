@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -20,7 +20,7 @@ class TestModuleWidget : public ModuleWidget
     TestModule *module_;
 
     public:
-    TestModuleWidget(QWidget *parent, TestModule *module);
+    TestModuleWidget(QWidget *parent, const GenericList &processingData, TestModule *module);
 
     /*
      * UI

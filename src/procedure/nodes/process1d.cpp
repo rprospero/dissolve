@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "procedure/nodes/process1d.h"
 #include "base/lineparser.h"
 #include "base/sysfunc.h"
 #include "classes/box.h"
 #include "classes/configuration.h"
-#include "genericitems/listhelper.h"
 #include "io/export/data1d.h"
 #include "keywords/types.h"
 #include "math/integrator.h"
@@ -16,12 +15,13 @@
 #include "procedure/nodes/select.h"
 
 Process1DProcedureNode::Process1DProcedureNode(const Collect1DProcedureNode *target)
-    : ProcedureNode(ProcedureNode::Process1DNode)
+    : ProcedureNode(ProcedureNode::NodeType::Process1D)
 {
-    keywords_.add("Target", new NodeKeyword<const Collect1DProcedureNode>(this, ProcedureNode::Collect1DNode, false, target),
-                  "SourceData", "Collect1D node containing the data to process");
-    keywords_.add("Target", new StringKeyword("Y"), "LabelValue", "Label for the value axis");
-    keywords_.add("Target", new StringKeyword("X"), "LabelX", "Label for the x axis");
+    keywords_.add("Control",
+                  new NodeKeyword<const Collect1DProcedureNode>(this, ProcedureNode::NodeType::Collect1D, false, target),
+                  "SourceData", "Collect1D node containing the histogram data to process");
+    keywords_.add("Control", new StringKeyword("Y"), "LabelValue", "Label for the value axis");
+    keywords_.add("Control", new StringKeyword("X"), "LabelX", "Label for the x axis");
     keywords_.add("Export", new BoolKeyword(false), "Save", "Save processed data to disk");
     keywords_.add("HIDDEN", new NodeBranchKeyword(this, &normalisationBranch_, ProcedureNode::OperateContext), "Normalisation",
                   "Branch providing normalisation operations for the data");
@@ -32,8 +32,6 @@ Process1DProcedureNode::Process1DProcedureNode(const Collect1DProcedureNode *tar
     // Initialise data pointer
     processedData_ = nullptr;
 }
-
-Process1DProcedureNode::~Process1DProcedureNode() {}
 
 /*
  * Identity
@@ -108,18 +106,14 @@ bool Process1DProcedureNode::prepare(Configuration *cfg, std::string_view prefix
     return true;
 }
 
-// Execute node, targetting the supplied Configuration
-ProcedureNode::NodeExecutionResult Process1DProcedureNode::execute(ProcessPool &procPool, Configuration *cfg,
-                                                                   std::string_view prefix, GenericList &targetList)
+// Finalise any necessary data after execution
+bool Process1DProcedureNode::finalise(ProcessPool &procPool, Configuration *cfg, std::string_view prefix,
+                                      GenericList &targetList)
 {
     // Retrieve / realise the normalised data from the supplied list
-    bool created;
-    auto &data = GenericListHelper<Data1D>::realise(targetList, fmt::format("{}_{}", name(), cfg->niceName()), prefix,
-                                                    GenericItem::InRestartFileFlag, &created);
+    auto &data = targetList.realise<Data1D>(fmt::format("Process1D//{}", name()), prefix, GenericItem::InRestartFileFlag);
     processedData_ = &data;
-
-    data.setName(name());
-    data.setObjectTag(fmt::format("{}//Process1D//{}//{}", prefix, cfg->name(), name()));
+    data.setTag(name());
 
     // Copy the averaged data from the associated Process1D node
     data = collectNode_->accumulatedData();
@@ -131,7 +125,7 @@ ProcedureNode::NodeExecutionResult Process1DProcedureNode::execute(ProcessPool &
         ListIterator<ProcedureNode> nodeIterator(normalisationBranch_->sequence());
         while (ProcedureNode *node = nodeIterator.iterate())
         {
-            if (!node->isType(ProcedureNode::OperateBaseNode))
+            if (!node->isType(ProcedureNode::NodeType::OperateBase))
                 continue;
 
             // Cast the node
@@ -139,9 +133,8 @@ ProcedureNode::NodeExecutionResult Process1DProcedureNode::execute(ProcessPool &
             operateNode->setTarget(processedData_);
         }
 
-        ProcedureNode::NodeExecutionResult result = normalisationBranch_->execute(procPool, cfg, prefix, targetList);
-        if (result != ProcedureNode::Success)
-            return result;
+        if (!normalisationBranch_->execute(procPool, cfg, prefix, targetList))
+            return false;
     }
 
     // Save data?
@@ -155,19 +148,12 @@ ProcedureNode::NodeExecutionResult Process1DProcedureNode::execute(ProcessPool &
             else
             {
                 procPool.decideFalse();
-                return ProcedureNode::Failure;
+                return false;
             }
         }
         else if (!procPool.decision())
-            return ProcedureNode::Failure;
+            return false;
     }
 
-    return ProcedureNode::Success;
-}
-
-// Finalise any necessary data after execution
-bool Process1DProcedureNode::finalise(ProcessPool &procPool, Configuration *cfg, std::string_view prefix,
-                                      GenericList &targetList)
-{
     return true;
 }

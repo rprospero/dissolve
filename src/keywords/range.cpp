@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "keywords/range.h"
 #include "base/lineparser.h"
@@ -29,7 +29,7 @@ int RangeKeyword::minArguments() const { return 2; }
 int RangeKeyword::maxArguments() const { return 2; }
 
 // Parse arguments from supplied LineParser, starting at given argument offset
-bool RangeKeyword::read(LineParser &parser, int startArg, CoreData &coreData)
+bool RangeKeyword::read(LineParser &parser, int startArg, const CoreData &coreData)
 {
     if (parser.hasArg(startArg + 1))
     {
@@ -42,7 +42,7 @@ bool RangeKeyword::read(LineParser &parser, int startArg, CoreData &coreData)
 }
 
 // Write keyword data to specified LineParser
-bool RangeKeyword::write(LineParser &parser, std::string_view keywordName, std::string_view prefix)
+bool RangeKeyword::write(LineParser &parser, std::string_view keywordName, std::string_view prefix) const
 {
     return parser.writeLineF("{}{}  {:12.6e}  {:12.6e}\n", prefix, keywordName, data_.minimum(), data_.maximum());
 }

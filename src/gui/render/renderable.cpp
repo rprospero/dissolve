@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "gui/render/renderable.h"
 #include "base/lineparser.h"
@@ -16,20 +16,15 @@ RefList<Renderable> Renderable::instances_;
 // Return enum options for RenderableType
 EnumOptions<Renderable::RenderableType> Renderable::renderableTypes()
 {
-    static EnumOptionsList RenderableTypeOptions = EnumOptionsList()
-                                                   << EnumOption(Renderable::ConfigurationRenderable, "Configuration")
-                                                   << EnumOption(Renderable::Data1DRenderable, "Data1D")
-                                                   << EnumOption(Renderable::Data2DRenderable, "Data2D")
-                                                   << EnumOption(Renderable::Data3DRenderable, "Data3D")
-                                                   << EnumOption(Renderable::SpeciesRenderable, "Species")
-                                                   << EnumOption(Renderable::SpeciesSiteRenderable, "SpeciesSite");
-
-    static EnumOptions<Renderable::RenderableType> options("ErrorType", RenderableTypeOptions);
-
-    return options;
+    return EnumOptions<Renderable::RenderableType>("ErrorType", {{Renderable::ConfigurationRenderable, "Configuration"},
+                                                                 {Renderable::Data1DRenderable, "Data1D"},
+                                                                 {Renderable::Data2DRenderable, "Data2D"},
+                                                                 {Renderable::Data3DRenderable, "Data3D"},
+                                                                 {Renderable::SpeciesRenderable, "Species"},
+                                                                 {Renderable::SpeciesSiteRenderable, "SpeciesSite"}});
 }
 
-Renderable::Renderable(Renderable::RenderableType type, std::string_view objectTag)
+Renderable::Renderable(Renderable::RenderableType type, std::string_view tag)
 {
     // Instance
     instances_.append(this);
@@ -39,10 +34,10 @@ Renderable::Renderable(Renderable::RenderableType type, std::string_view objectT
     name_ = "New Renderable";
 
     // Data tag
-    objectTag_ = objectTag;
+    tag_ = tag;
 
     // Group
-    group_ = nullptr;
+    group_ = std::nullopt;
 
     // Transform
     valuesTransformDataVersion_ = -1;
@@ -77,7 +72,7 @@ Renderable::~Renderable() { instances_.remove(this); }
 void Renderable::setName(std::string_view name) { name_ = name; }
 
 // Return name of Renderable
-std::string_view Renderable::name() { return name_; }
+std::string_view Renderable::name() const { return name_; }
 
 // Return type of Renderable
 Renderable::RenderableType Renderable::type() const { return type_; }
@@ -86,6 +81,15 @@ Renderable::RenderableType Renderable::type() const { return type_; }
  * Data
  */
 
+// Transform data values
+void Renderable::transformValues() {}
+
+// Attempt to set the data source, searching the supplied list for the object
+void Renderable::validateDataSource(const GenericList &sourceList) {}
+
+// Invalidate the current data source
+void Renderable::invalidateDataSource() {}
+
 // Set whether access to source data is currently enabled
 void Renderable::setSourceDataAccessEnabled(bool b) { sourceDataAccessEnabled_ = b; }
 
@@ -93,15 +97,22 @@ void Renderable::setSourceDataAccessEnabled(bool b) { sourceDataAccessEnabled_ =
 bool Renderable::sourceDataAccessEnabled() { return sourceDataAccessEnabled_; }
 
 // Return identifying tag for source data object
-std::string_view Renderable::objectTag() const { return objectTag_; }
+std::string_view Renderable::tag() const { return tag_; }
+
+// Validate all renderables
+void Renderable::validateAll(const GenericList &source)
+{
+    for (Renderable *rend : instances_)
+        rend->validateDataSource(source);
+}
 
 // Invalidate renderable data for specified object tag
-int Renderable::invalidate(std::string_view objectTag)
+int Renderable::invalidate(std::string_view tag)
 {
     auto count = 0;
     for (Renderable *rend : instances_)
     {
-        if (objectTag != rend->objectTag_)
+        if (tag != rend->tag_)
             continue;
 
         rend->invalidateDataSource();
@@ -195,12 +206,8 @@ void Renderable::setValuesTransformEquation(std::string_view transformEquation)
 {
     valuesTransform_.setEquation(transformEquation);
 
-    // Make sure transformed data is up to date
     if (valuesTransform_.enabled())
-    {
         valuesTransformDataVersion_ = -1;
-        transformValues();
-    }
 }
 
 // Return values transform equation
@@ -214,9 +221,7 @@ void Renderable::setValuesTransformEnabled(bool enabled)
 {
     valuesTransform_.setEnabled(enabled);
 
-    // Make sure transformed data is up to date
     valuesTransformDataVersion_ = -1;
-    transformValues();
 }
 
 // Return whether values transform is enabled
@@ -233,10 +238,13 @@ bool Renderable::yRangeOverX(double xMin, double xMax, double &yMin, double &yMa
  */
 
 // Set group that this Renderable is associated to
-void Renderable::setGroup(RenderableGroup *group) { group_ = group; }
+void Renderable::setGroup(RenderableGroup &group) { group_ = group; }
+
+// Remove the renderagle's group association
+void Renderable::unSetGroup() { group_ = std::nullopt; }
 
 // Return group that this Renderable is associated to
-RenderableGroup *Renderable::group() const { return group_; }
+OptionalReferenceWrapper<RenderableGroup> Renderable::group() const { return group_; }
 
 /*
  * Style
@@ -249,7 +257,7 @@ void Renderable::setVisible(bool visible) { visible_ = visible; }
 bool Renderable::isVisible() const
 {
     // Group visibility overrides our own (*if* we are currently visible)...
-    return (visible_ ? (group_ ? group_->isVisible() : visible_) : false);
+    return visible_ && (group_ ? group_->get().isVisible() : visible_);
 }
 
 // Set basic colour
@@ -264,8 +272,7 @@ void Renderable::setColour(StockColours::StockColour stockColour)
 // Return local colour definition for display
 ColourDefinition &Renderable::colour() { return colour_; }
 
-// Return local colour definition for display (const)
-const ColourDefinition &Renderable::constColour() const { return colour_; }
+const ColourDefinition &Renderable::colour() const { return colour_; }
 
 // Return line style
 LineStyle &Renderable::lineStyle() { return lineStyle_; }
@@ -304,27 +311,17 @@ void Renderable::updateAndSendPrimitives(const View &view, bool forceUpdate, boo
         return;
 
     // Grab axes for the View
-    const Axes &axes = view.constAxes();
+    const Axes &axes = view.axes();
 
     // Grab copy of the relevant colour definition for this Renderable
     const ColourDefinition &colourDefinition = colour();
 
-    // Check whether the primitive for this Renderable needs updating
-    auto upToDate = true;
-    if (forceUpdate)
-        upToDate = false;
-    else if (lastAxesVersion_ != axes.version())
-        upToDate = false;
-    else if (!DissolveSys::sameString(lastColourDefinitionFingerprint_,
-                                      fmt::format("{}@{}", fmt::ptr(group_), colourDefinition.version()), true))
-        upToDate = false;
-    else if (lastDataVersion_ != dataVersion())
-        upToDate = false;
-    else if (lastStyleVersion_ != styleVersion())
-        upToDate = false;
-
-    // If the primitive is out of date, recreate it's data.
-    if (!upToDate)
+    // If the primitive is out of date, recreate it
+    if (forceUpdate || lastAxesVersion_ != axes.version() || lastDataVersion_ != dataVersion() ||
+        valuesTransformDataVersion_ != dataVersion() || lastStyleVersion_ != styleVersion() ||
+        !DissolveSys::sameString(lastColourDefinitionFingerprint_,
+                                 fmt::format("{}@{}", group_ ? group_->get().name() : "NoGroup", colourDefinition.version()),
+                                 true))
     {
         // Recreate Primitives for the underlying data
         recreatePrimitives(view, colourDefinition);
@@ -347,7 +344,8 @@ void Renderable::updateAndSendPrimitives(const View &view, bool forceUpdate, boo
 
     // Store version points for the up-to-date primitive
     lastAxesVersion_ = axes.version();
-    lastColourDefinitionFingerprint_ = fmt::format("{}@{}", fmt::ptr(group_), colourDefinition.version());
+    lastColourDefinitionFingerprint_ =
+        fmt::format("{}@{}", group_ ? group_->get().name() : "NoGroup", colourDefinition.version());
     lastDataVersion_ = dataVersion();
     lastStyleVersion_ = styleVersion();
 }

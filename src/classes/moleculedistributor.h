@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
 #include "classes/distributor.h"
 #include "classes/molecule.h"
-#include "templates/dynamicarray.h"
 #include <deque>
 #include <memory>
 

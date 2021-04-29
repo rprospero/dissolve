@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -14,7 +14,7 @@ class OperateNormaliseProcedureNode : public OperateProcedureNodeBase
     public:
     OperateNormaliseProcedureNode(double value = 1.0);
     OperateNormaliseProcedureNode(int value);
-    ~OperateNormaliseProcedureNode();
+    ~OperateNormaliseProcedureNode() override = default;
 
     /*
      * Data Target (implements virtuals in OperateProcedureNodeBase)

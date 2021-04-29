@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "base/lineparser.h"
 #include "base/units.h"
@@ -7,12 +7,9 @@
 #include "classes/configuration.h"
 #include "classes/species.h"
 #include "gui/configurationtab.h"
-#include "gui/delegates/combolist.hui"
-#include "gui/delegates/exponentialspin.hui"
 #include "gui/getconfigurationnamedialog.h"
 #include "gui/gui.h"
 #include "gui/helpers/combopopulator.h"
-#include "gui/helpers/tablewidgetupdater.h"
 #include "main/dissolve.h"
 #include "templates/variantpointer.h"
 #include <QMessageBox>
@@ -40,9 +37,6 @@ ConfigurationTab::ConfigurationTab(DissolveWindow *dissolveWindow, Dissolve &dis
     // Set target for ProcedureEditor, and connect signals
     ui_.ProcedureWidget->setUp(&configuration_->generator(), dissolve.coreData());
     connect(ui_.ProcedureWidget, SIGNAL(dataModified()), dissolveWindow, SLOT(setModified()));
-
-    // Set up the ModuleEditor
-    ui_.LayerPanel->setUp(dissolveWindow, &cfg->moduleLayer(), configuration_);
 }
 
 ConfigurationTab::~ConfigurationTab()
@@ -131,7 +125,7 @@ void ConfigurationTab::updateControls()
     ui_.TemperatureSpin->setValue(configuration_->temperature());
 
     // Current Box
-    const Box *box = configuration_->box();
+    const auto *box = configuration_->box();
     ui_.CurrentBoxTypeLabel->setText(QString::fromStdString(std::string(Box::boxTypes().keyword(box->type()))));
     ui_.CurrentBoxALabel->setText(QString::number(box->axisLengths().x));
     ui_.CurrentBoxBLabel->setText(QString::number(box->axisLengths().y));
@@ -227,14 +221,6 @@ void ConfigurationTab::on_RequestedSizeFactorSpin_valueChanged(double value)
         return;
 
     configuration_->setRequestedSizeFactor(value);
+
+    dissolveWindow_->setModified();
 }
-
-/*
- * State
- */
-
-// Read widget state through specified LineParser
-bool ConfigurationTab::readState(LineParser &parser, const CoreData &coreData) { return true; }
-
-// Write widget state through specified LineParser
-bool ConfigurationTab::writeState(LineParser &parser) const { return true; }

@@ -1,6 +1,8 @@
-add_library(math
+add_library(
+  math
   averaging.cpp
   broadeningfunction.cpp
+  combinations.cpp
   cuboid.cpp
   data1d.cpp
   data2d.cpp
@@ -21,22 +23,26 @@ add_library(math
   matrix3.cpp
   matrix4.cpp
   pairbroadeningfunction.cpp
-  plottable.cpp
   poissonfit.cpp
   range.cpp
   regression.cpp
+  sampleddata1d.cpp
   sampleddouble.cpp
+  sampledvector.cpp
   svd.cpp
   transformer.cpp
   windowfunction.cpp
-
   averaging.h
   broadeningfunction.h
+  combinations.h
   constants.h
   cuboid.h
   data1d.h
+  data1dbase.h
   data2d.h
+  data2dbase.h
   data3d.h
+  data3dbase.h
   doubleexp.h
   error.h
   extrema.h
@@ -56,21 +62,18 @@ add_library(math
   mc.h
   minimiser.h
   pairbroadeningfunction.h
-  plottable.h
   poissonfit.h
   praxis.h
   range.h
   regression.h
+  sampleddata1d.h
   sampleddouble.h
+  sampledvector.h
   sd.h
   svd.h
   transformer.h
   windowfunction.h
 )
 
-include_directories(
-../
-${CMAKE_SOURCE_DIR}
-${CMAKE_BINARY_DIR}
-${CMAKE_BINARY_DIR}/src
-)
+include_directories(math PRIVATE ${PROJECT_SOURCE_DIR}/src)
+target_link_libraries(math PRIVATE base)

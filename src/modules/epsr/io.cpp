@@ -1,31 +1,33 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "classes/atomtype.h"
-#include "genericitems/listhelper.h"
 #include "keywords/types.h"
 #include "main/dissolve.h"
 #include "modules/epsr/epsr.h"
 
 // Return enum options for EPSRPCofKeyword
-EnumOptions<EPSRModule::EPSRPCofKeyword> &EPSRModule::epsrPCofKeywords()
+EnumOptions<EPSRModule::EPSRPCofKeyword> EPSRModule::epsrPCofKeywords()
 {
-    static EnumOptionsList PCOFKeywordOptions =
-        EnumOptionsList()
-        << EnumOption(EPSRModule::AddPotTypePCofKeyword, "addpottype") << EnumOption(EPSRModule::ExpecFPCofKeyword, "expecf")
-        << EnumOption(EPSRModule::GaussianPCofKeyword, "gaussian") << EnumOption(EPSRModule::NCoeffPPCofKeyword, "ncoeffp")
-        << EnumOption(EPSRModule::NPItSSPCofKeyword, "npitss") << EnumOption(EPSRModule::PAcceptPCofKeyword, "paccept")
-        << EnumOption(EPSRModule::PDMaxPCofKeyword, "pdmax") << EnumOption(EPSRModule::PDStepPCofKeyword, "pdstep")
-        << EnumOption(EPSRModule::PowerPCofKeyword, "power") << EnumOption(EPSRModule::PSigma2PCofKeyword, "psigma2")
-        << EnumOption(EPSRModule::QuitPCofKeyword, "q") << EnumOption(EPSRModule::RBroadPCofKeyword, "rbroad")
-        << EnumOption(EPSRModule::RChargePCofKeyword, "rcharge") << EnumOption(EPSRModule::RefPotFacPCofKeyword, "refpotfac")
-        << EnumOption(EPSRModule::RepPotTypePCofKeyword, "reppottype") << EnumOption(EPSRModule::RMaxPtPCofKeyword, "rmaxpt")
-        << EnumOption(EPSRModule::RMinFacPCofKeyword, "rminfac") << EnumOption(EPSRModule::RMinPtPCofKeyword, "rminpt")
-        << EnumOption(EPSRModule::ROverlapPCofKeyword, "roverlap");
-
-    static EnumOptions<EPSRModule::EPSRPCofKeyword> options("PCOFKeywords", PCOFKeywordOptions);
-
-    return options;
+    return EnumOptions<EPSRModule::EPSRPCofKeyword>("PCOFKeywords", {{EPSRModule::AddPotTypePCofKeyword, "addpottype"},
+                                                                     {EPSRModule::ExpecFPCofKeyword, "expecf"},
+                                                                     {EPSRModule::GaussianPCofKeyword, "gaussian"},
+                                                                     {EPSRModule::NCoeffPPCofKeyword, "ncoeffp"},
+                                                                     {EPSRModule::NPItSSPCofKeyword, "npitss"},
+                                                                     {EPSRModule::PAcceptPCofKeyword, "paccept"},
+                                                                     {EPSRModule::PDMaxPCofKeyword, "pdmax"},
+                                                                     {EPSRModule::PDStepPCofKeyword, "pdstep"},
+                                                                     {EPSRModule::PowerPCofKeyword, "power"},
+                                                                     {EPSRModule::PSigma2PCofKeyword, "psigma2"},
+                                                                     {EPSRModule::QuitPCofKeyword, "q"},
+                                                                     {EPSRModule::RBroadPCofKeyword, "rbroad"},
+                                                                     {EPSRModule::RChargePCofKeyword, "rcharge"},
+                                                                     {EPSRModule::RefPotFacPCofKeyword, "refpotfac"},
+                                                                     {EPSRModule::RepPotTypePCofKeyword, "reppottype"},
+                                                                     {EPSRModule::RMaxPtPCofKeyword, "rmaxpt"},
+                                                                     {EPSRModule::RMinFacPCofKeyword, "rminfac"},
+                                                                     {EPSRModule::RMinPtPCofKeyword, "rminpt"},
+                                                                     {EPSRModule::ROverlapPCofKeyword, "roverlap"}});
 }
 
 // Read data from supplied pcof file
@@ -50,7 +52,7 @@ bool EPSRModule::readPCof(Dissolve &dissolve, ProcessPool &procPool, std::string
         if (parser.getArgsDelim(LineParser::Defaults) != LineParser::Success)
             return Messenger::error("Failed to read pcof file.\n");
 
-        EPSRModule::EPSRPCofKeyword keyword = epsrPCofKeywords().enumeration(parser.argsv(0));
+        auto keyword = epsrPCofKeywords().enumeration(parser.argsv(0));
         switch (keyword)
         {
             case (EPSRModule::AddPotTypePCofKeyword):
@@ -58,11 +60,14 @@ bool EPSRModule::readPCof(Dissolve &dissolve, ProcessPool &procPool, std::string
             case (EPSRModule::ExpecFPCofKeyword):
                 break;
             case (EPSRModule::GaussianPCofKeyword):
-                keywords_.set<EPSRModule::ExpansionFunctionType>(
-                    "expansionfunction",
-                    (DissolveSys::sameString(parser.argsv(1), "Poisson") || DissolveSys::sameString(parser.argsv(1), "T")
-                         ? EPSRModule::PoissonExpansionFunction
-                         : EPSRModule::GaussianExpansionFunction));
+                if (DissolveSys::sameString(parser.argsv(1), "F") || DissolveSys::sameString(parser.argsv(1), "Poisson"))
+                    keywords_.setEnumeration<EPSRModule::ExpansionFunctionType>("expansionfunction",
+                                                                                EPSRModule::PoissonExpansionFunction);
+                else if (DissolveSys::sameString(parser.argsv(1), "T") || DissolveSys::sameString(parser.argsv(1), "Gaussian"))
+                    keywords_.setEnumeration<EPSRModule::ExpansionFunctionType>("expansionfunction",
+                                                                                EPSRModule::GaussianExpansionFunction);
+                else
+                    Messenger::warn("Couldn't determine expansion function to use (argument is '{}').\n", parser.argsv(1));
                 break;
             case (EPSRModule::NCoeffPPCofKeyword):
                 ncoeffp = parser.argi(1);
@@ -119,8 +124,8 @@ bool EPSRModule::readPCof(Dissolve &dissolve, ProcessPool &procPool, std::string
     }
 
     // Retrieve and zero the current potential coefficients file
-    auto &potentialCoefficients = GenericListHelper<Array2D<std::vector<double>>>::realise(
-        dissolve.processingModuleData(), "PotentialCoefficients", uniqueName_, GenericItem::InRestartFileFlag);
+    auto &potentialCoefficients = dissolve.processingModuleData().realise<Array2D<std::vector<double>>>(
+        "PotentialCoefficients", uniqueName_, GenericItem::InRestartFileFlag);
     potentialCoefficients.initialise(dissolve.nAtomTypes(), dissolve.nAtomTypes(), true);
     for (auto &n : potentialCoefficients)
     {

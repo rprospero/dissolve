@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -10,7 +10,6 @@
 #include "gui/render/primitive.h"
 #include "gui/render/textprimitivelist.h"
 #include "templates/array.h"
-#include "templates/objectstore.h"
 #include "templates/vector3.h"
 #include "templates/vector4.h"
 #include <vector>
@@ -44,7 +43,7 @@ class Axes
         nAutoScaleMethods
     };
     // Return enum options for AutoScaleMethod
-    static EnumOptions<Axes::AutoScaleMethod> &autoScaleMethods();
+    static EnumOptions<Axes::AutoScaleMethod> autoScaleMethods();
 
     private:
     // Data limits for surface generation

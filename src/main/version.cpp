@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "main/version.h"
 #include <fmt/core.h>
 
-#define DISSOLVEVERSION "0.7.0"
+#define DISSOLVEVERSION "0.8.0"
 #define DISSOLVESHORTHASH ""
-#define DISSOLVEREPO "https://github.com/projectdissolve/dissolve.git"
+#define DISSOLVEREPO "https://github.com/disorderedmaterials/dissolve.git"
 
 namespace Version
 {

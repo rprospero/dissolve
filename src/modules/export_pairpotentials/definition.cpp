@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "modules/export_pairpotentials/exportpp.h"
 
@@ -7,7 +7,7 @@
 std::string_view ExportPairPotentialsModule::type() const { return "ExportPairPotentials"; }
 
 // Return category for module
-std::string_view ExportPairPotentialsModule::category() const { return "Input / Output"; }
+std::string_view ExportPairPotentialsModule::category() const { return "Export"; }
 
 // Return brief description of module
 std::string_view ExportPairPotentialsModule::brief() const { return "Export pair potentials"; }

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -15,7 +15,7 @@ class ProcedureNodeReference : public ListItem<ProcedureNodeReference>
 {
     public:
     ProcedureNodeReference(ProcedureNode *node = nullptr);
-    ~ProcedureNodeReference();
+    ~ProcedureNodeReference() = default;
 
     /*
      * Data
@@ -26,7 +26,7 @@ class ProcedureNodeReference : public ListItem<ProcedureNodeReference>
     // Parent AnalyseModule owning the node (if relevant)
     AnalyseModule *analyseModuleParent_;
     // Allowable node types (when reading / setting)
-    bool allowedTypes_[ProcedureNode::nNodeTypes];
+    std::vector<ProcedureNode::NodeType> allowedTypes_;
 
     public:
     // Return target node
@@ -35,8 +35,6 @@ class ProcedureNodeReference : public ListItem<ProcedureNodeReference>
     ProcedureNode::NodeType type() const;
     // Add allowable node type
     void addAllowableNodeType(ProcedureNode::NodeType nt);
-    // Allow all node types
-    void setAllowAllNodeTypes();
     // Return if node pointer is NULL
     bool isNull() const;
 
@@ -52,7 +50,7 @@ class ProcedureNodeReference : public ListItem<ProcedureNodeReference>
      */
     public:
     // Read structure from specified LineParser
-    bool read(LineParser &parser, int startArg, CoreData &coreData, const Procedure *procedure);
+    bool read(LineParser &parser, int startArg, const CoreData &coreData, const Procedure *procedure);
     // Write structure to specified LineParser
     bool write(LineParser &parser, std::string_view prefix);
 };

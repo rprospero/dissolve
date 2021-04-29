@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "gui/speciesviewer.hui"
 
@@ -22,7 +22,7 @@ void SpeciesViewer::render2DOverlay()
     if (interacting())
         switch (interactionMode())
         {
-            case (SpeciesViewer::SelectAreaInteraction):
+            case (SpeciesViewer::InteractionMode::SelectArea):
                 // Draw dashed box indicating selection area, form clicked to current mouse coordinates
                 selectionBoxStyle.sendToGL();
                 glBegin(GL_LINE_LOOP);

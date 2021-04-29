@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "gui/dataviewer.hui"
 #include <QMenu>
@@ -19,15 +19,26 @@ void DataViewer::mouseMoved(int dx, int dy)
     auto refresh = false;
 
     // What we do here depends on the current mode
-    switch (interactionMode())
+    switch (transientInteractionMode_)
     {
-        case (DataViewer::ZoomToAreaInteraction):
-            // No action to take - the selection box will be drawn from the clicked and current positions (already
-            // stored)
-            refresh = true;
+        // Perform primary interaction
+        case (TransientInteractionMode::None):
+            switch (interactionMode())
+            {
+                case (DataViewer::InteractionMode::ZoomToArea):
+                    // No action to take - the selection box will be drawn from the clicked and current positions (already
+                    // stored)
+                    refresh = true;
+                    break;
+                case (DataViewer::InteractionMode::ZoomXRange):
+                    // No action to take - the range will be drawn from the clicked and current positions (already stored)
+                    refresh = true;
+                    break;
+                default:
+                    break;
+            }
             break;
-        case (DataViewer::RotateViewInteraction):
-            // Rotate view
+        case (DataViewer::TransientInteractionMode::RotateView):
             if (mouseDownModifiers_.testFlag(Qt::ShiftModifier))
             {
             }
@@ -40,7 +51,7 @@ void DataViewer::mouseMoved(int dx, int dy)
                 refresh = true;
             }
             break;
-        case (DataViewer::TranslateViewInteraction):
+        case (DataViewer::TransientInteractionMode::TranslateView):
             // Turn off autofollow if it is currently on...
             if (view().autoFollowType() != View::NoAutoFollow)
             {
@@ -53,10 +64,6 @@ void DataViewer::mouseMoved(int dx, int dy)
                 view().shiftFlatAxisLimits(dx, dy);
             else
                 view().translateView(dx / 15.0, dy / 15.0, 0.0);
-            refresh = true;
-            break;
-        case (DataViewer::ZoomXRangeInteraction):
-            // No action to take - the range will be drawn from the clicked and current positions (already stored)
             refresh = true;
             break;
         default:
@@ -113,10 +120,6 @@ void DataViewer::mouseDoubleClicked()
         case (NoObject):
             break;
         case (AxisLineObject):
-            //			i = clickedObjectInfo_.asInteger();
-            // 			axesWindow_.updateAndShow();
-            // 			axesWindow_.ui.AxesTabs->setCurrentIndex(i);
-            // 			axesWindow_.ui.
             break;
         case (AxisTickLabelObject):
             break;
@@ -131,10 +134,6 @@ void DataViewer::mouseDoubleClicked()
         case (CustomObject):
             break;
     }
-
-    // Reset clicked object info
-    // 	clickedObject_ = NoObject;
-    // 	clickedObjectInfo_.clear();
 }
 
 // Context menu requested
@@ -147,7 +146,7 @@ void DataViewer::contextMenuRequested(QPoint pos)
     if (objectType == BaseViewer::RenderableObject)
     {
         // Get Renderable pointer....
-        Renderable *rend = renderableWithTag(queryObjectInfo());
+        auto rend = renderableWithTag(queryObjectInfo());
         if (!rend)
         {
             fmt::print("Couldn't locate renderable with tag '{}' in the DataViewer...", queryObjectInfo());

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "io/export/coordinates.h"
 #include "base/lineparser.h"
@@ -8,7 +8,7 @@
 #include "classes/box.h"
 #include "classes/configuration.h"
 #include "classes/speciesatom.h"
-#include "data/atomicmass.h"
+#include "data/atomicmasses.h"
 
 CoordinateExportFileFormat::CoordinateExportFileFormat(std::string_view filename, CoordinateExportFormat format)
     : FileAndFormat(filename, format)
@@ -22,27 +22,19 @@ CoordinateExportFileFormat::CoordinateExportFileFormat(std::string_view filename
 // Return enum options for CoordinateExportFormat
 EnumOptions<CoordinateExportFileFormat::CoordinateExportFormat> CoordinateExportFileFormat::coordinateExportFormats()
 {
-    static EnumOptionsList CoordinateExportFormats =
-        EnumOptionsList() << EnumOption(CoordinateExportFileFormat::XYZCoordinates, "xyz", "Simple XYZ Coordinates")
-                          << EnumOption(CoordinateExportFileFormat::DLPOLYCoordinates, "dlpoly", "DL_POLY CONFIG File");
-
-    static EnumOptions<CoordinateExportFileFormat::CoordinateExportFormat> options("CoordinateExportFileFormat",
-                                                                                   CoordinateExportFormats);
-
-    return options;
+    return EnumOptions<CoordinateExportFileFormat::CoordinateExportFormat>(
+        "CoordinateExportFileFormat", {{CoordinateExportFileFormat::XYZCoordinates, "xyz", "Simple XYZ Coordinates"},
+                                       {CoordinateExportFileFormat::DLPOLYCoordinates, "dlpoly", "DL_POLY CONFIG File"}});
 }
 
 // Return number of available formats
 int CoordinateExportFileFormat::nFormats() const { return CoordinateExportFileFormat::nCoordinateExportFormats; }
 
 // Return format keyword for supplied index
-std::string_view CoordinateExportFileFormat::formatKeyword(int id) const
-{
-    return coordinateExportFormats().keywordByIndex(id);
-}
+std::string CoordinateExportFileFormat::formatKeyword(int id) const { return coordinateExportFormats().keywordByIndex(id); }
 
 // Return description string for supplied index
-std::string_view CoordinateExportFileFormat::formatDescription(int id) const
+std::string CoordinateExportFileFormat::formatDescription(int id) const
 {
     return coordinateExportFormats().descriptionByIndex(id);
 }
@@ -67,13 +59,10 @@ bool CoordinateExportFileFormat::exportXYZ(LineParser &parser, Configuration *cf
         return false;
 
     // Export Atoms
-    for (auto n = 0; n < cfg->nAtoms(); ++n)
-    {
-        Atom *i = cfg->atom(n);
-        if (!parser.writeLineF("{:<3}   {:15.9f}  {:15.9f}  {:15.9f}\n", i->speciesAtom()->element()->symbol(), i->r().x,
+    for (auto i : cfg->atoms())
+        if (!parser.writeLineF("{:<3}   {:15.9f}  {:15.9f}  {:15.9f}\n", Elements::symbol(i->speciesAtom()->Z()), i->r().x,
                                i->r().y, i->r().z))
             return false;
-    }
 
     return true;
 }
@@ -117,14 +106,12 @@ bool CoordinateExportFileFormat::exportDLPOLY(LineParser &parser, Configuration 
     }
 
     // Export Atoms
-    for (auto n = 0; n < cfg->nAtoms(); ++n)
-    {
-        Atom *i = cfg->atom(n);
+    auto n = 0;
+    for (auto i : cfg->atoms())
         if (!parser.writeLineF("{:<6}{:10d}{:20.10f}\n{:20.12f}{:20.12f}{:20.12f}\n",
-                               cfg->usedAtomType(i->localTypeIndex())->name(), n + 1,
-                               AtomicMass::mass(i->speciesAtom()->element()), i->r().x, i->r().y, i->r().z))
+                               cfg->usedAtomType(i->localTypeIndex())->name(), n++ + 1, AtomicMass::mass(i->speciesAtom()->Z()),
+                               i->r().x, i->r().y, i->r().z))
             return false;
-    }
 
     return true;
 }

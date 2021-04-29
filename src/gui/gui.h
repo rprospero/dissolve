@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
+#include "classes/referencepoint.h"
 #include "gui/maintab.h"
 #include "gui/outputhandler.hui"
-#include "gui/referencepoint.h"
 #include "gui/systemtemplate.h"
 #include "gui/thread.hui"
 #include "gui/ui_gui.h"
@@ -69,8 +69,7 @@ class DissolveWindow : public QMainWindow
     public:
     // Return reference to Dissolve
     Dissolve &dissolve();
-    // Return const reference to Dissolve
-    const Dissolve &constDissolve() const;
+    const Dissolve &dissolve() const;
     // Link the Messenger in to the GUI output device
     void addOutputHandler();
 
@@ -112,7 +111,7 @@ class DissolveWindow : public QMainWindow
      */
     private:
     // List of ReferencePoints currently loaded
-    List<ReferencePoint> referencePoints_;
+    std::vector<ReferencePoint> referencePoints_;
 
     /*
      * Update Functions
@@ -166,6 +165,7 @@ class DissolveWindow : public QMainWindow
     void on_SpeciesImportFromXYZAction_triggered(bool checked);
     void on_SpeciesRenameAction_triggered(bool checked);
     void on_SpeciesAddForcefieldTermsAction_triggered(bool checked);
+    void on_ImportForcefieldAction_triggered(bool checked);
     void on_SpeciesDeleteAction_triggered(bool checked);
     // Configuration
     void on_ConfigurationCreateEmptyAction_triggered(bool checked);

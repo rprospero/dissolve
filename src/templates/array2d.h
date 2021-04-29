@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -58,10 +58,8 @@ template <class A> class Array2D
         clear();
 
         // If we're only interested in half the matrix then it must be square
-        if (half_ && (nrows != ncolumns))
-        {
-            Messenger::error("BAD_USAGE - Requested half-matrix mode on a non-square matrix in Array2D::resize().\n");
-        }
+        if (half_)
+            assert(nrows == ncolumns);
 
         // Create new array
         nRows_ = nrows;
@@ -142,20 +140,9 @@ template <class A> class Array2D
     A &operator[](const std::tuple<int, int> index)
     {
         auto [row, column] = index;
-#ifdef CHECKS
-        static A dummy;
-        if ((row < 0) || (row >= nRows_))
-        {
-            Messenger::print("OUT_OF_RANGE - Row number ({}) is out of range in Array2D::at() (nRows = {}).\n", row, nRows_);
-            return dummy;
-        }
-        if ((column < 0) || (column >= nColumns_))
-        {
-            Messenger::print("OUT_OF_RANGE - Column number ({}) is out of range in Array2D::at() (nColumns = {}).\n", column,
-                             nColumns_);
-            return dummy;
-        }
-#endif
+        assert(row >= 0 && row < nRows_);
+        assert(column >= 0 && column < nColumns_);
+
         if (half_)
         {
             if (row > column)
@@ -170,21 +157,9 @@ template <class A> class Array2D
     const A &operator[](const std::tuple<int, int> index) const
     {
         auto [row, column] = index;
-#ifdef CHECKS
-        static A dummy;
-        if ((row < 0) || (row >= nRows_))
-        {
-            Messenger::print("OUT_OF_RANGE - Row number ({}) is out of range in Array2D::constAt() (nRows = {}).\n", row,
-                             nRows_);
-            return dummy;
-        }
-        if ((column < 0) || (column >= nColumns_))
-        {
-            Messenger::print("OUT_OF_RANGE - Column number ({}) is out of range in Array2D::constAt() (nColumns = {}).\n",
-                             column, nColumns_);
-            return dummy;
-        }
-#endif
+        assert(row >= 0 && row < nRows_);
+        assert(column >= 0 && column < nColumns_);
+
         if (half_)
         {
             if (row > column)
@@ -198,21 +173,9 @@ template <class A> class Array2D
     // Return address of specified element
     A *pointerAt(int row, int column)
     {
-#ifdef CHECKS
-        static A dummy;
-        if ((row < 0) || (row >= nRows_))
-        {
-            Messenger::print("OUT_OF_RANGE - Row number ({}) is out of range in Array2D::pointerAt() (nRows = {}).\n", row,
-                             nRows_);
-            return &dummy;
-        }
-        if ((column < 0) || (column >= nColumns_))
-        {
-            Messenger::print("OUT_OF_RANGE - Column number ({}) is out of range in Array2D::pointerAt() (nColumns = {}).\n",
-                             column, nColumns_);
-            return &dummy;
-        }
-#endif
+        assert(row >= 0 && row < nRows_);
+        assert(column >= 0 && column < nColumns_);
+
         if (half_)
         {
             if (row > column)
@@ -266,37 +229,21 @@ template <class A> class Array2D
     // Operator+= (matrix addition)
     void operator+=(const Array2D<A> &B)
     {
-        // Check array sizes are compatible
-        if (nColumns_ != B.nRows_)
-        {
-            Messenger::error("Can't add matrices together, as they have incompatible sizes ({}x{} and {}x{}, RxC)\n", nRows_,
-                             nColumns_, B.nRows_, B.nColumns_);
-            return;
-        }
+        assert(nColumns_ == B.nColumns_ && nRows_ == B.nRows_);
+
         std::transform(array_.begin(), array_.end(), B.array_.begin(), array_.begin(), [](auto &a, auto &b) { return a + b; });
     }
     // Operator-= (matrix subtraction)
     void operator-=(const Array2D<A> &B)
     {
-        // Check array sizes are compatible
-        if (nColumns_ != B.nRows_)
-        {
-            Messenger::error("Can't subtract matrices, as they have incompatible sizes ({}x{} and {}x{}, RxC)\n", nRows_,
-                             nColumns_, B.nRows_, B.nColumns_);
-            return;
-        }
+        assert(nColumns_ == B.nColumns_ && nRows_ == B.nRows_);
+
         std::transform(array_.begin(), array_.end(), B.array_begin(), array_.begin(), [](auto &a, auto &b) { return a - b; });
     }
     // Operator* (matrix multiply)
     Array2D<A> operator*(const Array2D<A> &B) const
     {
-        // Check array sizes are compatible
-        if (nColumns_ != B.nRows_)
-        {
-            Messenger::error("Can't multiply matrices together, as they have incompatible sizes ({}x{} and {}x{}, RxC)\n",
-                             nRows_, nColumns_, B.nRows_, B.nColumns_);
-            return Array2D<A>();
-        }
+        assert(nColumns_ == B.nRows_);
 
         Array2D<A> C(nRows_, B.nColumns_);
         int colB, i;

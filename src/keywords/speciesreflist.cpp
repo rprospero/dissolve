@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "keywords/speciesreflist.h"
 #include "base/lineparser.h"
@@ -18,7 +18,7 @@ SpeciesRefListKeyword::~SpeciesRefListKeyword() {}
  */
 
 // Determine whether current data is 'empty', and should be considered as 'not set'
-bool SpeciesRefListKeyword::isDataEmpty() const { return data_.nItems() > 0; }
+bool SpeciesRefListKeyword::isDataEmpty() const { return data_.nItems() == 0; }
 
 /*
  * Arguments
@@ -31,7 +31,7 @@ int SpeciesRefListKeyword::minArguments() const { return 1; }
 int SpeciesRefListKeyword::maxArguments() const { return 99; }
 
 // Parse arguments from supplied LineParser, starting at given argument offset
-bool SpeciesRefListKeyword::read(LineParser &parser, int startArg, CoreData &coreData)
+bool SpeciesRefListKeyword::read(LineParser &parser, int startArg, const CoreData &coreData)
 {
     // Each argument is the name of a Species that we will add to our list
     for (auto n = startArg; n < parser.nArgs(); ++n)
@@ -49,7 +49,7 @@ bool SpeciesRefListKeyword::read(LineParser &parser, int startArg, CoreData &cor
 }
 
 // Write keyword data to specified LineParser
-bool SpeciesRefListKeyword::write(LineParser &parser, std::string_view keywordName, std::string_view prefix)
+bool SpeciesRefListKeyword::write(LineParser &parser, std::string_view keywordName, std::string_view prefix) const
 {
     // Loop over list of Species
     std::string speciesString;

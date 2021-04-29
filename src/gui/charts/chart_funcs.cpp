@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "gui/charts/chart.hui"
 #include "gui/widgets/mimestrings.h"
@@ -237,10 +237,6 @@ void ChartBase::dropEvent(QDropEvent *event)
     // Widgets are almost in the right place, so don't animate anything
     currentHotSpot_ = nullptr;
     draggedBlock_ = nullptr;
-
-    // 	layOutWidgets(animate);
-
-    // 	repaint();
 }
 
 /*

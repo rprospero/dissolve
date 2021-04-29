@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "procedure/nodes/dynamicsite.h"
 #include "base/lineparser.h"
@@ -14,19 +14,17 @@
 #include "data/elements.h"
 #include "keywords/types.h"
 #include "procedure/nodes/select.h"
-#include "templates/dynamicarray.h"
 
-DynamicSiteProcedureNode::DynamicSiteProcedureNode(SelectProcedureNode *parent) : ProcedureNode(ProcedureNode::DynamicSiteNode)
+DynamicSiteProcedureNode::DynamicSiteProcedureNode(SelectProcedureNode *parent)
+    : ProcedureNode(ProcedureNode::NodeType::DynamicSite)
 {
     parent_ = parent;
 
     keywords_.add("Definition", new AtomTypeRefListKeyword(atomTypes_), "AtomType",
                   "Define one or more AtomTypes to include in this site");
-    keywords_.add("Definition", new ElementRefListKeyword(elements_), "Element",
+    keywords_.add("Definition", new ElementVectorKeyword(elements_), "Element",
                   "Define one or more Elements to include in this site");
 }
-
-DynamicSiteProcedureNode::~DynamicSiteProcedureNode() {}
 
 /*
  * Identity
@@ -52,7 +50,7 @@ void DynamicSiteProcedureNode::generateSites(std::shared_ptr<const Molecule> mol
     for (auto n = 0; n < molecule->nAtoms(); ++n)
     {
         // If the element is listed in our target elements list, add this atom as a site
-        if (elements_.contains(molecule->atom(n)->speciesAtom()->element()))
+        if (std::find(elements_.begin(), elements_.end(), molecule->atom(n)->speciesAtom()->Z()) != elements_.end())
         {
             generatedSites_.add(Site(molecule, molecule->atom(n)->r()));
             continue;
@@ -76,8 +74,8 @@ const Array<Site> &DynamicSiteProcedureNode::generatedSites() const { return gen
  */
 
 // Execute node, targetting the supplied Configuration
-ProcedureNode::NodeExecutionResult DynamicSiteProcedureNode::execute(ProcessPool &procPool, Configuration *cfg,
-                                                                     std::string_view prefix, GenericList &targetList)
+bool DynamicSiteProcedureNode::execute(ProcessPool &procPool, Configuration *cfg, std::string_view prefix,
+                                       GenericList &targetList)
 {
     // Clear our current list of sites
     generatedSites_.clear();
@@ -102,7 +100,7 @@ ProcedureNode::NodeExecutionResult DynamicSiteProcedureNode::execute(ProcessPool
         for (auto molecule : molecules)
         {
             // Check Molecule exclusions
-            if (find(excludedMolecules.begin(), excludedMolecules.end(), molecule) != excludedMolecules.end())
+            if (std::find(excludedMolecules.begin(), excludedMolecules.end(), molecule) != excludedMolecules.end())
                 continue;
 
             // All OK, so generate sites
@@ -110,5 +108,5 @@ ProcedureNode::NodeExecutionResult DynamicSiteProcedureNode::execute(ProcessPool
         }
     }
 
-    return ProcedureNode::Success;
+    return true;
 }

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "base/sysfunc.h"
 #include "classes/box.h"
@@ -10,7 +10,6 @@
 #include "classes/speciesangle.h"
 #include "classes/speciesbond.h"
 #include "classes/speciestorsion.h"
-#include "genericitems/listhelper.h"
 #include "main/dissolve.h"
 #include "modules/intrashake/intrashake.h"
 
@@ -92,10 +91,9 @@ bool IntraShakeModule::process(Dissolve &dissolve, ProcessPool &procPool)
         procPool.initialiseRandomBuffer(ProcessPool::subDivisionStrategy(strategy));
 
         // Ensure that the Species used in the present Configuration have attached atom lists
-        ListIterator<SpeciesInfo> speciesInfoIterator(cfg->usedSpecies());
-        while (SpeciesInfo *spInfo = speciesInfoIterator.iterate())
+        for (auto &spInfo : cfg->usedSpecies())
         {
-            Species *sp = spInfo->species();
+            Species *sp = spInfo.species();
             if (!sp->attachedAtomListsGenerated())
             {
                 Messenger::print("Performing one-time generation of attached atom lists for intramolecular "
@@ -116,8 +114,8 @@ bool IntraShakeModule::process(Dissolve &dissolve, ProcessPool &procPool)
         double ppEnergy, newPPEnergy, intraEnergy, newIntraEnergy, delta, totalDelta = 0.0;
         Vec3<double> vji, vjk, v;
         Matrix3 transform;
-        const Box *box = cfg->box();
-        const Atom *i, *j, *k, *l;
+        const auto *box = cfg->box();
+        std::shared_ptr<Atom> i, j, k, l;
 
         Timer timer;
         procPool.resetAccumulatedTime();
@@ -155,7 +153,7 @@ bool IntraShakeModule::process(Dissolve &dissolve, ProcessPool &procPool)
 
                 // Loop over defined bonds
                 if (adjustBonds)
-                    for (const auto &bond : mol->species()->constBonds())
+                    for (const auto &bond : mol->species()->bonds())
                     {
                         // Get Atom pointers
                         i = mol->atom(bond.indexI());
@@ -209,7 +207,7 @@ bool IntraShakeModule::process(Dissolve &dissolve, ProcessPool &procPool)
 
                 // Loop over defined angles
                 if (adjustAngles)
-                    for (const auto &angle : mol->species()->constAngles())
+                    for (const auto &angle : mol->species()->angles())
                     {
                         // Get Atom pointers
                         i = mol->atom(angle.indexI());
@@ -266,7 +264,7 @@ bool IntraShakeModule::process(Dissolve &dissolve, ProcessPool &procPool)
 
                 // Loop over defined torsions
                 if (adjustTorsions)
-                    for (const auto &torsion : mol->species()->constTorsions())
+                    for (const auto &torsion : mol->species()->torsions())
                     {
                         // Get Atom pointers
                         i = mol->atom(torsion.indexI());

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "gui/widgets/mimetreewidget.hui"
 #include "gui/widgets/mimetreewidgetitem.h"
@@ -79,8 +79,6 @@ void MimeTreeWidget::mouseMoveEvent(QMouseEvent *event)
     if (drag->exec(Qt::MoveAction) != Qt::MoveAction)
     {
         // Reset everything, and do not perform a move
-        // 		interactionMode_ = NoInteraction;
-        // 		interactionPane_ = nullptr;
         update();
     }
 

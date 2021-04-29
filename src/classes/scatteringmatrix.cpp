@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "classes/scatteringmatrix.h"
 #include "classes/atomtype.h"
@@ -75,15 +75,15 @@ Array2D<double> ScatteringMatrix::matrix(double q) const
         auto col = 0;
         for (auto [i, j] : typePairs_)
         {
-            auto ffi = XRayFormFactors::formFactorData(weights.formFactors(), i->element());
+            auto ffi = XRayFormFactors::formFactorData(weights.formFactors(), i->Z());
             if (!ffi)
                 throw(std::runtime_error(fmt::format("No form factor data available for element {} in dataset {}.",
-                                                     i->element()->name(),
+                                                     Elements::name(i->Z()),
                                                      XRayFormFactors::xRayFormFactorData().keyword(weights.formFactors()))));
-            auto ffj = XRayFormFactors::formFactorData(weights.formFactors(), j->element());
+            auto ffj = XRayFormFactors::formFactorData(weights.formFactors(), j->Z());
             if (!ffj)
                 throw(std::runtime_error(fmt::format("No form factor data available for element {} in dataset {}.",
-                                                     j->element()->name(),
+                                                     Elements::name(j->Z()),
                                                      XRayFormFactors::xRayFormFactorData().keyword(weights.formFactors()))));
 
             m[{row, col}] *= ffi->get().magnitude(q) * ffj->get().magnitude(q) / normFactor;
@@ -147,7 +147,7 @@ void ScatteringMatrix::print(double q) const
                 break;
             }
         }
-        Messenger::print("{}  {}\n", line, data_.constAt(row).name());
+        Messenger::print("{}  {}\n", line, data_.at(row).tag());
 
         // Limit to sensible number of rows
         if (row >= std::max(nColsWritten, 10))
@@ -199,7 +199,7 @@ void ScatteringMatrix::printInverse(double q) const
                 break;
             }
         }
-        Messenger::print("{}  {}\n", line, data_.constAt(col).name());
+        Messenger::print("{}  {}\n", line, data_.at(col).tag());
 
         // Limit to sensible number of rows
         if (col >= std::max(nColsWritten, 10))
@@ -307,8 +307,7 @@ Array2D<double> ScatteringMatrix::matrixProduct(double q) const { return inverse
  */
 
 // Initialise from supplied list of AtomTypes
-void ScatteringMatrix::initialise(const std::vector<std::shared_ptr<AtomType>> &types, Array2D<Data1D> &estimatedSQ,
-                                  std::string_view objectNamePrefix, std::string_view groupName)
+void ScatteringMatrix::initialise(const std::vector<std::shared_ptr<AtomType>> &types, Array2D<Data1D> &estimatedSQ)
 {
     // Clear coefficients matrix and its inverse_, and empty our typePairs_ and data_ lists
     A_.clear();
@@ -322,12 +321,7 @@ void ScatteringMatrix::initialise(const std::vector<std::shared_ptr<AtomType>> &
     estimatedSQ.initialise(types.size(), types.size(), true);
     auto index = 0;
     for (auto [i, j] : typePairs_)
-    {
-        estimatedSQ[index].setName(fmt::format("EstimatedSQ-{}-{}-{}.sq", i->name(), j->name(), groupName));
-        estimatedSQ[index].setObjectTag(
-            fmt::format("{}//EstimatedSQ//{}//{}-{}", objectNamePrefix, groupName, i->name(), j->name()));
-        ++index;
-    }
+        estimatedSQ[index++].setTag(fmt::format("{}-{}", i->name(), j->name()));
 }
 
 // Add reference data with its associated NeutronWeights, applying optional factor to those weights and the data itself
@@ -335,7 +329,7 @@ bool ScatteringMatrix::addReferenceData(const Data1D &weightedData, const Neutro
 {
     // Make sure that the scattering weights are valid
     if (!dataWeights.isValid())
-        return Messenger::error("Reference data '{}' does not have valid scattering weights.\n", weightedData.name());
+        return Messenger::error("Reference data '{}' does not have valid scattering weights.\n", weightedData.tag());
 
     // Extend the scattering matrix by one row
     A_.addRow(typePairs_.size());
@@ -374,7 +368,7 @@ bool ScatteringMatrix::addReferenceData(const Data1D &weightedData, const XRayWe
 {
     // Make sure that the scattering weights are valid
     if (!dataWeights.isValid())
-        return Messenger::error("Reference data '{}' does not have valid scattering weights.\n", weightedData.name());
+        return Messenger::error("Reference data '{}' does not have valid scattering weights.\n", weightedData.tag());
 
     // Extend the scattering matrix by one row
     A_.addRow(typePairs_.size());

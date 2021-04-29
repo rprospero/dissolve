@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -45,5 +45,6 @@ class NETAVisitor : private NETAParserBaseVisitor
     antlrcpp::Any visitTargetList(NETAParser::TargetListContext *context) override;
     // Context Modifiers
     antlrcpp::Any visitModifier(NETAParser::ModifierContext *context) override;
+    antlrcpp::Any visitOption(NETAParser::OptionContext *context) override;
     antlrcpp::Any visitFlag(NETAParser::FlagContext *context) override;
 };

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "keywords/base.h"
 #include "base/messenger.h"
@@ -32,7 +32,7 @@ std::string_view KeywordDataTypeKeywords[] = {"AtomTypeRefList",
                                               "Data3DStore",
                                               "Double",
                                               "DynamicSites",
-                                              "ElementRefList",
+                                              "ElementVector",
                                               "EnumOptions",
                                               "Expression",
                                               "ExpressionVariableList",
@@ -65,7 +65,7 @@ std::string_view KeywordDataTypeKeywords[] = {"AtomTypeRefList",
                                               "Vec3<NodeValue>",
                                               "Vector<Integer,Double>",
                                               "Vector<Integer,String>",
-                                              "WindowFunction"};
+                                              "Vector<String,String>"};
 
 // Return ValueType name
 std::string_view KeywordBase::keywordDataType(KeywordDataType kdt) { return KeywordDataTypeKeywords[kdt]; }

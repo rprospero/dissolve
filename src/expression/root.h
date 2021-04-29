@@ -1,16 +1,23 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
-#include "expression/nodeNEW.h"
+#include "expression/node.h"
 
 // Expression Root Node
-class ExpressionRootNode : public ExpressionNodeNEW
+class ExpressionRootNode : public ExpressionNode
 {
     public:
     ExpressionRootNode();
     ~ExpressionRootNode() = default;
+
+    /*
+     * Nodes
+     */
+    public:
+    // Duplicate this node and its contents
+    std::shared_ptr<ExpressionNode> duplicate();
 
     /*
      * Evaluation

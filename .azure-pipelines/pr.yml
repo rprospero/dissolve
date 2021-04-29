@@ -10,6 +10,8 @@ pr:
     - examples/*
     - web/*
     - README.md
+    - .azure-pipelines/continuous.yml
+    - .azure-pipelines/release.yml
 
 stages:
   - template: templates/code-quality-checks.yml
@@ -28,10 +30,12 @@ stages:
           - template: templates/set-short-hash.yml
           - template: templates/build-linux-serial-gui.yml
             parameters:
-              extraflags: '-DCHECKS:bool=true'
+              extraflags: '-DBUILD_TESTS:bool=true -DCMAKE_BUILD_TYPE=Debug'
+              ppa: 'beineri/opt-qt-5.13.2-bionic'
+              qtver: 513
           - task: PublishBuildArtifacts@1
             inputs:
-              PathtoPublish: "tests/"
+              PathtoPublish: "build/"
               ArtifactName: 'linux-tests-serial'
             displayName: 'Publish Serial Test Artifacts'
       - job: 'linux_parallel'
@@ -44,15 +48,16 @@ stages:
           - template: templates/set-short-hash.yml
           - template: templates/build-linux-serial-gui.yml
             parameters:
-              extraflags: '-DCHECKS:bool=true'
+              extraflags: '-DBUILD_TESTS:bool=true -DCMAKE_BUILD_TYPE=Debug'
               parallel: "true"
           - task: PublishBuildArtifacts@1
             inputs:
-              PathtoPublish: "tests/"
+              PathtoPublish: "build/"
               ArtifactName: 'linux-tests-parallel'
             displayName: 'Publish Parallel Test Artifacts'
       - job: 'osx_serialgui'
         displayName: 'Build OSX (Serial/GUI, macos-latest)'
+        timeoutInMinutes: 120
         pool:
           vmImage: 'macos-latest' 
         steps:
@@ -71,9 +76,9 @@ stages:
               ArtifactName: 'osx-artifacts'
             displayName: 'Publish OSX Artifacts'
       - job: 'windows_serialgui'
-        timeoutInMinutes: 120
         displayName: 'Build Windows (Serial/GUI, windows-latest)'
         condition: eq(1, 2)
+        timeoutInMinutes: 120
         pool:
           vmImage: 'windows-latest' 
         steps:

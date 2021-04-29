@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -68,8 +68,7 @@ class ScatteringMatrix
      */
     public:
     // Initialise from supplied list of AtomTypes
-    void initialise(const std::vector<std::shared_ptr<AtomType>> &types, Array2D<Data1D> &estimatedSQ,
-                    std::string_view objectNamePrefix, std::string_view groupName);
+    void initialise(const std::vector<std::shared_ptr<AtomType>> &types, Array2D<Data1D> &estimatedSQ);
     // Add reference data with its associated NeutronWeights, applying optional factor to those weights and the data itself
     bool addReferenceData(const Data1D &weightedData, const NeutronWeights &dataWeights, double factor = 1.0);
     // Add reference data with its associated XRayWeights, applying optional factor to those weights and the data itself

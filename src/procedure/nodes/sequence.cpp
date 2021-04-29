@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "procedure/nodes/sequence.h"
 #include "base/lineparser.h"
@@ -8,7 +8,7 @@
 
 SequenceProcedureNode::SequenceProcedureNode(ProcedureNode::NodeContext context, const Procedure *procedure,
                                              ProcedureNode *parentNode, std::string_view blockTerminationKeyword)
-    : ProcedureNode(ProcedureNode::SequenceNode)
+    : ProcedureNode(ProcedureNode::NodeType::Sequence)
 {
     context_ = context;
     procedure_ = procedure;
@@ -35,11 +35,7 @@ bool SequenceProcedureNode::isContextRelevant(ProcedureNode::NodeContext context
 // Return enum option info for SequenceNodeKeyword
 EnumOptions<SequenceProcedureNode::SequenceNodeKeyword> SequenceProcedureNode::sequenceNodeKeywords()
 {
-    static EnumOptionsList SequenceNodeTypeKeywords;
-
-    static EnumOptions<SequenceProcedureNode::SequenceNodeKeyword> options("SequenceNodeKeyword", SequenceNodeTypeKeywords);
-
-    return options;
+    return EnumOptions<SequenceProcedureNode::SequenceNodeKeyword>("SequenceNodeKeyword", {});
 }
 
 /*
@@ -74,7 +70,7 @@ int SequenceProcedureNode::nNodes() const { return sequence_.nItems(); }
 
 // Return named node if it exists anywhere in our sequence or below, and optionally matches the type given
 ProcedureNode *SequenceProcedureNode::searchNodes(std::string_view name, ProcedureNode *excludeNode,
-                                                  ProcedureNode::NodeType nt) const
+                                                  std::optional<ProcedureNode::NodeType> optNodeType) const
 {
     ListIterator<ProcedureNode> nodeIterator(sequence_);
     while (ProcedureNode *node = nodeIterator.iterate())
@@ -85,9 +81,7 @@ ProcedureNode *SequenceProcedureNode::searchNodes(std::string_view name, Procedu
             if (DissolveSys::sameString(node->name(), name))
             {
                 // Check type
-                if (nt == ProcedureNode::nNodeTypes)
-                    return node;
-                else if (node->type() == nt)
+                if (!optNodeType || optNodeType.value() == node->type())
                     return node;
             }
         }
@@ -95,7 +89,7 @@ ProcedureNode *SequenceProcedureNode::searchNodes(std::string_view name, Procedu
         // If the node has a branch, descend into it
         if (node->hasBranch())
         {
-            ProcedureNode *result = node->branch()->searchNodes(name, excludeNode, nt);
+            ProcedureNode *result = node->branch()->searchNodes(name, excludeNode, optNodeType);
             if (result)
                 return result;
         }
@@ -105,13 +99,14 @@ ProcedureNode *SequenceProcedureNode::searchNodes(std::string_view name, Procedu
 }
 
 // Search through the Procedure for the named parameter
-ExpressionVariable *SequenceProcedureNode::searchParameters(std::string_view name, ExpressionVariable *excludeParameter) const
+std::shared_ptr<ExpressionVariable>
+SequenceProcedureNode::searchParameters(std::string_view name, std::shared_ptr<ExpressionVariable> excludeParameter) const
 {
     ListIterator<ProcedureNode> nodeIterator(sequence_);
     while (ProcedureNode *node = nodeIterator.iterate())
     {
         // Does this node have a parameter by this name?
-        ExpressionVariable *result = node->hasParameter(name, excludeParameter);
+        auto result = node->hasParameter(name, excludeParameter);
         if (result)
             return result;
 
@@ -134,7 +129,7 @@ const Procedure *SequenceProcedureNode::procedure() const { return procedure_; }
 ProcedureNode::NodeContext SequenceProcedureNode::sequenceContext() const { return context_; }
 
 // Return named node if present in this sequence, and which matches the (optional) type given
-ProcedureNode *SequenceProcedureNode::node(std::string_view name, ProcedureNode::NodeType nt) const
+ProcedureNode *SequenceProcedureNode::node(std::string_view name, std::optional<ProcedureNode::NodeType> optNodeType) const
 {
     ListIterator<ProcedureNode> nodeIterator(sequence_);
     while (ProcedureNode *node = nodeIterator.iterate())
@@ -142,16 +137,14 @@ ProcedureNode *SequenceProcedureNode::node(std::string_view name, ProcedureNode:
         if (DissolveSys::sameString(node->name(), name))
         {
             // Check type
-            if (nt == ProcedureNode::nNodeTypes)
-                return node;
-            else if (node->type() == nt)
+            if (!optNodeType || optNodeType.value() == node->type())
                 return node;
         }
 
         // If the node has a branch, recurse in to that
         if (node->hasBranch())
         {
-            ProcedureNode *branchNode = node->branch()->node(name, nt);
+            ProcedureNode *branchNode = node->branch()->node(name, optNodeType);
             if (branchNode)
                 return branchNode;
         }
@@ -161,7 +154,8 @@ ProcedureNode *SequenceProcedureNode::node(std::string_view name, ProcedureNode:
 }
 
 // Return list of nodes of specified type present in the Procedure
-RefList<ProcedureNode> SequenceProcedureNode::nodes(ProcedureNode *queryingNode, ProcedureNode::NodeType nt)
+RefList<ProcedureNode> SequenceProcedureNode::nodes(ProcedureNode *queryingNode,
+                                                    std::optional<ProcedureNode::NodeType> optNodeType)
 {
     RefList<ProcedureNode> matches;
 
@@ -169,15 +163,13 @@ RefList<ProcedureNode> SequenceProcedureNode::nodes(ProcedureNode *queryingNode,
     while (ProcedureNode *node = nodeIterator.iterate())
     {
         // Check type
-        if (nt == ProcedureNode::nNodeTypes)
-            matches.append(node);
-        else if (node->type() == nt)
+        if (!optNodeType || optNodeType.value() == node->type())
             matches.append(node);
 
         // If the node has a branch, recurse in to that
         if (node->hasBranch())
         {
-            RefList<ProcedureNode> branchNodes = node->branch()->nodes(node, nt);
+            RefList<ProcedureNode> branchNodes = node->branch()->nodes(node, optNodeType);
             matches += branchNodes;
         }
     }
@@ -187,15 +179,10 @@ RefList<ProcedureNode> SequenceProcedureNode::nodes(ProcedureNode *queryingNode,
 
 // Return named node if it is currently in scope, and optionally matches the type given
 ProcedureNode *SequenceProcedureNode::nodeInScope(ProcedureNode *queryingNode, std::string_view name,
-                                                  ProcedureNode::NodeType nt)
+                                                  std::optional<ProcedureNode::NodeType> optNodeType)
 {
-    // Is this node present in our own sequence?
-    if (queryingNode && (!sequence_.contains(queryingNode)))
-    {
-        Messenger::error("INTERNAL ERROR: Querying node passed to SequenceProcedureNode::nodeInScope() is not a member "
-                         "of this sequence.\n");
-        return nullptr;
-    }
+    if (queryingNode)
+        assert(sequence_.contains(queryingNode));
 
     // Start from the target node and work backwards...
     for (auto *node = queryingNode; node != nullptr; node = node->prev())
@@ -203,31 +190,25 @@ ProcedureNode *SequenceProcedureNode::nodeInScope(ProcedureNode *queryingNode, s
         if (DissolveSys::sameString(node->name(), name))
         {
             // Check type
-            if (nt == ProcedureNode::nNodeTypes)
-                return node;
-            else if (node->type() == nt)
+            if (!optNodeType || optNodeType.value() == node->type())
                 return node;
         }
     }
 
     // Not in our list. Recursively check our parent(s)
     if (parentNode_)
-        return parentNode_->nodeInScope(name, nt);
+        return parentNode_->nodeInScope(name, optNodeType);
 
     // Not found
     return nullptr;
 }
 
-// Return list of nodes of specified type present in scope
-RefList<ProcedureNode> SequenceProcedureNode::nodesInScope(ProcedureNode *queryingNode, ProcedureNode::NodeType nt)
+// Return list of nodes of optional specified type present in scope
+RefList<ProcedureNode> SequenceProcedureNode::nodesInScope(ProcedureNode *queryingNode,
+                                                           std::optional<ProcedureNode::NodeType> optNodeType)
 {
-    // Is this node present in our own sequence?
-    if (queryingNode && (!sequence_.contains(queryingNode)))
-    {
-        Messenger::error("INTERNAL ERROR: Querying node passed to SequenceProcedureNode::nodesInScope() is not a "
-                         "member of this sequence.\n");
-        return RefList<ProcedureNode>();
-    }
+    if (queryingNode)
+        assert(sequence_.contains(queryingNode));
 
     RefList<ProcedureNode> matches;
 
@@ -235,47 +216,41 @@ RefList<ProcedureNode> SequenceProcedureNode::nodesInScope(ProcedureNode *queryi
     for (auto *node = queryingNode; node != nullptr; node = node->prev())
     {
         // Check type
-        if (nt == ProcedureNode::nNodeTypes)
-            matches.append(node);
-        else if (node->type() == nt)
+        if (!optNodeType || optNodeType.value() == node->type())
             matches.append(node);
     }
 
     // Not in our list. Recursively check our parent(s)
     if (parentNode_)
-        matches += parentNode_->nodesInScope(nt);
+        matches += parentNode_->nodesInScope(optNodeType);
 
     return matches;
 }
 
 // Return named node if it exists anywhere in the same Procedure, and optionally matches the type given
 ProcedureNode *SequenceProcedureNode::nodeExists(std::string_view name, ProcedureNode *excludeNode,
-                                                 ProcedureNode::NodeType nt) const
+                                                 std::optional<ProcedureNode::NodeType> optNodeType) const
 {
     // First, bubble up to the topmost sequence (which should be the Procedure's rootSequence_)
     if (parentNode_)
-        return parentNode_->scope()->nodeExists(name, excludeNode, nt);
+        return parentNode_->scope()->nodeExists(name, excludeNode, optNodeType);
 
     // No parent node, so we must be the topmost sequence - run the search from here
-    return searchNodes(name, excludeNode, nt);
+    return searchNodes(name, excludeNode, optNodeType);
 }
 
-// Return whether the named parameter is currently in scope
-ExpressionVariable *SequenceProcedureNode::parameterInScope(ProcedureNode *queryingNode, std::string_view name,
-                                                            ExpressionVariable *excludeParameter)
+// Return the named parameter if it is currently in scope
+std::shared_ptr<ExpressionVariable>
+SequenceProcedureNode::parameterInScope(ProcedureNode *queryingNode, std::string_view name,
+                                        std::shared_ptr<ExpressionVariable> excludeParameter)
 {
-    // Is this node present in our own sequence?
-    if (queryingNode && (!sequence_.contains(queryingNode)))
-    {
-        Messenger::error("INTERNAL ERROR: Querying node passed to SequenceProcedureNode::parameterInScope() is not a "
-                         "member of this sequence.\n");
-        return nullptr;
-    }
+    if (queryingNode)
+        assert(sequence_.contains(queryingNode));
 
     // Start from the target node and work backwards...
     for (auto *node = queryingNode; node != nullptr; node = node->prev())
     {
-        ExpressionVariable *param = node->hasParameter(name, excludeParameter);
+        auto param = node->hasParameter(name, excludeParameter);
         if (param)
             return param;
     }
@@ -289,7 +264,8 @@ ExpressionVariable *SequenceProcedureNode::parameterInScope(ProcedureNode *query
 }
 
 // Return whether the named parameter exists in this sequence or its children (branches)
-ExpressionVariable *SequenceProcedureNode::parameterExists(std::string_view name, ExpressionVariable *excludeParameter) const
+std::shared_ptr<ExpressionVariable>
+SequenceProcedureNode::parameterExists(std::string_view name, std::shared_ptr<ExpressionVariable> excludeParameter) const
 {
     // First, bubble up to the topmost sequence (which should be the Procedure's rootSequence_)
     if (parentNode_)
@@ -300,27 +276,34 @@ ExpressionVariable *SequenceProcedureNode::parameterExists(std::string_view name
 }
 
 // Create and return reference list of parameters in scope
-RefList<ExpressionVariable> SequenceProcedureNode::parametersInScope(ProcedureNode *queryingNode)
+std::vector<std::shared_ptr<ExpressionVariable>> SequenceProcedureNode::parametersInScope(ProcedureNode *queryingNode)
 {
-    RefList<ExpressionVariable> parameters;
+    if (queryingNode)
+        assert(sequence_.contains(queryingNode));
 
-    // Is this node present in our own sequence?
-    if (queryingNode && (!sequence_.contains(queryingNode)))
-    {
-        Messenger::error("INTERNAL ERROR: Querying node passed to SequenceProcedureNode::parametersInScope() is not a "
-                         "member of this sequence.\n");
-        return parameters;
-    }
+    std::vector<std::shared_ptr<ExpressionVariable>> parameters;
 
     // Start from the target node and work backwards...
     for (auto *node = queryingNode; node != nullptr; node = node->prev())
     {
-        parameters += node->parameterReferences();
+        auto optOtherParams = node->parameters();
+        if (optOtherParams)
+        {
+            const std::vector<std::shared_ptr<ExpressionVariable>> otherParams = (*optOtherParams);
+            parameters.insert(parameters.end(), otherParams.begin(), otherParams.end());
+        }
     }
 
     // Recursively check our parent(s)
     if (parentNode_)
-        parameters += parentNode_->parametersInScope();
+    {
+        auto optOtherParams = parentNode_->parameters();
+        if (optOtherParams)
+        {
+            const std::vector<std::shared_ptr<ExpressionVariable>> otherParams = (*optOtherParams);
+            parameters.insert(parameters.end(), otherParams.begin(), otherParams.end());
+        }
+    }
 
     return parameters;
 }
@@ -342,28 +325,19 @@ bool SequenceProcedureNode::prepare(Configuration *cfg, std::string_view prefix,
 }
 
 // Execute node, targetting the supplied Configuration
-ProcedureNode::NodeExecutionResult SequenceProcedureNode::execute(ProcessPool &procPool, Configuration *cfg,
-                                                                  std::string_view prefix, GenericList &targetList)
+bool SequenceProcedureNode::execute(ProcessPool &procPool, Configuration *cfg, std::string_view prefix, GenericList &targetList)
 {
-    ProcedureNode::NodeExecutionResult result = ProcedureNode::Success;
-
     // If there are no nodes, just exit now
     if (sequence_.nItems() == 0)
-        return ProcedureNode::Success;
+        return true;
 
     // Loop over nodes in the list, executing each in turn
     ListIterator<ProcedureNode> nodeIterator(sequence_);
     while (ProcedureNode *node = nodeIterator.iterate())
-    {
-        // Get the result of executing the node
-        result = node->execute(procPool, cfg, prefix, targetList);
+        if (!node->execute(procPool, cfg, prefix, targetList))
+            return false;
 
-        // If the result is not Success, don't process any more nodes
-        if (result != ProcedureNode::Success)
-            break;
-    }
-
-    return result;
+    return true;
 }
 
 // Finalise any necessary data after execution
@@ -390,7 +364,7 @@ void SequenceProcedureNode::setBlockTerminationKeyword(std::string_view endKeywo
 std::string_view SequenceProcedureNode::blockTerminationKeyword() const { return blockTerminationKeyword_; }
 
 // Read structure from specified LineParser
-bool SequenceProcedureNode::read(LineParser &parser, CoreData &coreData)
+bool SequenceProcedureNode::deserialise(LineParser &parser, const CoreData &coreData)
 {
     // Read until we encounter the block-ending keyword, or we fail for some reason
     while (!parser.eofOrBlank())
@@ -421,87 +395,81 @@ bool SequenceProcedureNode::read(LineParser &parser, CoreData &coreData)
         ProcedureNode::NodeType nt = ProcedureNode::nodeTypes().enumeration(parser.argsv(0));
         switch (nt)
         {
-            case (ProcedureNode::AddSpeciesNode):
+            case (ProcedureNode::NodeType::AddSpecies):
                 newNode = new AddSpeciesProcedureNode();
                 break;
-            case (ProcedureNode::BoxNode):
+            case (ProcedureNode::NodeType::Box):
                 newNode = new BoxProcedureNode();
                 break;
-            case (ProcedureNode::CalculateAngleNode):
+            case (ProcedureNode::NodeType::CalculateAngle):
                 newNode = new CalculateAngleProcedureNode();
                 break;
-            case (ProcedureNode::CalculateDistanceNode):
+            case (ProcedureNode::NodeType::CalculateDistance):
                 newNode = new CalculateDistanceProcedureNode();
                 break;
-            case (ProcedureNode::CalculateBaseNode):
+            case (ProcedureNode::NodeType::CalculateBase):
                 /* This should never be called */
                 return Messenger::error("Can't create a node of CalculateBase type directly - create the "
                                         "parent node instead.\n");
                 break;
-            case (ProcedureNode::CalculateVectorNode):
+            case (ProcedureNode::NodeType::CalculateVector):
                 newNode = new CalculateVectorProcedureNode();
                 break;
-            case (ProcedureNode::Collect1DNode):
+            case (ProcedureNode::NodeType::Collect1D):
                 newNode = new Collect1DProcedureNode();
                 break;
-            case (ProcedureNode::Collect2DNode):
+            case (ProcedureNode::NodeType::Collect2D):
                 newNode = new Collect2DProcedureNode();
                 break;
-            case (ProcedureNode::Collect3DNode):
+            case (ProcedureNode::NodeType::Collect3D):
                 newNode = new Collect3DProcedureNode();
                 break;
-            case (ProcedureNode::ExcludeNode):
-                newNode = new ExcludeProcedureNode();
-                break;
-            case (ProcedureNode::Fit1DNode):
+            case (ProcedureNode::NodeType::Fit1D):
                 newNode = new Fit1DProcedureNode();
                 break;
-            case (ProcedureNode::OperateBaseNode):
+            case (ProcedureNode::NodeType::OperateBase):
                 /* This should never be called */
                 return Messenger::error("Can't create a node of OperateBase type directly - create the parent node instead.\n");
                 break;
-            case (ProcedureNode::OperateDivideNode):
+            case (ProcedureNode::NodeType::OperateDivide):
                 newNode = new OperateDivideProcedureNode();
                 break;
-            case (ProcedureNode::OperateExpressionNode):
+            case (ProcedureNode::NodeType::OperateExpression):
                 newNode = new OperateExpressionProcedureNode();
                 break;
-            case (ProcedureNode::OperateMultiplyNode):
+            case (ProcedureNode::NodeType::OperateMultiply):
                 newNode = new OperateMultiplyProcedureNode();
                 break;
-            case (ProcedureNode::OperateNormaliseNode):
+            case (ProcedureNode::NodeType::OperateNormalise):
                 newNode = new OperateNormaliseProcedureNode();
                 break;
-            case (ProcedureNode::OperateNumberDensityNormaliseNode):
+            case (ProcedureNode::NodeType::OperateNumberDensityNormalise):
                 newNode = new OperateNumberDensityNormaliseProcedureNode();
                 break;
-            case (ProcedureNode::OperateSitePopulationNormaliseNode):
+            case (ProcedureNode::NodeType::OperateSitePopulationNormalise):
                 newNode = new OperateSitePopulationNormaliseProcedureNode();
                 break;
-            case (ProcedureNode::OperateSphericalShellNormaliseNode):
+            case (ProcedureNode::NodeType::OperateSphericalShellNormalise):
                 newNode = new OperateSphericalShellNormaliseProcedureNode();
                 break;
-            case (ProcedureNode::ParametersNode):
+            case (ProcedureNode::NodeType::Parameters):
                 newNode = new ParametersProcedureNode();
                 break;
-            case (ProcedureNode::Process1DNode):
+            case (ProcedureNode::NodeType::Process1D):
                 newNode = new Process1DProcedureNode();
                 break;
-            case (ProcedureNode::Process2DNode):
+            case (ProcedureNode::NodeType::Process2D):
                 newNode = new Process2DProcedureNode();
                 break;
-            case (ProcedureNode::Process3DNode):
+            case (ProcedureNode::NodeType::Process3D):
                 newNode = new Process3DProcedureNode();
                 break;
-            case (ProcedureNode::SelectNode):
+            case (ProcedureNode::NodeType::Select):
                 newNode = new SelectProcedureNode();
                 break;
-            case (ProcedureNode::SequenceNode):
+            case (ProcedureNode::NodeType::Sequence):
                 /* This should never be called */
                 newNode = new SequenceProcedureNode(ProcedureNode::NoContext, procedure(), this);
-                break;
-            case (ProcedureNode::nNodeTypes):
-                return Messenger::error("Unrecognised procedure node type '{}' found.\n", parser.argsv(0));
                 break;
             default:
                 return Messenger::error("Epic Developer Fail - Don't know how to create a node of type '{}'.\n",
@@ -538,7 +506,7 @@ bool SequenceProcedureNode::read(LineParser &parser, CoreData &coreData)
         newNode->setScope(this);
 
         // Read the new node
-        if (!newNode->read(parser, coreData))
+        if (!newNode->deserialise(parser, coreData))
             return Messenger::error("Failed to read node sequence.\n");
     }
 

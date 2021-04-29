@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -14,22 +14,18 @@ class OperateExpressionProcedureNode : public OperateProcedureNodeBase
 {
     public:
     OperateExpressionProcedureNode(std::string_view expressionText = "");
-    ~OperateExpressionProcedureNode();
+    ~OperateExpressionProcedureNode() override = default;
 
     /*
      * Expression and Variables
      */
     private:
-    // Normalisation expression
+    // Expression
     Expression expression_;
-    // X variable in equation
-    ExpressionVariable *x_;
-    // Y variable in equation
-    ExpressionVariable *y_;
-    // Z variable in equation
-    ExpressionVariable *z_;
-    // Value variable in equation
-    ExpressionVariable *value_;
+    // Vector of variables accessible by the transform equation
+    std::vector<std::shared_ptr<ExpressionVariable>> variables_;
+    // Variables accessible by the transform equation
+    std::shared_ptr<ExpressionVariable> x_, y_, z_, value_;
 
     /*
      * Data Target (implements virtuals in OperateProcedureNodeBase)

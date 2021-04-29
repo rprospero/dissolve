@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "classes/moleculedistributor.h"
 #include "classes/atom.h"
@@ -31,7 +31,7 @@ Array<Cell *> MoleculeDistributor::cellsToBeModifiedForObject(int objectId)
 
         // Is it already in the list?
         for (n = 0; n < cells.nItems(); ++n)
-            if (cells.constAt(n) == cell)
+            if (cells.at(n) == cell)
                 break;
         if (n == cells.nItems())
             cells.add(cell);

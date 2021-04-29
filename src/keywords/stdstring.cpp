@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "keywords/stdstring.h"
 #include "base/lineparser.h"
@@ -20,7 +20,7 @@ int StringKeyword::minArguments() const { return 1; }
 int StringKeyword::maxArguments() const { return 1; }
 
 // Parse arguments from supplied LineParser, starting at given argument offset
-bool StringKeyword::read(LineParser &parser, int startArg, CoreData &coreData)
+bool StringKeyword::read(LineParser &parser, int startArg, const CoreData &coreData)
 {
     if (parser.hasArg(startArg))
     {
@@ -34,7 +34,7 @@ bool StringKeyword::read(LineParser &parser, int startArg, CoreData &coreData)
 }
 
 // Write keyword data to specified LineParser
-bool StringKeyword::write(LineParser &parser, std::string_view keywordName, std::string_view prefix)
+bool StringKeyword::write(LineParser &parser, std::string_view keywordName, std::string_view prefix) const
 {
     return parser.writeLineF("{}{}  '{}'\n", prefix, keywordName, data_);
 }

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "neta/NETAErrorListeners.h"
 #include "base/messenger.h"
@@ -36,5 +36,5 @@ void NETAParserErrorListener::syntaxError(antlr4::Recognizer *recognizer, antlr4
     marker += '^';
     Messenger::print("{}\n", marker);
 
-    throw NETAExceptions::NETASyntaxException(message);
+    throw NETAExceptions::NETASyntaxException(fmt::format("Syntax Error: {}", message));
 }

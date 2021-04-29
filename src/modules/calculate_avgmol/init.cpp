@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "keywords/types.h"
 #include "modules/calculate_avgmol/avgmol.h"
@@ -8,7 +8,7 @@
 void CalculateAvgMolModule::initialise()
 {
     // Set up keywords
-    keywords_.add("Target", new SpeciesSiteKeyword(nullptr, true), "Site",
+    keywords_.add("Control", new SpeciesSiteKeyword(nullptr, true), "Site",
                   "Target site about which to calculate average species geometry",
                   KeywordBase::ModificationRequiresSetUpOption);
 

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -216,9 +216,9 @@ class KeywordList
      */
     public:
     // Try to parse keyword in specified LineParser
-    KeywordBase::ParseResult parse(LineParser &parser, CoreData &coreData);
+    KeywordBase::ParseResult parse(LineParser &parser, const CoreData &coreData);
     // Write all keywords to specified LineParser
-    bool write(LineParser &parser, std::string_view prefix, bool onlyIfSet = true);
+    bool write(LineParser &parser, std::string_view prefix, bool onlyIfSet = true) const;
     // Write all keywords in groups to specified LineParser
-    bool writeGroups(LineParser &parser, std::string_view prefix, bool onlyIfSet = true);
+    bool writeGroups(LineParser &parser, std::string_view prefix, bool onlyIfSet = true) const;
 };

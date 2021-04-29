@@ -1,18 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "classes/atomtypelist.h"
 #include "base/lineparser.h"
-#include "base/processpool.h"
 #include "base/sysfunc.h"
 #include "classes/atomtype.h"
 #include "classes/isotopedata.h"
 #include "data/elements.h"
 #include "data/isotopes.h"
-#include "templates/broadcastlist.h"
-#include "templates/broadcastvector.h"
 #include <algorithm>
-#include <string.h>
 
 AtomTypeList::AtomTypeList() {}
 
@@ -25,12 +21,8 @@ void AtomTypeList::operator=(const AtomTypeList &source) { types_ = source.types
 // Array access operator
 AtomTypeData &AtomTypeList::operator[](int n)
 {
-#ifdef CHECKS
-    if ((n < 0) || (n >= types_.size()))
-    {
-        Messenger::print("OUT_OF_RANGE - Specified index {} out of range in AtomTypeList::operator[].\n", n);
-    }
-#endif
+    assert(n >= 0 && n < types_.size());
+
     return types_[n];
 }
 
@@ -228,12 +220,8 @@ double AtomTypeList::totalPopulation() const
 // Return nth referenced AtomType
 const std::shared_ptr<AtomType> AtomTypeList::atomType(int n) const
 {
-#ifdef CHECKS
-    if ((n < 0) || (n >= types_.size()))
-    {
-        Messenger::print("OUT_OF_RANGE - Specified index {} out of range in AtomTypeList::atomType().\n");
-    }
-#endif
+    assert(n >= 0 && n < types_.size());
+
     return types_[n].atomType();
 }
 
@@ -259,7 +247,7 @@ void AtomTypeList::print() const
         if (atd.isotopeData())
         {
             Messenger::print("{} {:<8}  {:<3}    -     {:<10d}    {:10.6f} (of world) {:6.3f}\n", exch, atd.atomTypeName(),
-                             atd.atomType()->element()->symbol(), atd.population(), atd.fraction(), atd.boundCoherent());
+                             Elements::symbol(atd.atomType()->Z()), atd.population(), atd.fraction(), atd.boundCoherent());
 
             for (const auto *topeData = atd.isotopeData(); topeData != nullptr; topeData = topeData->next())
             {
@@ -270,21 +258,18 @@ void AtomTypeList::print() const
         }
         else
             Messenger::print("{} {:<8}  {:<3}          {:<10d}  {:8.6f}     --- N/A ---\n", exch, atd.atomTypeName(),
-                             atd.atomType()->element()->symbol(), atd.population(), atd.fraction());
+                             Elements::symbol(atd.atomType()->Z()), atd.population(), atd.fraction());
 
         Messenger::print("  -----------------------------------------------------------------\n");
     }
 }
 
 /*
- * GenericItemBase Implementations
+ * Serialisation
  */
 
-// Return class name
-std::string_view AtomTypeList::itemClassName() { return "AtomTypeList"; }
-
 // Read data through specified LineParser
-bool AtomTypeList::read(LineParser &parser, CoreData &coreData)
+bool AtomTypeList::deserialise(LineParser &parser, const CoreData &coreData)
 {
     types_.clear();
 
@@ -303,14 +288,14 @@ bool AtomTypeList::read(LineParser &parser, CoreData &coreData)
         auto boundCoherent = parser.argd(3);
         auto nIsotopes = parser.argi(4);
 
-        // types_.emplace_back(types_.size(), atomType, population);
         types_.emplace_back(atomType, population, fraction, boundCoherent);
         auto &atd = types_.back();
         for (auto i = 0; i < nIsotopes; ++i)
         {
             if (parser.getArgsDelim(LineParser::Defaults) != LineParser::Success)
                 return false;
-            auto isotope = Isotopes::isotope(parser.argi(0), parser.argi(1));
+            auto Z = Elements::element(parser.argi(0));
+            auto isotope = Isotopes::isotope(Z, parser.argi(1));
             atd.add(isotope, parser.argd(2));
         }
     }
@@ -319,79 +304,13 @@ bool AtomTypeList::read(LineParser &parser, CoreData &coreData)
 }
 
 // Write data through specified LineParser
-bool AtomTypeList::write(LineParser &parser)
+bool AtomTypeList::serialise(LineParser &parser) const
 {
     if (!parser.writeLineF("{}  # nItems\n", types_.size()))
         return false;
     for (auto &atd : types_)
-        if (!atd.write(parser))
+        if (!atd.serialise(parser))
             return false;
 
-    return true;
-}
-
-/*
- * Parallel Comms
- */
-
-// Broadcast item contents
-bool AtomTypeList::broadcast(ProcessPool &procPool, const int root, const CoreData &coreData)
-{
-#ifdef PARALLEL
-    int count;
-    if (procPool.isMaster())
-    {
-        // Broadcast number of items in list, then list items...
-        count = types_.size();
-        if (!procPool.broadcast(count, root))
-            return false;
-        for (auto &type : types_)
-        {
-            std::string name{type.atomType()->name()};
-            if (!procPool.broadcast(name, root))
-                return false;
-            if (!type.broadcast(procPool, root, coreData))
-                return false;
-        }
-    }
-    else
-    {
-        // Get number of list items to expect
-        if (!procPool.broadcast(count, root))
-            return false;
-
-        // Clear list and reconstruct
-        types_.clear();
-        for (auto n = 0; n < count; ++n)
-        {
-            // Slaves must create a suitable structure first, and then join the broadcast
-            std::string typeName;
-            if (!procPool.broadcast(typeName), root)
-                return false;
-            auto atomType = coreData.findAtomType(typeName);
-            types_.emplace_back(atomType);
-            auto &item = types_.back();
-            if (!item.broadcast(procPool, root, coreData))
-                return false;
-        }
-    }
-
-    // All OK - success!
-#endif
-    return true;
-}
-
-// Check item equality
-bool AtomTypeList::equality(ProcessPool &procPool)
-{
-#ifdef PARALLEL
-    // Check number of types in list first
-    if (!procPool.equality((long int)types_.size()))
-        return Messenger::error("AtomTypeList size is not equivalent (process {} has {}).\n", procPool.poolRank(),
-                                types_.size());
-    for (auto &atd : types_)
-        if (!atd.equality(procPool))
-            return Messenger::error("AtomTypeList entry for type '{}' is not equivalent.\n", atd.atomTypeName());
-#endif
     return true;
 }

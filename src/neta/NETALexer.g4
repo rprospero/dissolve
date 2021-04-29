@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 lexer grammar NETALexer;
 
@@ -16,7 +16,7 @@ lexer grammar NETALexer;
 
 // Appears in the private part of the lexer in the h file.
 @lexer::declarations {
-bool isElement(std::string symbol) { return Elements::element(symbol.c_str()).Z() != 0; }
+bool isElement(std::string symbol) { return Elements::element(symbol) != Elements::Unknown; }
 }
 
 // Appears in line with the other class member definitions in the cpp file.
@@ -31,6 +31,7 @@ fragment DIGIT: [0-9];
 fragment LETTER: [a-zA-Z];
 fragment UCASELETTER: [A-Z];
 fragment LCASELETTER: [a-z];
+fragment SYMBOL: [_+-];
 
 // Comparison Operators
 ComparisonOperator: '<=' | '>=' | '<' | '>' | '=' | '!=';
@@ -44,7 +45,7 @@ Comma: ',';
 TypeReference: '&';
 
 // Whitespace
-WS : [ ]* -> skip;
+WS : [ ]+ -> skip;
 
 // Basic Tokens
 Integer: DIGIT+;
@@ -56,7 +57,7 @@ ConnectionKeyword: '-';
 RingKeyword: 'r' 'i' 'n' 'g';
 
 // Named Tokens
-Element: UCASELETTER LCASELETTER* { isElement(getText()) }?;
-FFTypeName: TypeReference LETTER+;
+Element: UCASELETTER LCASELETTER*;
+FFTypeName: TypeReference LETTER (LETTER | DIGIT | SYMBOL)*;
 FFTypeIndex: TypeReference Integer;
 Keyword: LCASELETTER+;

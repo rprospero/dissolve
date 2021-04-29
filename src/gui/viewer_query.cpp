@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "base/messenger.h"
 #include "gui/dataviewer.hui"
@@ -48,11 +48,6 @@ void BaseViewer::generateQueryImage()
         Messenger::error("Failed to bind framebuffer object.\n");
     setupGL();
     renderGL();
-
-    // TEST Save offscreen image
-    // 	QImage fboImage(offscreenBuffer_->toImage());
-    // 	QImage tile(fboImage.constBits(), fboImage.width(), fboImage.height(), QImage::Format_ARGB32);
-    // 	tile.save("query.png", "png");
 
     // Reset pixel scaling
     setPixelScaling(1.0);

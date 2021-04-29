@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "classes/box.h"
 #include "classes/configuration.h"
 #include "classes/species.h"
 #include "gui/addconfigurationwizard.h"
 #include "gui/helpers/combopopulator.h"
-#include "gui/helpers/tablewidgetupdater.h"
 #include "main/dissolve.h"
 #include "templates/variantpointer.h"
 #include <QFileDialog>
@@ -26,12 +25,6 @@ AddConfigurationWizard::AddConfigurationWizard(QWidget *parent)
     registerPage(AddConfigurationWizard::SelectTemplatePage, "Select Generator Template",
                  AddConfigurationWizard::NameAndTemperaturePage);
     registerPage(AddConfigurationWizard::NameAndTemperaturePage, "Name and Temperature", WizardWidgetPageInfo::FinishHereFlag);
-
-    // Connect signals / slots
-    // 	connect(ui_.AtomTypesList->itemDelegate(), SIGNAL(commitData(QWidget*)), this,
-    // SLOT(atomTypesListEdited(QWidget*))); 	connect(ui_.CreateAtomicElementSelector,
-    // SIGNAL(elementSelectionChanged()), this, SLOT(createAtomicElementChanged()));
-
     lockedForRefresh_ = 0;
 }
 
@@ -166,7 +159,7 @@ void AddConfigurationWizard::reset()
 
     // Set a new, unique name ready on the final page
     ui_.FinishNameEdit->setText(
-        QString::fromStdString(std::string(dissolveReference_->constCoreData().uniqueConfigurationName("NewConfiguration"))));
+        QString::fromStdString(std::string(dissolveReference_->coreData().uniqueConfigurationName("NewConfiguration"))));
 }
 
 /*

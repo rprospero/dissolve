@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "procedure/nodes/operatenormalise.h"
 #include "base/lineparser.h"
@@ -9,19 +9,17 @@
 #include "math/integrator.h"
 
 OperateNormaliseProcedureNode::OperateNormaliseProcedureNode(double value)
-    : OperateProcedureNodeBase(ProcedureNode::OperateNormaliseNode)
+    : OperateProcedureNodeBase(ProcedureNode::NodeType::OperateNormalise)
 {
-    keywords_.add("Normal", new NodeValueKeyword(this, value), "Value", "Value expression to normalise to");
-    keywords_.add("Normal", new BoolKeyword(true), "Absolute", "Normalise absolute sum of values rather than direct sum");
+    keywords_.add("Control", new NodeValueKeyword(this, value), "Value", "Constant value to normalise to");
+    keywords_.add("Control", new BoolKeyword(true), "Absolute", "Normalise absolute sum of values rather than direct sum");
 }
 OperateNormaliseProcedureNode::OperateNormaliseProcedureNode(int value)
-    : OperateProcedureNodeBase(ProcedureNode::OperateNormaliseNode)
+    : OperateProcedureNodeBase(ProcedureNode::NodeType::OperateNormalise)
 {
-    keywords_.add("Normal", new NodeValueKeyword(this, value), "Value", "Value expression to normalise to");
-    keywords_.add("Normal", new BoolKeyword(true), "Absolute", "Normalise absolute sum of values rather than direct sum");
+    keywords_.add("Control", new NodeValueKeyword(this, value), "Value", "Constant value to normalise to");
+    keywords_.add("Control", new BoolKeyword(true), "Absolute", "Normalise absolute sum of values rather than direct sum");
 }
-
-OperateNormaliseProcedureNode::~OperateNormaliseProcedureNode() {}
 
 /*
  * Data Target (implements virtuals in OperateProcedureNodeBase)

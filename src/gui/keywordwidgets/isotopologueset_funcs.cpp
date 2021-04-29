@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "classes/coredata.h"
 #include "classes/species.h"
-#include "genericitems/listhelper.h"
 #include "gui/delegates/combolist.hui"
 #include "gui/delegates/customcombodelegate.h"
 #include "gui/delegates/exponentialspin.hui"
@@ -94,10 +93,9 @@ void IsotopologueSetKeywordWidget::addButton_clicked(bool checked)
     if (!item)
     {
         // No item selected - add next missing Species
-        ListIterator<Species> speciesIterator(coreData_.species());
-        while (const auto *sp = speciesIterator.iterate())
+        for (const auto &sp : coreData_.species())
         {
-            if (!set.contains(sp))
+            if (!set.contains(sp.get()))
             {
                 set.add(sp->naturalIsotopologue(), 1.0);
                 break;

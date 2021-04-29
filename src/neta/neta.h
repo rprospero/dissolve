@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -16,7 +16,7 @@ class NETADefinition
 {
     public:
     NETADefinition();
-    ~NETADefinition();
+    ~NETADefinition() = default;
 
     /*
      * Data
@@ -32,6 +32,8 @@ class NETADefinition
     std::shared_ptr<NETARootNode> rootNode();
     // Create definition from stored string
     bool create(const Forcefield *associatedFF = nullptr);
+    // Set definition string and create definition
+    bool create(std::string_view definition, const Forcefield *associatedFF = nullptr);
     // Set generating string
     void setDefinitionString(std::string_view definition);
     // Return original generating string

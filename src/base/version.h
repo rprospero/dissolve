@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
 // Forward Declarations
 class CoreData;
-class ProcessPool;
 
 // Version Counter
 class VersionCounter
@@ -33,11 +32,4 @@ class VersionCounter
     operator int() const;
     // Prefix increment
     int operator++();
-
-    /*
-     * Parallel Comms
-     */
-    public:
-    // Broadcast data from Master to all Slaves
-    bool broadcast(ProcessPool &procPool, const int root);
 };

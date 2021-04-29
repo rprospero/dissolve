@@ -1,8 +1,8 @@
-add_library(sg
+add_library(
+  sg
   generator.h
   sginfo.h
-
-  generator.cpp 
+  generator.cpp
   sgclib.c
   sgfind.c
   sghkl.c
@@ -10,10 +10,5 @@ add_library(sg
   sgsi.c
 )
 
-include_directories(
-  ../../
-  ${CMAKE_SOURCE_DIR}
-  ${CMAKE_BINARY_DIR}
-  ${CMAKE_BINARY_DIR}/src
-)
-
+include_directories(sg PRIVATE ${PROJECT_SOURCE_DIR}/src)
+target_link_libraries(sg PRIVATE base)

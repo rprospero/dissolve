@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "classes/atomtype.h"
 #include "gui/delegates/combolist.hui"
@@ -44,7 +44,7 @@ SpeciesTab::SpeciesTab(DissolveWindow *dissolveWindow, Dissolve &dissolve, MainT
                dissolve.masterTorsions()));
     ui_.ImproperTable->setItemDelegateForColumn(
         4, new IntraFormComboDelegate(
-               this, new ComboEnumOptionsItems<SpeciesImproper::ImproperFunction>(SpeciesImproper::improperFunctions()),
+               this, new ComboEnumOptionsItems<SpeciesTorsion::TorsionFunction>(SpeciesTorsion::torsionFunctions()),
                dissolve.masterImpropers()));
     // -- Isotopologues Tree
     ui_.IsotopologuesTree->setItemDelegateForColumn(1, new NullDelegate(this));
@@ -75,7 +75,7 @@ SpeciesTab::SpeciesTab(DissolveWindow *dissolveWindow, Dissolve &dissolve, MainT
     // Connect signals / slots
     connect(ui_.ViewerWidget, SIGNAL(dataModified()), this, SLOT(updateControls()));
     connect(ui_.ViewerWidget, SIGNAL(dataModified()), dissolveWindow_, SLOT(setModified()));
-    connect(ui_.ViewerWidget->speciesViewer(), SIGNAL(atomSelectionChanged()), this, SLOT(updateAtomTableSelection()));
+    connect(ui_.ViewerWidget->speciesViewer(), SIGNAL(atomsChanged()), this, SLOT(updateAtomTableSelection()));
     connect(ui_.SiteViewerWidget, SIGNAL(dataModified()), this, SLOT(updateSitesTab()));
     connect(ui_.SiteViewerWidget, SIGNAL(siteCreatedAndShown()), this, SLOT(setCurrentSiteFromViewer()));
     connect(ui_.SiteViewerWidget, SIGNAL(dataModified()), dissolveWindow_, SLOT(setModified()));
@@ -167,13 +167,3 @@ bool SpeciesTab::canClose() const
 
 // Return displayed Species
 Species *SpeciesTab::species() const { return species_; }
-
-/*
- * State
- */
-
-// Read widget state through specified LineParser
-bool SpeciesTab::readState(LineParser &parser, const CoreData &coreData) { return true; }
-
-// Write widget state through specified LineParser
-bool SpeciesTab::writeState(LineParser &parser) const { return true; }

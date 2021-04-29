@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "procedure/nodes/operatedivide.h"
 #include "base/lineparser.h"
@@ -7,12 +7,10 @@
 #include "keywords/types.h"
 #include "math/data1d.h"
 
-OperateDivideProcedureNode::OperateDivideProcedureNode() : OperateProcedureNodeBase(ProcedureNode::OperateDivideNode)
+OperateDivideProcedureNode::OperateDivideProcedureNode() : OperateProcedureNodeBase(ProcedureNode::NodeType::OperateDivide)
 {
-    keywords_.add("Divisor", new NodeValueKeyword(this, 1.0), "Value", "Value expression to divide by");
+    keywords_.add("Control", new NodeValueKeyword(this, 1.0), "Value", "Constant value to use as the divisor");
 }
-
-OperateDivideProcedureNode::~OperateDivideProcedureNode() {}
 
 /*
  * Data Target (implements virtuals in OperateProcedureNodeBase)

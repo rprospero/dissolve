@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "base/sysfunc.h"
 #include "classes/box.h"
 #include "classes/regionaldistributor.h"
-#include "genericitems/listhelper.h"
 #include "io/export/data1d.h"
 #include "io/import/data1d.h"
 #include "main/dissolve.h"
@@ -71,8 +70,8 @@ bool BenchmarkModule::process(Dissolve &dissolve, ProcessPool &procPool)
                 bool upToDate;
                 Timer timer;
                 Messenger::mute();
-                rdfModule.calculateGR(procPool, cfg, RDFModule::CellsMethod, cfg->box()->inscribedSphereRadius(), 0.05,
-                                      upToDate);
+                rdfModule.calculateGR(dissolve.processingModuleData(), procPool, cfg, RDFModule::CellsMethod,
+                                      cfg->box()->inscribedSphereRadius(), 0.05, upToDate);
                 Messenger::unMute();
                 timing += timer.split();
             }
@@ -97,8 +96,8 @@ bool BenchmarkModule::process(Dissolve &dissolve, ProcessPool &procPool)
                 bool upToDate;
                 Timer timer;
                 Messenger::mute();
-                rdfModule.calculateGR(procPool, cfg, RDFModule::SimpleMethod, cfg->box()->inscribedSphereRadius(), 0.05,
-                                      upToDate);
+                rdfModule.calculateGR(dissolve.processingModuleData(), procPool, cfg, RDFModule::SimpleMethod,
+                                      cfg->box()->inscribedSphereRadius(), 0.05, upToDate);
                 Messenger::unMute();
                 timing += timer.split();
             }
@@ -172,12 +171,9 @@ bool BenchmarkModule::process(Dissolve &dissolve, ProcessPool &procPool)
                     }
 
                     // Loop over target Molecules
-                    for (int n = 0; n < targetMolecules.size(); ++n)
-                    {
+                    for (auto &molId : targetMolecules)
                         // Get Molecule index and pointer
-                        auto molId = targetMolecules[n];
                         auto mol = cfg->molecule(molId);
-                    }
                 }
                 Messenger::unMute();
                 timing += timer.split();

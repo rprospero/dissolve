@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "base/lineparser.h"
 #include "base/sysfunc.h"
@@ -9,15 +9,9 @@
 // Return enum option info for SimulationKeyword
 EnumOptions<SimulationBlock::SimulationKeyword> SimulationBlock::keywords()
 {
-    static EnumOptionsList SimulationKeywords =
-        EnumOptionsList() << EnumOption(SimulationBlock::EndSimulationKeyword, "EndSimulation")
-                          << EnumOption(SimulationBlock::ParallelStrategyKeyword, "ParallelStrategy", 1)
-                          << EnumOption(SimulationBlock::ParallelGroupPopulationKeyword, "ParallelGroupPopulation", 1)
-                          << EnumOption(SimulationBlock::SeedKeyword, "Seed", 1);
-
-    static EnumOptions<SimulationBlock::SimulationKeyword> options("SimulationKeyword", SimulationKeywords);
-
-    return options;
+    return EnumOptions<SimulationBlock::SimulationKeyword>(
+        "SimulationKeyword",
+        {{SimulationBlock::EndSimulationKeyword, "EndSimulation"}, {SimulationBlock::SeedKeyword, "Seed", 1}});
 }
 
 // Parse Simulation block
@@ -47,18 +41,6 @@ bool SimulationBlock::parse(LineParser &parser, Dissolve *dissolve)
                 Messenger::print("Found end of {} block.\n",
                                  BlockKeywords::keywords().keyword(BlockKeywords::SimulationBlockKeyword));
                 blockDone = true;
-                break;
-            case (SimulationBlock::ParallelStrategyKeyword):
-                if (Dissolve::parallelStrategy(parser.argsv(1)) == Dissolve::nParallelStrategies)
-                {
-                    Messenger::error("Unrecognised parallel strategy '{}'.\n", parser.argsv(1));
-                    error = true;
-                }
-                else
-                    dissolve->setParallelStrategy(Dissolve::parallelStrategy(parser.argsv(1)));
-                break;
-            case (SimulationBlock::ParallelGroupPopulationKeyword):
-                dissolve->setParallelGroupPopulation(parser.argi(1));
                 break;
             case (SimulationBlock::SeedKeyword):
                 dissolve->setSeed(parser.argi(1));

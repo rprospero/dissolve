@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "base/messenger.h"
 #include "base/processpool.h"
@@ -9,9 +9,6 @@
 #include "main/version.h"
 #include <QSurfaceFormat>
 #include <clocale>
-#include <ctime>
-#include <stdlib.h>
-#include <time.h>
 
 int main(int args, char **argv)
 {
@@ -30,7 +27,7 @@ int main(int args, char **argv)
         return 1;
 
     // Print GPL license information
-    Messenger::print("Dissolve-GUI version {}, Copyright (C) 2020 Team Dissolve and contributors.\n", Version::info());
+    Messenger::print("Dissolve-GUI version {}, Copyright (C) 2021 Team Dissolve and contributors.\n", Version::info());
     Messenger::print("Source repository: {}.\n", Version::repoUrl());
     Messenger::print("Dissolve comes with ABSOLUTELY NO WARRANTY.\n");
     Messenger::print("This is free software, and you are welcome to redistribute it under certain conditions.\n");
@@ -77,15 +74,24 @@ int main(int args, char **argv)
             return 1;
         }
 
+        // Set restart file frequency and whether to write heartbeat file
+        if (options.writeNoFiles())
+        {
+            dissolve.setRestartFileFrequency(0);
+            dissolve.setWriteHeartBeat(false);
+        }
+        else
+            dissolve.setRestartFileFrequency(options.restartFileFrequency());
+
         // Iterate before launching the GUI?
-        if (options.nIterations())
+        if (options.nIterations() > 0)
         {
             // Prepare for run
             if (!dissolve.prepare())
                 return 1;
 
             // Run main simulation
-            auto result = dissolve.iterate(options.nIterations().value());
+            auto result = dissolve.iterate(options.nIterations());
             if (!result)
                 return 1;
         }

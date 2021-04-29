@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "data/formfactors.h"
 #include "data/formfactors_dummy.h"
@@ -12,17 +12,13 @@ namespace XRayFormFactors
 // Return EnumOptions for ConfigurationDisplayStyle
 EnumOptions<XRayFormFactors::XRayFormFactorData> xRayFormFactorData()
 {
-    static EnumOptionsList XRayFormFactorDataSets = EnumOptionsList()
-                                                    << EnumOption(XRayFormFactors::NoFormFactorData, "None")
-                                                    << EnumOption(XRayFormFactors::WaasmaierKirfel1995, "WK1995");
 
-    static EnumOptions<XRayFormFactors::XRayFormFactorData> options("XRayFormFactors", XRayFormFactorDataSets);
-
-    return options;
+    return EnumOptions<XRayFormFactors::XRayFormFactorData>(
+        "XRayFormFactors", {{XRayFormFactors::NoFormFactorData, "None"}, {XRayFormFactors::WaasmaierKirfel1995, "WK1995"}});
 }
 
 // Return form factor data from specified dataset for given element and formal charge (if it exists)
-OptionalReferenceWrapper<const FormFactorData> formFactorData(XRayFormFactorData dataSet, int Z, int formalCharge)
+OptionalReferenceWrapper<const FormFactorData> formFactorData(XRayFormFactorData dataSet, Elements::Element Z, int formalCharge)
 {
     switch (dataSet)
     {
@@ -33,12 +29,6 @@ OptionalReferenceWrapper<const FormFactorData> formFactorData(XRayFormFactorData
     }
 
     return {};
-}
-
-// Return form factor data from specified dataset for given element and formal charge (if it exists)
-OptionalReferenceWrapper<const FormFactorData> formFactorData(XRayFormFactorData dataSet, Element *el, int formalCharge)
-{
-    return formFactorData(dataSet, el->Z(), formalCharge);
 }
 
 } // namespace XRayFormFactors

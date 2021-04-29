@@ -1,9 +1,23 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "expression/root.h"
 
-ExpressionRootNode::ExpressionRootNode() : ExpressionNodeNEW() {}
+ExpressionRootNode::ExpressionRootNode() : ExpressionNode() {}
+
+/*
+ * Nodes
+ */
+
+// Duplicate this node and its contents
+std::shared_ptr<ExpressionNode> ExpressionRootNode::duplicate()
+{
+    auto node = std::make_shared<ExpressionRootNode>();
+    for (auto child : children_)
+        node->addChild(child->duplicate());
+
+    return node;
+}
 
 /*
  * Evaluation

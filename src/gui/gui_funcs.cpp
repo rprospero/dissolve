@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "base/lineparser.h"
 #include "gui/configurationtab.h"
@@ -134,8 +134,7 @@ void DissolveWindow::setModified()
 // Return reference to Dissolve
 Dissolve &DissolveWindow::dissolve() { return dissolve_; }
 
-// Return const reference to Dissolve
-const Dissolve &DissolveWindow::constDissolve() const { return dissolve_; }
+const Dissolve &DissolveWindow::dissolve() const { return dissolve_; }
 
 // Link output handler in to the Messenger
 void DissolveWindow::addOutputHandler()
@@ -362,6 +361,7 @@ void DissolveWindow::updateWhileRunning(int iterationsRemaining)
 
     // Enable data access in Renderables, and update all tabs.
     Renderable::setSourceDataAccessEnabled(true);
+    Renderable::validateAll(dissolve_.processingModuleData());
     ui_.MainTabs->updateAllTabs();
     repaint();
     Renderable::setSourceDataAccessEnabled(false);

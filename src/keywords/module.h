@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -8,11 +8,7 @@
 #include "keywords/data.h"
 #include "module/module.h"
 
-// Forward Declarations
-class ModuleValue;
-class ProcedureModule;
-
-// Keyword with ProcedureModule base class
+// Keyword with Module base class
 class ModuleKeywordBase
 {
     public:
@@ -42,7 +38,7 @@ class ModuleKeywordBase
     virtual int optionMask() const = 0;
 };
 
-// Keyword with ProcedureModule
+// Keyword with Module
 template <class M> class ModuleKeyword : public ModuleKeywordBase, public KeywordData<M *>
 {
     public:
@@ -57,11 +53,11 @@ template <class M> class ModuleKeyword : public ModuleKeywordBase, public Keywor
      */
     public:
     // Return minimum number of arguments accepted
-    int minArguments() const { return 1; }
+    int minArguments() const override { return 1; }
     // Return maximum number of arguments accepted
-    int maxArguments() const { return 1; }
+    int maxArguments() const override { return 1; }
     // Parse arguments from supplied LineParser, starting at given argument offset
-    bool read(LineParser &parser, int startArg, CoreData &coreData)
+    bool read(LineParser &parser, int startArg, const CoreData &coreData)
     {
         Module *module = coreData.findModule(parser.argsv(startArg));
         if (!module)
@@ -71,7 +67,7 @@ template <class M> class ModuleKeyword : public ModuleKeywordBase, public Keywor
         return setModule(module);
     }
     // Write keyword data to specified LineParser
-    bool write(LineParser &parser, std::string_view keywordName, std::string_view prefix)
+    bool write(LineParser &parser, std::string_view keywordName, std::string_view prefix) const override
     {
         // No need to write the keyword if the module pointer is null
         if (KeywordData<M *>::data_ == nullptr)
@@ -122,7 +118,7 @@ template <class M> class ModuleKeyword : public ModuleKeywordBase, public Keywor
      * Object Management
      */
     protected:
-    // Prune any references to the supplied ProcedureModule in the contained data
+    // Prune any references to the supplied Module in the contained data
     void removeReferencesTo(Module *module)
     {
         if (KeywordData<M *>::data_ == module)

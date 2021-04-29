@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "gui/datamanagerdialog.h"
 #include "gui/gui.h"
@@ -78,7 +78,7 @@ void DissolveWindow::on_SimulationSaveRestartPointAction_triggered(bool checked)
 
 void DissolveWindow::on_SimulationDataManagerAction_triggered(bool checked)
 {
-    DataManagerDialog dataManagerDialog(this, dissolve_, referencePoints_);
+    DataManagerDialog dataManagerDialog(this, dissolve_, referencePoints_, dissolve_.processingModuleData());
     dataManagerDialog.exec();
 }
 
@@ -99,11 +99,6 @@ void DissolveWindow::on_SimulationClearModuleDataAction_triggered(bool checked)
 
         // Clear main processing data
         dissolve_.processingModuleData().clear();
-
-        // Clear local processing data in configurations
-        ListIterator<Configuration> configIterator(dissolve_.configurations());
-        while (Configuration *cfg = configIterator.iterate())
-            cfg->moduleData().clear();
 
         // Set iteration counter to zero
         dissolve_.resetIterationCounter();

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -9,7 +9,6 @@
 // Forward Declarations
 class SpeciesAtom;
 class Species;
-class ProcessPool;
 
 // SpeciesBond Definition
 class SpeciesBond : public SpeciesIntra
@@ -30,6 +29,8 @@ class SpeciesBond : public SpeciesIntra
     SpeciesAtom *i_;
     // Second SpeciesAtom in interaction
     SpeciesAtom *j_;
+
+    private:
     // Assign the two atoms in the bond
     void assign(SpeciesAtom *i, SpeciesAtom *j);
 

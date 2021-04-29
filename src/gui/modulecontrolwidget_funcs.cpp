@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "base/lineparser.h"
 #include "classes/configuration.h"
@@ -46,13 +46,11 @@ void ModuleControlWidget::setModule(Module *module, Dissolve *dissolve)
         return;
     }
 
-    // Set the icon name label
-    ui_.ModuleNameLabel->setText(QString("%1 (%2)").arg(QString::fromStdString(std::string(module_->uniqueName())),
-                                                        QString::fromStdString(std::string(module->type()))));
+    // Set the icon label
     ui_.ModuleIconLabel->setPixmap(ModuleBlock::modulePixmap(module_));
 
     // Set up our control widgets
-    ui_.ModuleKeywordsWidget->setUp(module_->keywords(), dissolve_->constCoreData());
+    ui_.ModuleKeywordsWidget->setUp(module_->keywords(), dissolve_->coreData());
 
     // Create any additional controls offered by the Module
     moduleWidget_ = module->createWidget(nullptr, *dissolve_);
@@ -62,6 +60,7 @@ void ModuleControlWidget::setModule(Module *module, Dissolve *dissolve)
     {
         ui_.ModuleControlsStack->addWidget(moduleWidget_);
         ui_.ModuleOutputButton->setEnabled(true);
+        moduleWidget_->updateControls(ModuleWidget::UpdateType::RecreateRenderables);
     }
 
     updateControls();
@@ -80,7 +79,7 @@ void ModuleControlWidget::setUpModule()
     module_->setUp(*dissolve_, dissolve_->worldPool());
 
     if (moduleWidget_)
-        moduleWidget_->updateControls(ModuleWidget::ResetGraphDataTargetsFlag);
+        moduleWidget_->updateControls(ModuleWidget::UpdateType::Normal);
 }
 
 /*
@@ -95,12 +94,16 @@ void ModuleControlWidget::updateControls()
 
     Locker refreshLocker(refreshLock_);
 
+    // Ensure module name is up to date
+    ui_.ModuleNameLabel->setText(QString("%1 (%2)").arg(QString::fromStdString(std::string(module_->uniqueName())),
+                                                        QString::fromStdString(std::string(module_->type()))));
+
     // Update keywords
     ui_.ModuleKeywordsWidget->updateControls();
 
     // Update additional controls (if they exist)
     if (moduleWidget_)
-        moduleWidget_->updateControls();
+        moduleWidget_->updateControls(ModuleWidget::UpdateType::Normal);
 }
 
 // Disable sensitive controls
@@ -137,42 +140,3 @@ void ModuleControlWidget::on_ModuleOutputButton_clicked(bool checked)
 
 // Keyword data for Module has been modified
 void ModuleControlWidget::keywordDataModified() { emit(dataModified()); }
-
-/*
- * State I/O
- */
-
-// Read widget state through specified LineParser
-bool ModuleControlWidget::readState(LineParser &parser)
-{
-    Locker refreshLocker(refreshLock_);
-
-    // Write currently-open page...
-    if (parser.getArgsDelim() != LineParser::Success)
-        return false;
-    ui_.ModuleControlsStack->setCurrentIndex(parser.argi(0));
-    if (parser.argi(0) == 0)
-        ui_.ModuleControlsButton->setChecked(true);
-    else if (parser.argi(0) == 1)
-        ui_.ModuleOutputButton->setChecked(true);
-
-    // Additional controls state
-    if (moduleWidget_ && (!moduleWidget_->readState(parser)))
-        return false;
-
-    return true;
-}
-
-// Write widget state through specified LineParser
-bool ModuleControlWidget::writeState(LineParser &parser) const
-{
-    // Write currently-open page...
-    if (!parser.writeLineF("%i\n", ui_.ModuleControlsStack->currentIndex()))
-        return false;
-
-    // Additional controls state
-    if (moduleWidget_ && (!moduleWidget_->writeState(parser)))
-        return false;
-
-    return true;
-}

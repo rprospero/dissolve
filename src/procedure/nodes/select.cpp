@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "procedure/nodes/select.h"
 #include "base/lineparser.h"
@@ -14,31 +14,34 @@
 #include "procedure/nodes/select.h"
 #include "procedure/nodes/sequence.h"
 
-SelectProcedureNode::SelectProcedureNode(SpeciesSite *site, bool axesRequired) : ProcedureNode(ProcedureNode::SelectNode)
+SelectProcedureNode::SelectProcedureNode(SpeciesSite *site, bool axesRequired) : ProcedureNode(ProcedureNode::NodeType::Select)
 {
     if (site)
         speciesSites_.append(site);
     axesRequired_ = axesRequired;
     inclusiveDistanceRange_.set(0.0, 5.0);
 
-    keywords_.add("Target", new SpeciesSiteRefListKeyword(speciesSites_, axesRequired_), "Site",
+    keywords_.add("Control", new SpeciesSiteRefListKeyword(speciesSites_, axesRequired_), "Site",
                   "Add target site(s) to the selection");
-    keywords_.add("Target", new DynamicSiteNodesKeyword(this, dynamicSites_, axesRequired_), "DynamicSite",
+    keywords_.add("Control", new DynamicSiteNodesKeyword(this, dynamicSites_, axesRequired_), "DynamicSite",
                   "Add a new dynamic site to the selection");
-    keywords_.add("Target", new NodeKeyword<SelectProcedureNode>(this, ProcedureNode::SelectNode, true), "SameMoleculeAsSite",
+    keywords_.add("Control", new NodeKeyword<SelectProcedureNode>(this, ProcedureNode::NodeType::Select, true),
+                  "SameMoleculeAsSite",
                   "Request that the selected site comes from the molecule containing the current site in the specified "
                   "SelectNode");
-    keywords_.add("Target",
-                  new NodeRefListKeyword<SelectProcedureNode>(this, ProcedureNode::SelectNode, true, sameMoleculeExclusions_),
-                  "ExcludeSameMolecule",
-                  "Exclude sites from selection if they are present in the same molecule as the current site in the specified "
-                  "SelectNode(s)");
     keywords_.add(
-        "Target", new NodeRefListKeyword<SelectProcedureNode>(this, ProcedureNode::SelectNode, true, sameSiteExclusions_),
-        "ExcludeSameSite", "Exclude sites from selection if they are the current site in the specified SelectNode(s)");
-    keywords_.add("Target", new NodeKeyword<SelectProcedureNode>(this, ProcedureNode::SelectNode, true), "ReferenceSite",
+        "Control",
+        new NodeRefListKeyword<SelectProcedureNode>(this, ProcedureNode::NodeType::Select, true, sameMoleculeExclusions_),
+        "ExcludeSameMolecule",
+        "Exclude sites from selection if they are present in the same molecule as the current site in the specified "
+        "SelectNode(s)");
+    keywords_.add("Control",
+                  new NodeRefListKeyword<SelectProcedureNode>(this, ProcedureNode::NodeType::Select, true, sameSiteExclusions_),
+                  "ExcludeSameSite",
+                  "Exclude sites from selection if they are the current site in the specified SelectNode(s)");
+    keywords_.add("Control", new NodeKeyword<SelectProcedureNode>(this, ProcedureNode::NodeType::Select, true), "ReferenceSite",
                   "Site to use as reference point when determining inclusions / exclusions");
-    keywords_.add("Target", new RangeKeyword(inclusiveDistanceRange_, Vec3Labels::MinMaxBinwidthlabels), "InclusiveRange",
+    keywords_.add("Control", new RangeKeyword(inclusiveDistanceRange_, Vec3Labels::MinMaxBinwidthlabels), "InclusiveRange",
                   "Distance range (from reference site) within which sites are selected (only if ReferenceSite is defined)");
     keywords_.add("HIDDEN", new NodeBranchKeyword(this, &forEachBranch_, ProcedureNode::AnalysisContext), "ForEach",
                   "Branch to run on each site selected");
@@ -78,7 +81,7 @@ bool SelectProcedureNode::isContextRelevant(ProcedureNode::NodeContext context)
  */
 
 // Return list of Molecules currently excluded from selection
-const OrderedVector<std::shared_ptr<const Molecule>> &SelectProcedureNode::excludedMolecules() const
+const std::vector<std::shared_ptr<const Molecule>> &SelectProcedureNode::excludedMolecules() const
 {
     return excludedMolecules_;
 }
@@ -118,7 +121,7 @@ int SelectProcedureNode::nCumulativeSites() const { return nCumulativeSites_; }
 // Return current site
 const Site *SelectProcedureNode::currentSite() const
 {
-    return (currentSiteIndex_ == -1 ? nullptr : sites_.constAt(currentSiteIndex_));
+    return (currentSiteIndex_ == -1 ? nullptr : sites_.at(currentSiteIndex_));
 }
 
 /*
@@ -172,8 +175,7 @@ bool SelectProcedureNode::prepare(Configuration *cfg, std::string_view prefix, G
 }
 
 // Execute node, targetting the supplied Configuration
-ProcedureNode::NodeExecutionResult SelectProcedureNode::execute(ProcessPool &procPool, Configuration *cfg,
-                                                                std::string_view prefix, GenericList &targetList)
+bool SelectProcedureNode::execute(ProcessPool &procPool, Configuration *cfg, std::string_view prefix, GenericList &targetList)
 {
     // Create our arrays of sites
     sites_.clear();
@@ -182,7 +184,7 @@ ProcedureNode::NodeExecutionResult SelectProcedureNode::execute(ProcessPool &pro
     excludedMolecules_.clear();
     for (SelectProcedureNode *node : sameMoleculeExclusions_)
         if (node->currentSite())
-            excludedMolecules_.insert(node->currentSite()->molecule());
+            excludedMolecules_.emplace_back(node->currentSite()->molecule());
 
     excludedSites_.clear();
     for (SelectProcedureNode *node : sameSiteExclusions_)
@@ -203,7 +205,7 @@ ProcedureNode::NodeExecutionResult SelectProcedureNode::execute(ProcessPool &pro
     {
         const SiteStack *siteStack = cfg->siteStack(site);
         if (siteStack == nullptr)
-            return ProcedureNode::Failure;
+            return false;
 
         for (auto n = 0; n < siteStack->nSites(); ++n)
         {
@@ -242,12 +244,12 @@ ProcedureNode::NodeExecutionResult SelectProcedureNode::execute(ProcessPool &pro
      */
     for (DynamicSiteProcedureNode *dynamicNode : dynamicSites_)
     {
-        if (dynamicNode->execute(procPool, cfg, prefix, targetList) == ProcedureNode::Failure)
-            return ProcedureNode::Failure;
+        if (!dynamicNode->execute(procPool, cfg, prefix, targetList))
+            return false;
 
         const Array<Site> &generatedSites = dynamicNode->generatedSites();
         for (auto n = 0; n < generatedSites.nItems(); ++n)
-            sites_.add(&generatedSites.constAt(n));
+            sites_.add(&generatedSites.at(n));
     }
 
     // Set first site index and increase selections counter
@@ -262,12 +264,12 @@ ProcedureNode::NodeExecutionResult SelectProcedureNode::execute(ProcessPool &pro
             ++nCumulativeSites_;
 
             // If the branch fails at any point, return failure here.  Otherwise, continue the loop
-            if (forEachBranch_->execute(procPool, cfg, prefix, targetList) == ProcedureNode::Failure)
-                return ProcedureNode::Failure;
+            if (!forEachBranch_->execute(procPool, cfg, prefix, targetList))
+                return false;
         }
     }
 
-    return ProcedureNode::Success;
+    return true;
 }
 
 // Finalise any necessary data after execution

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -10,11 +10,10 @@
 class Data1D;
 
 // Fourier Transforms
-class Fourier
+namespace Fourier
 {
-    public:
-    // Perform Fourier sine transform of supplied data, over range specified, and with specified window and broadening
-    // functions applied
-    static bool sineFT(Data1D &data, double normFactor, double wMin, double wStep, double wMax,
-                       WindowFunction windowFunction = WindowFunction(), BroadeningFunction broadening = BroadeningFunction());
-};
+// Perform Fourier sine transform of supplied data, over range specified, and with specified window and broadening
+// functions applied
+bool sineFT(Data1D &data, double normFactor, double wMin, double wStep, double wMax,
+            WindowFunction windowFunction = WindowFunction(), BroadeningFunction broadening = BroadeningFunction());
+}; // namespace Fourier

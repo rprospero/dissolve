@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "keywords/types.h"
 #include "math/averaging.h"
@@ -8,14 +8,10 @@
 // Return enum option info for NormalisationType
 EnumOptions<RDFModule::PartialsMethod> RDFModule::partialsMethods()
 {
-    static EnumOptionsList PartialsMethodOptions = EnumOptionsList() << EnumOption(RDFModule::AutoMethod, "Auto")
-                                                                     << EnumOption(RDFModule::CellsMethod, "Cells")
-                                                                     << EnumOption(RDFModule::SimpleMethod, "Simple")
-                                                                     << EnumOption(RDFModule::TestMethod, "TestSquaredAverage");
-
-    static EnumOptions<RDFModule::PartialsMethod> options("PartialsMethod", PartialsMethodOptions, RDFModule::AutoMethod);
-
-    return options;
+    return EnumOptions<RDFModule::PartialsMethod>("PartialsMethod", {{RDFModule::AutoMethod, "Auto"},
+                                                                     {RDFModule::CellsMethod, "Cells"},
+                                                                     {RDFModule::SimpleMethod, "Simple"},
+                                                                     {RDFModule::TestMethod, "TestSquaredAverage"}});
 }
 
 // Perform any necessary initialisation for the Module
@@ -27,7 +23,7 @@ void RDFModule::initialise()
                   "Maximum r to calculate g(r) out to, unless UseHalfCellRange is true");
     keywords_.add("Control", new BoolKeyword(true), "UseHalfCellRange",
                   "Whether to use the maximal RDF range possible that avoids periodic images", "<True|False>");
-    keywords_.add("Control", new IntegerKeyword(5, 1), "Averaging",
+    keywords_.add("Control", new IntegerKeyword(5, 0), "Averaging",
                   "Number of historical partial sets to combine into final partials", "<5>");
     keywords_.add(
         "Control",

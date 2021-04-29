@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "gui/viewer.hui"
 
@@ -15,8 +15,7 @@ View &BaseViewer::view()
     return view_;
 }
 
-// Return the View definition (const)
-const View &BaseViewer::constView() const
+const View &BaseViewer::view() const
 {
     if (view_.linkedView())
         return (*view_.linkedView());

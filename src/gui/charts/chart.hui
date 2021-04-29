@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -153,15 +153,6 @@ class ChartBase : public QWidget
     void recalculateLayout();
 
     /*
-     * State I/O
-     */
-    public:
-    // Read widget state through specified LineParser
-    virtual bool readState(LineParser &parser) = 0;
-    // Write widget state through specified LineParser
-    virtual bool writeState(LineParser &parser) const = 0;
-
-    /*
      * Signals / Slots
      */
     protected slots:
@@ -171,6 +162,8 @@ class ChartBase : public QWidget
     signals:
     // Notify that the underlying data displayed by the chart has changed
     void dataModified();
+    // Notify that the underlying data has changed, and the GUI should be updated in full
+    void fullUpdate();
     // Notify that our required size has changed
     void requiredSizeChanged();
 };

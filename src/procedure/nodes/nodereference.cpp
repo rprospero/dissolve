@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "procedure/nodes/nodereference.h"
 #include "base/lineparser.h"
@@ -11,13 +11,9 @@
 ProcedureNodeReference::ProcedureNodeReference(ProcedureNode *node) : ListItem<ProcedureNodeReference>()
 {
     node_ = node;
-    for (auto n = 0; n < ProcedureNode::nNodeTypes; ++n)
-        allowedTypes_[n] = false;
 
     analyseModuleParent_ = nullptr;
 }
-
-ProcedureNodeReference::~ProcedureNodeReference() {}
 
 /*
  * Data
@@ -27,17 +23,14 @@ ProcedureNodeReference::~ProcedureNodeReference() {}
 ProcedureNode *ProcedureNodeReference::node() { return node_; }
 
 // Return node type
-ProcedureNode::NodeType ProcedureNodeReference::type() const { return (node_ ? node_->type() : ProcedureNode::nNodeTypes); }
+ProcedureNode::NodeType ProcedureNodeReference::type() const
+{
+    assert(node_);
+    return node_->type();
+}
 
 // Add allowable node type
-void ProcedureNodeReference::addAllowableNodeType(ProcedureNode::NodeType nt) { allowedTypes_[nt] = true; }
-
-// Allow all node types
-void ProcedureNodeReference::setAllowAllNodeTypes()
-{
-    for (auto n = 0; n < ProcedureNode::nNodeTypes; ++n)
-        allowedTypes_[n] = true;
-}
+void ProcedureNodeReference::addAllowableNodeType(ProcedureNode::NodeType nt) { allowedTypes_.push_back(nt); }
 
 // Return if node pointer is NULL
 bool ProcedureNodeReference::isNull() const { return (node_ == nullptr); }
@@ -51,8 +44,7 @@ void ProcedureNodeReference::operator=(ProcedureNode *node) { node_ = node; }
 void ProcedureNodeReference::operator=(const ProcedureNodeReference &nodeRef)
 {
     node_ = nodeRef.node_;
-    for (auto n = 0; n < ProcedureNode::nNodeTypes; ++n)
-        allowedTypes_[n] = nodeRef.allowedTypes_[n];
+    allowedTypes_ = nodeRef.allowedTypes_;
 }
 
 /*
@@ -60,7 +52,7 @@ void ProcedureNodeReference::operator=(const ProcedureNodeReference &nodeRef)
  */
 
 // Read structure from specified LineParser
-bool ProcedureNodeReference::read(LineParser &parser, int startArg, CoreData &coreData, const Procedure *procedure)
+bool ProcedureNodeReference::read(LineParser &parser, int startArg, const CoreData &coreData, const Procedure *procedure)
 {
     node_ = nullptr;
 
@@ -93,7 +85,7 @@ bool ProcedureNodeReference::read(LineParser &parser, int startArg, CoreData &co
     }
 
     // Check the type of the node
-    if (!allowedTypes_[node_->type()])
+    if (std::find(allowedTypes_.begin(), allowedTypes_.end(), node_->type()) == allowedTypes_.end())
         return Messenger::error("Node '{}' is not of the correct type.\n", node_->name());
 
     return (node_ != nullptr);

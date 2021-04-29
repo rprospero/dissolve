@@ -1,16 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
-#include "genericitems/base.h"
 #include "templates/listitem.h"
 #include "templates/refdatalist.h"
 
 // Forward Declarations
 class Species;
 class Isotopologue;
-class ProcessPool;
 class LineParser;
 
 // Isotopologue Weight

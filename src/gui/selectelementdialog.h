@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -32,5 +32,5 @@ class SelectElementDialog : public QDialog
 
     public:
     // Run the dialog, returning the selected Element
-    Element *selectElement(Element *currentElement = nullptr);
+    Elements::Element selectElement(Elements::Element currentElement);
 };

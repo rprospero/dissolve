@@ -1,19 +1,18 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
+#include "classes/atomtype.h"
 #include "classes/species.h"
-#include "data/atomicmass.h"
+#include "data/atomicmasses.h"
 
 // Add a new atom to the Species
-SpeciesAtom *Species::addAtom(Element *element, Vec3<double> r, double q)
+SpeciesAtom &Species::addAtom(Elements::Element Z, Vec3<double> r, double q)
 {
-    SpeciesAtom *i = atoms_.add();
-    i->setSpecies(this);
-    i->set(element, r.x, r.y, r.z, q);
-    i->setIndex(atoms_.nItems() - 1);
-
+    auto &i = atoms_.emplace_back();
+    i.setSpecies(this);
+    i.set(Z, r.x, r.y, r.z, q);
+    i.setIndex(atoms_.size() - 1);
     ++version_;
-
     return i;
 }
 
@@ -25,27 +24,68 @@ void Species::removeAtom(SpeciesAtom *i)
      * species definitions upon which the simulation has no dependencies.
      */
 
-    // Remove any bond terms that involve 'i'
-    while (i->nBonds())
-        removeBond(i, i->bond(0).partner(i));
+    // Clear higher-order terms
+    angles_.clear();
+    torsions_.clear();
+    impropers_.clear();
+
+    // Detach & remove any bond terms that involve 'i'
+    auto it = std::remove_if(bonds_.begin(), bonds_.end(), [i](auto &bond) {
+        if (bond.i() == i || bond.j() == i)
+        {
+            bond.detach();
+            return true;
+        }
+        else
+            return false;
+    });
+    if (it != bonds_.end())
+        bonds_.erase(it, bonds_.end());
 
     // Now remove the atom
-    atoms_.remove(i);
+    auto atomIt = std::find_if(atoms_.begin(), atoms_.end(), [&](const auto &p) { return i == &p; });
+    atoms_.erase(atomIt);
+    selectedAtoms_.remove(i);
+
+    renumberAtoms();
 
     ++version_;
 }
 
 // Return the number of Atoms in the Species
-int Species::nAtoms() const { return atoms_.nItems(); }
+int Species::nAtoms() const { return atoms_.size(); }
+
+// Renumber atoms so they are sequential in the list
+void Species::renumberAtoms()
+{
+    auto count = 0;
+    for (auto &i : atoms_)
+        i.setIndex(count++);
+}
 
 // Return the first Atom in the Species
-SpeciesAtom *Species::firstAtom() const { return atoms_.first(); }
+const SpeciesAtom &Species::firstAtom() const { return atoms_.front(); }
 
 // Return the nth Atom in the Species
-SpeciesAtom *Species::atom(int n) { return atoms_[n]; }
+SpeciesAtom &Species::atom(int n)
+{
+    assert(n >= 0 && n < atoms_.size());
+    auto it = std::next(atoms_.begin(), n);
+    return *it;
+}
 
-// Return the list of SpeciesAtoms
-const List<SpeciesAtom> &Species::atoms() const { return atoms_; }
+const SpeciesAtom &Species::atom(int n) const
+{
+    assert(n >= 0 && n < atoms_.size());
+    const auto it = std::next(atoms_.begin(), n);
+    return *it;
+}
+
+// Return a vector of of immutable SpeciesAtoms
+const std::list<SpeciesAtom> &Species::atoms() const { return atoms_; }
+
+// Return vector of mutable atoms
+std::list<SpeciesAtom> &Species::atoms() { return atoms_; }
 
 // Set coordinates of specified atom
 void Species::setAtomCoordinates(SpeciesAtom *i, Vec3<double> r)
@@ -59,32 +99,20 @@ void Species::setAtomCoordinates(SpeciesAtom *i, Vec3<double> r)
 }
 
 // Set coordinates of specified atom (by index and individual coordinates)
-void Species::setAtomCoordinates(int id, double x, double y, double z)
-{
-#ifdef CHECKS
-    if ((id < 0) || (id >= atoms_.nItems()))
-    {
-        Messenger::error("Atom index {} is out of range - nAtoms = {}\n", id, atoms_.nItems());
-        return;
-    }
-#endif
-
-    atoms_[id]->setCoordinates(x, y, z);
-}
+void Species::setAtomCoordinates(int id, double x, double y, double z) { atom(id).setCoordinates(x, y, z); }
 
 // Transmute specified SpeciesAtom
-void Species::transmuteAtom(SpeciesAtom *i, Element *el)
+void Species::transmuteAtom(SpeciesAtom *i, Elements::Element newZ)
 {
-    if (!i)
-        return;
+    assert(i);
 
     // Nothing to do if current element matches that supplied
-    if (i->element() == el)
+    if (i->Z() == newZ)
         return;
 
     // Remove any existing AtomType assignment
     i->setAtomType(nullptr);
-    i->setElement(el);
+    i->setZ(newZ);
 
     ++version_;
 }
@@ -92,8 +120,8 @@ void Species::transmuteAtom(SpeciesAtom *i, Element *el)
 // Clear current Atom selection
 void Species::clearAtomSelection()
 {
-    for (auto *i = atoms_.first(); i != nullptr; i = i->next())
-        i->setSelected(false);
+    for (auto &i : atoms_)
+        i.setSelected(false);
 
     selectedAtoms_.clear();
 
@@ -170,15 +198,6 @@ SpeciesAtom *Species::selectedAtom(int n)
         return ri->item();
 }
 
-// Return total charge of species from local atomic charges
-double Species::totalChargeOnAtoms()
-{
-    double totalQ = 0.0;
-    for (auto *i = atoms_.first(); i != nullptr; i = i->next())
-        totalQ += i->charge();
-    return totalQ;
-}
-
 // Return number of selected Atoms
 int Species::nSelectedAtoms() const { return selectedAtoms_.nItems(); }
 
@@ -191,9 +210,9 @@ int Species::atomSelectionVersion() const { return atomSelectionVersion_; }
 // Return total atomic mass of Species
 double Species::mass() const
 {
-    double m = 0.0;
-    for (auto *i = atoms_.first(); i != nullptr; i = i->next())
-        m += AtomicMass::mass(i->element());
+    auto m = 0.0;
+    for (const auto &i : atoms_)
+        m += AtomicMass::mass(i.Z());
     return m;
 }
 
@@ -201,9 +220,9 @@ double Species::mass() const
 void Species::updateUsedAtomTypes()
 {
     usedAtomTypes_.clear();
-    for (auto *i = atoms_.first(); i != nullptr; i = i->next())
-        if (i->atomType())
-            usedAtomTypes_.add(i->atomType(), 1);
+    for (const auto &i : atoms_)
+        if (i.atomType())
+            usedAtomTypes_.add(i.atomType(), 1);
 
     // Update our isotopologue definitions while we're here
     updateIsotopologues();
@@ -215,8 +234,30 @@ const AtomTypeList &Species::usedAtomTypes() const { return usedAtomTypes_; }
 // Clear AtomType assignments for all atoms
 void Species::clearAtomTypes()
 {
-    for (auto *i = atoms_.first(); i != nullptr; i = i->next())
-        i->setAtomType(nullptr);
+    for (auto &i : atoms_)
+        i.setAtomType(nullptr);
 
     usedAtomTypes_.clear();
+}
+
+// Return total charge of species from local/atomtype atomic charges
+double Species::totalCharge(bool useAtomTypes)
+{
+    double totalQ = 0.0;
+    if (useAtomTypes)
+        for (const auto &i : atoms_)
+        {
+            if (!i.atomType())
+            {
+                Messenger::warn(
+                    "No atom type assigned to atom index {} in species '{}', so can't calculate correct total charge.\n",
+                    i.userIndex(), name_);
+                continue;
+            }
+            totalQ += i.atomType()->charge();
+        }
+    else
+        for (const auto &i : atoms_)
+            totalQ += i.charge();
+    return totalQ;
 }

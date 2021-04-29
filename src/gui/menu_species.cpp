@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "classes/species.h"
 #include "gui/addforcefieldtermsdialog.h"
 #include "gui/editspeciesdialog.h"
 #include "gui/gui.h"
+#include "gui/importforcefieldwizard.h"
 #include "gui/importspeciesdialog.h"
 #include "gui/selectelementdialog.h"
 #include "gui/speciestab.h"
@@ -14,14 +15,14 @@ void DissolveWindow::on_SpeciesCreateAtomicAction_triggered(bool checked)
 {
     // Raise an element selection dialog
     static SelectElementDialog selectElementDialog(this);
-    Element *el = selectElementDialog.selectElement();
-    if (!el)
+    auto Z = selectElementDialog.selectElement(Elements::Unknown);
+    if (Z == Elements::Unknown)
         return;
 
     // Create the new Species, and add a single atom at {0,0,0}
     Species *newSpecies = dissolve_.addSpecies();
-    newSpecies->addAtom(el, Vec3<double>());
-    newSpecies->setName(dissolve_.coreData().uniqueSpeciesName(el->symbol()));
+    newSpecies->addAtom(Z, Vec3<double>());
+    newSpecies->setName(dissolve_.coreData().uniqueSpeciesName(Elements::symbol(Z)));
 
     setModified();
     fullUpdate();
@@ -35,6 +36,9 @@ void DissolveWindow::on_SpeciesCreateDrawAction_triggered(bool checked)
     EditSpeciesDialog editSpeciesDialog(this, newSpecies);
     if (editSpeciesDialog.editSpecies())
     {
+        // Renumber the atoms so they are sequential
+        newSpecies->renumberAtoms();
+
         setModified();
         fullUpdate();
         ui_.MainTabs->setCurrentTab(newSpecies);
@@ -114,6 +118,21 @@ void DissolveWindow::on_SpeciesAddForcefieldTermsAction_triggered(bool checked)
     {
         addForcefieldTermsDialog.applyForcefieldTerms(dissolve_);
 
+        // Fully update GUI
+        setModified();
+        fullUpdate();
+    }
+}
+
+void DissolveWindow::on_ImportForcefieldAction_triggered(bool checked)
+{
+    // Get the current Species (if a SpeciesTab is selected)
+    ImportForcefieldWizard importForcefieldWizardDialog(this, dissolve_);
+
+    importForcefieldWizardDialog.reset();
+
+    if (importForcefieldWizardDialog.exec() == QDialog::Accepted)
+    {
         // Fully update GUI
         setModified();
         fullUpdate();

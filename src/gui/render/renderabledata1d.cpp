@@ -1,46 +1,50 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "gui/render/renderabledata1d.h"
 #include "base/lineparser.h"
+#include "genericitems/list.h"
 #include "gui/render/renderablegroupmanager.h"
 #include "gui/render/view.h"
+#include "math/sampleddata1d.h"
 
-RenderableData1D::RenderableData1D(const Data1D *source, std::string_view objectTag)
-    : Renderable(Renderable::Data1DRenderable, objectTag), source_(source)
+RenderableData1D::RenderableData1D(const Data1DBase &source)
+    : Renderable(Renderable::Data1DRenderable, ""), source_(source), displayStyle_(LinesStyle)
 {
-    // Set style defaults
-    displayStyle_ = LinesStyle;
-
-    // Create primitive
     dataPrimitive_ = createPrimitive();
 }
 
-RenderableData1D::~RenderableData1D() {}
+RenderableData1D::RenderableData1D(std::string_view tag)
+    : Renderable(Renderable::Data1DRenderable, tag), displayStyle_(LinesStyle)
+{
+    dataPrimitive_ = createPrimitive();
+}
 
 /*
  * Data
  */
 
-// Return whether a valid data source is available (attempting to set it if not)
-bool RenderableData1D::validateDataSource()
+// Return source data
+OptionalReferenceWrapper<const Data1DBase> RenderableData1D::source() const { return source_; }
+
+// Attempt to set the data source, searching the supplied list for the object
+void RenderableData1D::validateDataSource(const GenericList &sourceList)
 {
     // Don't try to access source_ if we are not currently permitted to do so
     if (!sourceDataAccessEnabled_)
-        return false;
+        return;
 
-    // If there is no valid source set, attempt to set it now...
-    if (!source_)
-        source_ = Data1D::findObject(objectTag_);
+    if (source_)
+        return;
 
-    return source_;
+    source_ = sourceList.searchBase<Data1DBase, Data1D, SampledData1D>(tag_);
 }
 
 // Invalidate the current data source
-void RenderableData1D::invalidateDataSource() { source_ = nullptr; }
+void RenderableData1D::invalidateDataSource() { source_ = std::nullopt; }
 
 // Return version of data
-int RenderableData1D::dataVersion() { return (validateDataSource() ? source_->version() : -99); }
+int RenderableData1D::dataVersion() { return (source_ ? source_->get().version() : -99); }
 
 /*
  * Transform / Limits
@@ -58,7 +62,7 @@ void RenderableData1D::transformValues()
     if (!source_)
         transformedData_.clear();
     else
-        transformedData_ = *source_;
+        transformedData_ = source_->get();
     valuesTransform_.transformValues(transformedData_);
 
     limitsMin_ = 0.0;
@@ -83,27 +87,27 @@ void RenderableData1D::transformValues()
     for (auto n = 0; n < transformedData_.nValues(); ++n)
     {
         // X
-        if (transformedData_.constXAxis(n) > 0.0)
+        if (transformedData_.xAxis(n) > 0.0)
         {
             if (positiveLimitsMin_.x < 0.0)
-                positiveLimitsMin_.x = transformedData_.constXAxis(n);
-            else if (transformedData_.constXAxis(n) < positiveLimitsMin_.x)
-                positiveLimitsMin_.x = transformedData_.constXAxis(n);
+                positiveLimitsMin_.x = transformedData_.xAxis(n);
+            else if (transformedData_.xAxis(n) < positiveLimitsMin_.x)
+                positiveLimitsMin_.x = transformedData_.xAxis(n);
 
-            if (transformedData_.constXAxis(n) > positiveLimitsMax_.x)
-                positiveLimitsMax_.x = transformedData_.constXAxis(n);
+            if (transformedData_.xAxis(n) > positiveLimitsMax_.x)
+                positiveLimitsMax_.x = transformedData_.xAxis(n);
         }
 
         // Value
-        if (transformedData_.constValue(n) > 0.0)
+        if (transformedData_.value(n) > 0.0)
         {
             if (positiveValuesMin_ < 0.0)
-                positiveValuesMin_ = transformedData_.constValue(n);
-            else if (transformedData_.constValue(n) < positiveValuesMin_)
-                positiveValuesMin_ = transformedData_.constValue(n);
+                positiveValuesMin_ = transformedData_.value(n);
+            else if (transformedData_.value(n) < positiveValuesMin_)
+                positiveValuesMin_ = transformedData_.value(n);
 
-            if (transformedData_.constValue(n) > positiveValuesMax_)
-                positiveValuesMax_ = transformedData_.constValue(n);
+            if (transformedData_.value(n) > positiveValuesMax_)
+                positiveValuesMax_ = transformedData_.value(n);
         }
     }
 
@@ -131,15 +135,15 @@ void RenderableData1D::transformValues()
 const Data1D &RenderableData1D::transformedData()
 {
     // Check that we have a valid source
-    if (!validateDataSource())
+    if (!source_)
         return transformedData_;
 
     // If the value transform is not enabled, just return the original data
     if (!valuesTransform_.enabled())
-        return *source_;
-
-    // Make sure the transformed data is up-to-date
-    transformValues();
+        transformedData_ = source_->get();
+    else
+        // Make sure the transformed data is up-to-date
+        transformValues();
 
     return transformedData_;
 }
@@ -153,23 +157,23 @@ bool RenderableData1D::yRangeOverX(double xMin, double xMax, double &yMin, doubl
     auto first = true;
     for (auto n = 0; n < data.nValues(); ++n)
     {
-        if (data.constXAxis(n) < xMin)
+        if (data.xAxis(n) < xMin)
             continue;
-        else if (data.constXAxis(n) > xMax)
+        else if (data.xAxis(n) > xMax)
             break;
 
         if (first)
         {
-            yMin = data.constValue(n);
+            yMin = data.value(n);
             yMax = yMin;
             first = false;
         }
         else
         {
-            if (data.constValue(n) < yMin)
-                yMin = data.constValue(n);
-            else if (data.constValue(n) > yMax)
-                yMax = data.constValue(n);
+            if (data.value(n) < yMin)
+                yMin = data.value(n);
+            else if (data.value(n) > yMax)
+                yMax = data.value(n);
         }
     }
 
@@ -185,7 +189,7 @@ void RenderableData1D::recreatePrimitives(const View &view, const ColourDefiniti
 {
     dataPrimitive_->initialise(GL_LINE_STRIP, true, 4096);
 
-    constructLineXY(transformedData().xAxis(), transformedData().values(), dataPrimitive_, view.constAxes(), colourDefinition);
+    constructLineXY(transformedData().xAxis(), transformedData().values(), dataPrimitive_, view.axes(), colourDefinition);
 }
 
 // Send primitives for rendering
@@ -275,11 +279,7 @@ void RenderableData1D::constructLineXY(const std::vector<double> &displayAbsciss
 // Return EnumOptions for Data1DDisplayStyle
 EnumOptions<RenderableData1D::Data1DDisplayStyle> RenderableData1D::data1DDisplayStyles()
 {
-    static EnumOptionsList Style1DOptions = EnumOptionsList() << EnumOption(RenderableData1D::LinesStyle, "Lines");
-
-    static EnumOptions<RenderableData1D::Data1DDisplayStyle> options("Data1DDisplayStyle", Style1DOptions);
-
-    return options;
+    return EnumOptions<RenderableData1D::Data1DDisplayStyle>("Data1DDisplayStyle", {{RenderableData1D::LinesStyle, "Lines"}});
 }
 
 // Set display style for renderable
@@ -300,12 +300,9 @@ RenderableData1D::Data1DDisplayStyle RenderableData1D::displayStyle() const { re
 // Return enum option info for RenderableKeyword
 EnumOptions<RenderableData1D::Data1DStyleKeyword> RenderableData1D::data1DStyleKeywords()
 {
-    static EnumOptionsList StyleKeywords = EnumOptionsList() << EnumOption(RenderableData1D::DisplayKeyword, "Display", 1)
-                                                             << EnumOption(RenderableData1D::EndStyleKeyword, "EndStyle");
-
-    static EnumOptions<RenderableData1D::Data1DStyleKeyword> options("Data1DStyleKeyword", StyleKeywords);
-
-    return options;
+    return EnumOptions<RenderableData1D::Data1DStyleKeyword>(
+        "Data1DStyleKeyword",
+        {{RenderableData1D::DisplayKeyword, "Display", 1}, {RenderableData1D::EndStyleKeyword, "EndStyle"}});
 }
 
 // Write style information

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "classes/site.h"
 #include "base/messenger.h"
@@ -54,13 +54,8 @@ bool OrientedSite::hasAxes() const { return true; }
 // Return enum options for SiteAxis
 EnumOptions<OrientedSite::SiteAxis> OrientedSite::siteAxis()
 {
-    static EnumOptionsList SiteAxisOptions = EnumOptionsList() << EnumOption(OrientedSite::XAxis, "XAxis")
-                                                               << EnumOption(OrientedSite::YAxis, "YAxis")
-                                                               << EnumOption(OrientedSite::ZAxis, "ZAxis");
-
-    static EnumOptions<OrientedSite::SiteAxis> options("SiteAxis", SiteAxisOptions);
-
-    return options;
+    return EnumOptions<OrientedSite::SiteAxis>(
+        "SiteAxis", {{OrientedSite::XAxis, "XAxis"}, {OrientedSite::YAxis, "YAxis"}, {OrientedSite::ZAxis, "ZAxis"}});
 }
 
 // Return local axes

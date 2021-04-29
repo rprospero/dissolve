@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -20,7 +20,7 @@ class CalibrationModuleWidget : public ModuleWidget
     Q_OBJECT
 
     public:
-    CalibrationModuleWidget(QWidget *parent, CalibrationModule *module);
+    CalibrationModuleWidget(QWidget *parent, const GenericList &processingData, CalibrationModule *module);
     ~CalibrationModuleWidget();
 
     private:
@@ -38,16 +38,7 @@ class CalibrationModuleWidget : public ModuleWidget
 
     public:
     // Update controls within widget
-    void updateControls(int flags = ModuleWidget::DefaultUpdateFlag);
-
-    /*
-     * State I/O
-     */
-    public:
-    // Write widget state through specified LineParser
-    bool writeState(LineParser &parser) const;
-    // Read widget state through specified LineParser
-    bool readState(LineParser &parser);
+    void updateControls(ModuleWidget::UpdateType updateType) override;
 
     /*
      * Widgets / Functions

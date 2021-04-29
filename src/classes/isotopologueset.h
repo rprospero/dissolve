@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
 #include "classes/isotopologues.h"
-#include "genericitems/base.h"
 #include "templates/optionalref.h"
 #include <vector>
 
@@ -14,7 +13,7 @@ class Isotopologue;
 class LineParser;
 
 // IsotopologueSet - Isotopologues for one or more Species
-class IsotopologueSet : public GenericItemBase
+class IsotopologueSet
 {
     public:
     IsotopologueSet() = default;
@@ -46,17 +45,14 @@ class IsotopologueSet : public GenericItemBase
     int nIsotopologues() const;
     // Return vector of all Isotopologues
     std::vector<Isotopologues> &isotopologues();
-    // Return vector of all Isotopologues (const)
-    const std::vector<Isotopologues> &constIsotopologues() const;
+    const std::vector<Isotopologues> &isotopologues() const;
 
     /*
-     * GenericItemBase Implementations
+     * Serialisation
      */
     public:
-    // Return class name
-    static std::string_view itemClassName();
     // Read data through specified LineParser
-    bool read(LineParser &parser, CoreData &coreData);
+    bool deserialise(LineParser &parser, const CoreData &coreData);
     // Write data through specified LineParser
     bool write(LineParser &parser);
 };

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -14,7 +14,7 @@ class SpeciesRing
     public:
     SpeciesRing(const std::vector<const SpeciesAtom *> atoms = {});
     ~SpeciesRing() = default;
-    bool operator==(const SpeciesRing &other);
+    bool operator==(const SpeciesRing &other) const;
 
     /*
      * Atoms

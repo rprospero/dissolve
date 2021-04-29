@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "data/structurefactors.h"
 
@@ -9,14 +9,9 @@ namespace StructureFactors
 // Return enum option info for NormalisationType
 EnumOptions<NormalisationType> normalisationTypes()
 {
-    static EnumOptionsList NormalisationTypeOptions = EnumOptionsList()
-                                                      << EnumOption(NoNormalisation, "None")
-                                                      << EnumOption(AverageOfSquaresNormalisation, "AverageOfSquares")
-                                                      << EnumOption(SquareOfAverageNormalisation, "SquareOfAverage");
-
-    static EnumOptions<NormalisationType> options("NormalisationType", NormalisationTypeOptions, NoNormalisation);
-
-    return options;
+    return EnumOptions<NormalisationType>("NormalisationType", {{NoNormalisation, "None"},
+                                                                {AverageOfSquaresNormalisation, "AverageOfSquares"},
+                                                                {SquareOfAverageNormalisation, "SquareOfAverage"}});
 }
 
 } // namespace StructureFactors

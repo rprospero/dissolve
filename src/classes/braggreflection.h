@@ -1,33 +1,23 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
 #include "base/lineparser.h"
-#include "genericitems/base.h"
 #include "templates/array2d.h"
-#include "templates/listitem.h"
-
-// Forward Declarations
-/* none */
 
 // BraggReflection Class
-class BraggReflection : public GenericItemBase
+class BraggReflection
 {
-    /*
-     *  BraggReflection acts as a 'bin' for collecting contributions arising from a set of KVectors which occur at the same
-     * Q value.
-     */
     public:
     BraggReflection();
-    ~BraggReflection();
-    BraggReflection(const BraggReflection &source);
-    // Operator=
-    void operator=(const BraggReflection &source);
-    // Operator+= (intensity addition)
+    ~BraggReflection() = default;
+    BraggReflection(const BraggReflection &source) = default;
+    BraggReflection(BraggReflection &&source) = default;
+    BraggReflection &operator=(const BraggReflection &source) = default;
     void operator+=(const BraggReflection &source);
-    // Operator*= (intensity scaling)
     void operator*=(double factor);
+    BraggReflection operator*(double factor) const;
 
     /*
      * Data
@@ -55,10 +45,10 @@ class BraggReflection : public GenericItemBase
     void reset();
     // Add intensity between specified atomtypes from k-vector
     void addIntensity(int typeI, int typeJ, double intensity);
-    // Scale intensities between all atom types by factor provided
-    void scaleIntensities(double factor);
-    // Scale intensity between all specific atom types by factor provided
+    // Scale intensity between specified atom types by factor provided
     void scaleIntensity(int typeI, int typeJ, double factor);
+    // Return intensities array
+    const Array2D<double> intensities() const;
     // Return intensity between specified atom types for this reflection
     double intensity(int typeI, int typeJ) const;
     // Increment number of contributing k-vectors
@@ -67,22 +57,11 @@ class BraggReflection : public GenericItemBase
     int nKVectors() const;
 
     /*
-     * GenericItemBase Implementations
+     * Serialisation
      */
     public:
-    // Return class name
-    static std::string_view itemClassName();
     // Read data through specified parser
-    bool read(LineParser &parser, CoreData &coreData);
+    bool deserialise(LineParser &parser);
     // Write data through specified parser
-    bool write(LineParser &parser);
-
-    /*
-     * Parallel Comms
-     */
-    public:
-    // Broadcast data from root to all other processes
-    bool broadcast(ProcessPool &procPool, const int root, const CoreData &coreData);
-    // Check item equality
-    bool equality(ProcessPool &procPool);
+    bool serialise(LineParser &parser) const;
 };

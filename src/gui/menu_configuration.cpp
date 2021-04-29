@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #include "gui/configurationtab.h"
 #include "gui/gui.h"
@@ -14,7 +14,7 @@
 
 void DissolveWindow::on_ConfigurationCreateEmptyAction_triggered(bool checked)
 {
-    Configuration *newConfiguration = dissolve_.addConfiguration();
+    auto *newConfiguration = dissolve_.addConfiguration();
 
     setModified();
     fullUpdate();
@@ -26,21 +26,20 @@ void DissolveWindow::on_ConfigurationCreateSimpleRandomMixAction_triggered(bool 
     // Create a SpeciesSelectDialog and use it to get the Species to add to the mix
     SelectSpeciesDialog speciesSelectDialog(this, dissolve_.coreData(), "Select species to mix");
 
-    RefList<Species> mixSpecies = speciesSelectDialog.selectSpecies(1, -1);
+    auto mixSpecies = speciesSelectDialog.selectSpecies(1, -1);
     if (mixSpecies.nItems() == 0)
         return;
 
     // Create the Configuration and a suitable generator
-    Configuration *newConfiguration = dissolve_.addConfiguration();
-    Procedure &generator = newConfiguration->generator();
-    ParametersProcedureNode *paramsNode = new ParametersProcedureNode;
+    auto *newConfiguration = dissolve_.addConfiguration();
+    auto &generator = newConfiguration->generator();
+    auto *paramsNode = new ParametersProcedureNode;
     paramsNode->addParameter("rho", 0.1);
     generator.addRootSequenceNode(paramsNode);
     generator.addRootSequenceNode(new BoxProcedureNode);
     for (auto sp : mixSpecies)
     {
-        generator.addRootSequenceNode(
-            new AddSpeciesProcedureNode(sp, 100, NodeValue("rho", paramsNode->parameterReferences())));
+        generator.addRootSequenceNode(new AddSpeciesProcedureNode(sp, 100, NodeValue("rho", paramsNode->parameters())));
     }
 
     // Run the generator
@@ -61,29 +60,28 @@ void DissolveWindow::on_ConfigurationCreateRelativeRandomMixAction_triggered(boo
         return;
 
     // Create the Configuration and a suitable generator
-    Configuration *newConfiguration = dissolve_.addConfiguration();
-    Procedure &generator = newConfiguration->generator();
-    ParametersProcedureNode *paramsNode = new ParametersProcedureNode;
+    auto *newConfiguration = dissolve_.addConfiguration();
+    auto &generator = newConfiguration->generator();
+    auto *paramsNode = new ParametersProcedureNode;
     paramsNode->addParameter("populationA", 100);
     paramsNode->addParameter("rho", 0.1);
     generator.addRootSequenceNode(paramsNode);
     generator.addRootSequenceNode(new BoxProcedureNode);
     auto count = 0;
-    for (Species *sp : mixSpecies)
+    for (auto *sp : mixSpecies)
     {
         // Add a parameter for the ratio of this species to the first (or the population of the first)
         if (count == 0)
-            generator.addRootSequenceNode(
-                new AddSpeciesProcedureNode(sp, NodeValue("populationA", paramsNode->parameterReferences()),
-                                            NodeValue("rho", paramsNode->parameterReferences())));
+            generator.addRootSequenceNode(new AddSpeciesProcedureNode(sp, NodeValue("populationA", paramsNode->parameters()),
+                                                                      NodeValue("rho", paramsNode->parameters())));
         else
         {
-            std::string parameterName = fmt::format("ratio{}", char(65 + count));
+            auto parameterName = fmt::format("ratio{}", char(65 + count));
             paramsNode->addParameter(parameterName, 1);
 
             generator.addRootSequenceNode(new AddSpeciesProcedureNode(
-                sp, NodeValue(fmt::format("{}*populationA", parameterName), paramsNode->parameterReferences()),
-                NodeValue("rho", paramsNode->parameterReferences())));
+                sp, NodeValue(fmt::format("{}*populationA", parameterName), paramsNode->parameters()),
+                NodeValue("rho", paramsNode->parameters())));
         }
 
         ++count;
@@ -100,7 +98,7 @@ void DissolveWindow::on_ConfigurationCreateRelativeRandomMixAction_triggered(boo
 void DissolveWindow::on_ConfigurationRenameAction_triggered(bool checked)
 {
     // Get the current tab - make sure it is a ConfigurationTab, then call its rename() function
-    MainTab *tab = ui_.MainTabs->currentTab();
+    auto *tab = ui_.MainTabs->currentTab();
     if ((!tab) || (tab->type() != MainTab::ConfigurationTabType))
         return;
     tab->rename();
@@ -109,12 +107,12 @@ void DissolveWindow::on_ConfigurationRenameAction_triggered(bool checked)
 void DissolveWindow::on_ConfigurationDeleteAction_triggered(bool checked)
 {
     // Get the current tab - make sure it is a ConfigurationTab
-    MainTab *tab = ui_.MainTabs->currentTab();
+    auto *tab = ui_.MainTabs->currentTab();
     if ((!tab) || (tab->type() != MainTab::ConfigurationTabType))
         return;
 
     // Cast up the tab to a ConfigurationTab so we can get the ModuleLayer pointer
-    ConfigurationTab *cfgTab = dynamic_cast<ConfigurationTab *>(tab);
+    auto *cfgTab = dynamic_cast<ConfigurationTab *>(tab);
     if (!cfgTab)
         return;
 
@@ -131,7 +129,7 @@ void DissolveWindow::on_ConfigurationDeleteAction_triggered(bool checked)
 void DissolveWindow::on_ConfigurationExportToXYZAction_triggered(bool checked)
 {
     // Get the currently-displayed Configuration
-    Configuration *cfg = ui_.MainTabs->currentConfiguration();
+    auto *cfg = ui_.MainTabs->currentConfiguration();
     if (!cfg)
         return;
 

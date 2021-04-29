@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (c) 2020 Team Dissolve and contributors
+// Copyright (c) 2021 Team Dissolve and contributors
 
 #pragma once
 
@@ -9,9 +9,9 @@
 #include "gui/maintab.h"
 #include "gui/ui_forcefieldtab.h"
 
-Q_DECLARE_METATYPE(MasterIntra *)
-Q_DECLARE_METATYPE(AtomType *)
-Q_DECLARE_METATYPE(PairPotential *)
+Q_DECLARE_METATYPE(const MasterIntra *)
+Q_DECLARE_METATYPE(const AtomType *)
+Q_DECLARE_METATYPE(const PairPotential *)
 
 // Forcefield Tab
 class ForcefieldTab : public QWidget, public MainTab
@@ -101,13 +101,4 @@ class ForcefieldTab : public QWidget, public MainTab
     void on_MasterTermAddImproperButton_clicked(bool checked);
     void on_MasterTermRemoveImproperButton_clicked(bool checked);
     void on_MasterImpropersTable_itemChanged(QTableWidgetItem *w);
-
-    /*
-     * State
-     */
-    public:
-    // Read widget state through specified LineParser
-    bool readState(LineParser &parser, const CoreData &coreData);
-    // Write widget state through specified LineParser
-    bool writeState(LineParser &parser) const;
 };
