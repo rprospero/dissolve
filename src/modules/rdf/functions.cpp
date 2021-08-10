@@ -20,6 +20,7 @@
 #include "templates/combinable.h"
 #include <iterator>
 #include <tuple>
+#include <CL/sycl.hpp>
 
 namespace
 {

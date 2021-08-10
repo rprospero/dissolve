@@ -29,6 +29,7 @@ macro(dissolve_add_module header modulename)
       PRIVATE base
       PUBLIC ${THREADING_LINK_LIBS}
     )
+    add_sycl_to_target(TARGET module_${modulename}_nogui SOURCES functions.cpp)
   endif()
 
   # Add library target
@@ -47,6 +48,7 @@ macro(dissolve_add_module header modulename)
     ${PROJECT_SOURCE_DIR}
     ${CMAKE_BINARY_DIR}
     ${CMAKE_BINARY_DIR}/src
+    ${HIPSYCL_INCLUDE_DIR}
   )
   target_link_libraries(
     module_${modulename}
@@ -108,6 +110,8 @@ macro(dissolve_add_module_gui modulename)
     PUBLIC ${THREADING_LINK_LIBS}
   )
 endmacro()
+
+find_package(hipSYCL CONFIG REQUIRED)
 
 # Module subdirectories
 message(STATUS "Looking for modules in ${CMAKE_CURRENT_SOURCE_DIR}...")
