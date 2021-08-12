@@ -10,6 +10,7 @@
 #include "modules/forces/forces.h"
 #include "templates/algorithms.h"
 #include "templates/combinable.h"
+#include <CL/sycl.hpp>
 
 namespace
 {

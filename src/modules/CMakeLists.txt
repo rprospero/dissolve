@@ -50,9 +50,11 @@ macro(dissolve_add_module header modulename)
     ${CMAKE_BINARY_DIR}/src
     ${HIPSYCL_INCLUDE_DIR}
   )
+  message("HIP_SYCL ${HIPSYCL_LINK_LIBS}")
   target_link_libraries(
     module_${modulename}
     PRIVATE base
+    ${HIPSYCL_LINK_LIBS}/libhipSYCL-rt.so
     PUBLIC ${THREADING_LINK_LIBS}
   )
 endmacro()

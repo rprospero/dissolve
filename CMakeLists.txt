@@ -271,13 +271,14 @@ set(BASIC_LINK_LIBS
 )
 
 # Set linker options for complete/no archive
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  set(WHOLE_ARCHIVE_FLAG "-Wl,-all_load")
-  set(NO_WHOLE_ARCHIVE_FLAG "-Wl,-noall_load")
-else()
+# if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+#   set(WHOLE_ARCHIVE_FLAG "-Wl,-all_load")
+#   set(NO_WHOLE_ARCHIVE_FLAG "-Wl,-noall_load")
+# else()
   set(WHOLE_ARCHIVE_FLAG "-Wl,-whole-archive")
   set(NO_WHOLE_ARCHIVE_FLAG "-Wl,-no-whole-archive")
-endif()
+# endif()
+find_package(Threads REQUIRED)
 
 # Enable build of unit / system tests?
 option(BUILD_SYSTEM_TESTS "Build system tests" OFF)
@@ -314,6 +315,7 @@ target_link_libraries(
          ${MODULENOGUI_LINK_LIBS} ${NO_WHOLE_ARCHIVE_FLAG}
   PRIVATE # External libs
           antlr4-runtime ${EXTRA_LINK_LIBS} ${THREADING_LINK_LIBS}
+	  Threads::Threads
   INTERFACE CONAN_PKG::fmt CONAN_PKG::CLI11
 )
 

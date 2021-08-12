@@ -68,6 +68,17 @@ bool RDFModule::calculateGRSimple(ProcessPool &procPool, Configuration *cfg, Par
     std::vector<int *> binss(nTypes);
     int *bins;
 
+    {
+      cl::sycl::queue q;
+      cl::sycl::range<1> work_items(nTypes);
+      cl::sycl::buffer<int> buff_nr(nr.data(), nTypes);
+      q.submit([&](cl::sycl::handler &cgh) {
+	auto access_nr = buff_nr.get_access<cl::sycl::access::mode::write>(cgh);
+	cgh.parallel_for<class init_nr>(work_items,
+					[=](cl::sycl::id<1> idx){access_nr[idx] = 0;});
+      });
+    }
+
     n = 0;
     for (auto &atd : cfg->usedAtomTypesList())
     {
