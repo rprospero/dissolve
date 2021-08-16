@@ -1,3 +1,4 @@
+find_package(hipsycl REQUIRED CONFIG)
 # Macros
 macro(dissolve_add_module header modulename)
   get_filename_component(MODULE_DIR "${CMAKE_CURRENT_SOURCE_DIR}" NAME)
@@ -29,7 +30,6 @@ macro(dissolve_add_module header modulename)
       PRIVATE base
       PUBLIC ${THREADING_LINK_LIBS}
     )
-    add_sycl_to_target(TARGET module_${modulename}_nogui SOURCES functions.cpp)
   endif()
 
   # Add library target
@@ -48,15 +48,15 @@ macro(dissolve_add_module header modulename)
     ${PROJECT_SOURCE_DIR}
     ${CMAKE_BINARY_DIR}
     ${CMAKE_BINARY_DIR}/src
-    ${HIPSYCL_INCLUDE_DIR}
+    ${OpenMP_DIR}/include
   )
-  message("HIP_SYCL ${HIPSYCL_LINK_LIBS}")
   target_link_libraries(
     module_${modulename}
     PRIVATE base
-    ${HIPSYCL_LINK_LIBS}/libhipSYCL-rt.so
+    ${OpenMP}/lib/libomp.so
     PUBLIC ${THREADING_LINK_LIBS}
   )
+  add_sycl_to_target(TARGET module_${modulename} SOURCES functions.cpp)
 endmacro()
 macro(dissolve_add_module_gui modulename)
   message(STATUS "...    GUI component 'module_${modulename}_gui'")
@@ -112,8 +112,6 @@ macro(dissolve_add_module_gui modulename)
     PUBLIC ${THREADING_LINK_LIBS}
   )
 endmacro()
-
-find_package(hipSYCL CONFIG REQUIRED)
 
 # Module subdirectories
 message(STATUS "Looking for modules in ${CMAKE_CURRENT_SOURCE_DIR}...")
