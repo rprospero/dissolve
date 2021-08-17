@@ -11,6 +11,7 @@
 #include "templates/parallel_defs.h"
 #include <atomic>
 #include <numeric>
+#include <CL/sycl.hpp>
 
 namespace
 {
@@ -72,29 +73,43 @@ double EnergyModule::interAtomicEnergy(ProcessPool &procPool, const Species *sp,
     auto nChunks = procPool.interleavedLoopStride(ProcessPool::PoolStrategy);
     auto [loopStart, loopEnd] = chop_range(0, comb.getNumCombinations(), nChunks, offset);
 
-    double energy =
-        dissolve::transform_reduce(ParallelPolicies::par, dissolve::counting_iterator<int>(loopStart),
-                                   dissolve::counting_iterator<int>(loopEnd), 0.0, std::plus<double>(), [&](const auto idx) {
-                                       auto [n, m] = comb.nthCombination(idx);
-                                       auto &i = sp->atom(n);
-                                       auto &j = sp->atom(m);
-                                       auto &rI = i.r();
-                                       auto &rJ = j.r();
+    {
+      cl::sycl::queue q;
+      std::vector<double> energies(sp->nAtoms(), 0);
+      std::vector<SpeciesAtom> atoms(sp->nAtoms());
+      cl::sycl::buffer<SpeciesAtom> buff_atom(atoms.data(), atoms.size());
+      cl::sycl::buffer<double> buff_energy(energies.data(), atoms.size());
 
-                                       // Get interatomic distance
-                                       double r = (rJ - rI).magnitude();
-                                       if (r > cutoff)
-                                           return 0.0;
+      std::copy(sp->atoms().begin(), sp->atoms().end(), atoms.begin());
 
-                                       // Get intramolecular scaling of atom pair
-                                       double scale = i.scaling(&j);
-                                       if (scale < 1.0e-3)
-                                           return 0.0;
+      q.submit([&](cl::sycl::handler &cgh){
+	auto access_atoms = buff_atom.get_access<cl::sycl::access::mode::read>(cgh);
+	cl::sycl::range<2> work_items(atoms.size(), atoms.size());
+	auto energy = cl::sycl::accessor<double,1,cl::sycl::access::mode::write,cl::sycl::access::target::global_buffer>(buff_energy, cgh);
 
-                                       return potentialMap.energy(&i, &j, r) * scale;
-                                   });
+	cgh.parallel_for<class energy_intra>(work_items, cl::sycl::reduction(energy, 0, std::plus<>()),
+					     [access_atoms, potentialMap, cutoff](cl::sycl::id<2> tid, auto &energy) {
+					       auto i = access_atoms[tid.get(0)];
+					       auto j = access_atoms[tid.get(1)];
+					       auto &rI = i.r();
+					       auto &rJ = j.r();
 
-    return energy;
+					       // Get interatomic distance
+					       double r = (rJ - rI).magnitude();
+					       if (r > cutoff)
+						 return;
+
+					       // Get intramolecular scaling of atom pair
+					       double scale = i.scaling(&j);
+					       if (scale < 1.0e-3)
+						 return;
+
+					       energy.combine(potentialMap.energy(i, j, r) * scale);
+					     });
+      });
+      return energies[0];
+
+    }
 }
 
 // Return total intermolecular energy of Configuration
