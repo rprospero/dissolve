@@ -305,7 +305,7 @@ double EnergyKernel::energy(const CellArray &cellArray, bool interMolecular, Pro
  */
 
 // Return SpeciesBond energy at Atoms specified
-double EnergyKernel::energy(const SpeciesBond &bond, const Atom &i, const Atom &j)
+double EnergyKernel::energy(const SpeciesBond &bond, const Atom &i, const Atom &j) const
 {
     // Determine whether we need to apply minimum image to the distance calculation
     if (i.cell()->mimRequired(j.cell()))
@@ -318,7 +318,7 @@ double EnergyKernel::energy(const SpeciesBond &bond, const Atom &i, const Atom &
 double EnergyKernel::energy(const SpeciesBond &b) { return b.energy((b.j()->r() - b.i()->r()).magnitude()); }
 
 // Return SpeciesAngle energy at Atoms specified
-double EnergyKernel::energy(const SpeciesAngle &angle, const Atom &i, const Atom &j, const Atom &k)
+double EnergyKernel::energy(const SpeciesAngle &angle, const Atom &i, const Atom &j, const Atom &k) const
 {
     Vec3<double> vecji, vecjk;
 
@@ -354,7 +354,7 @@ double EnergyKernel::energy(const SpeciesAngle &angle)
 }
 
 // Return SpeciesTorsion energy at Atoms specified
-double EnergyKernel::energy(const SpeciesTorsion &torsion, const Atom &i, const Atom &j, const Atom &k, const Atom &l)
+double EnergyKernel::energy(const SpeciesTorsion &torsion, const Atom &i, const Atom &j, const Atom &k, const Atom &l) const
 {
     Vec3<double> vecji, vecjk, veckl;
 
@@ -383,7 +383,7 @@ double EnergyKernel::energy(const SpeciesTorsion &torsion)
 }
 
 // Return SpeciesImproper energy at Atoms specified
-double EnergyKernel::energy(const SpeciesImproper &imp, const Atom &i, const Atom &j, const Atom &k, const Atom &l)
+double EnergyKernel::energy(const SpeciesImproper &imp, const Atom &i, const Atom &j, const Atom &k, const Atom &l) const
 {
     Vec3<double> vecji, vecjk, veckl;
 
