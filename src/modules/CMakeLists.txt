@@ -53,7 +53,7 @@ macro(dissolve_add_module header modulename)
   target_link_libraries(
     module_${modulename}
     PRIVATE base
-    ${OpenMP}/lib/libomp.so
+    ${OpenMP_DIR}/lib/libomp.so
     PUBLIC ${THREADING_LINK_LIBS}
   )
   add_sycl_to_target(TARGET module_${modulename} SOURCES functions.cpp)
